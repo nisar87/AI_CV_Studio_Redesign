@@ -1,13 +1,19 @@
 import type { Browser } from 'puppeteer-core';
 
-export type CvReady = { pages: number; overflow: number; nearlyFits: boolean };
+export type CvReady = { pages: number; overflow: number; nearlyFits: boolean; fitted?: number };
 
 /** Print a self-contained CV document (fonts inlined) to PDF. No network access is allowed. */
 export async function renderPdfFromHtml(
   browser: Browser,
   html: string,
   { timeoutMs = 20_000 }: { timeoutMs?: number } = {},
-): Promise<{ pdf: Uint8Array; pages: number; overflow: number }> {
+): Promise<{
+  pdf: Uint8Array;
+  pages: number;
+  overflow: number;
+  fitted: number;
+  nearlyFits: boolean;
+}> {
   const page = await browser.newPage();
   try {
     await page.setJavaScriptEnabled(true);
@@ -28,7 +34,13 @@ export async function renderPdfFromHtml(
       outline: false,
       timeout: timeoutMs,
     });
-    return { pdf, pages: ready.pages, overflow: ready.overflow };
+    return {
+      pdf,
+      pages: ready.pages,
+      overflow: ready.overflow,
+      fitted: ready.fitted ?? 0,
+      nearlyFits: ready.nearlyFits,
+    };
   } finally {
     await page.close().catch(() => undefined);
   }

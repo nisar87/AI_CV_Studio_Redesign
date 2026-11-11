@@ -26,6 +26,8 @@ export type REntry = {
   tags: string[];
   /** Skill-group label or language fluency. */
   label: string;
+  /** Link for `meta` (e.g. a project URL). */
+  metaHref?: string;
 };
 
 export type RSection = {
@@ -90,6 +92,7 @@ function entriesOf(section: Section, locale: string): REntry[] {
         title: clean(i.name),
         subtitle: clean(i.role),
         meta: displayUrl(i.link),
+        metaHref: toHref(i.link),
         dates: formatRange(i.start, i.end, false, locale),
         bullets: nonEmpty(i.bullets),
       }));

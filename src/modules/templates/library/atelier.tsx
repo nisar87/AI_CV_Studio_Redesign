@@ -1,4 +1,5 @@
 import {
+  MetaText,
   ContactList,
   joinParts,
   Portrait,
@@ -13,6 +14,7 @@ import type { TemplateDefinition } from '../types';
  */
 
 const hooks: TemplateHooks = {
+  splitSkills: true,
   heading: (s) => <h2 className="a-h">{s.title}</h2>,
   summary: (t) => <p className="a-summary">{t}</p>,
   entryHead: (e) => (
@@ -25,7 +27,11 @@ const hooks: TemplateHooks = {
         <p className="a-sub">
           {e.title && e.subtitle && <span className="a-org">{e.subtitle}</span>}
           {e.title && e.subtitle && e.meta && <span className="a-dot"> · </span>}
-          {e.meta && <span className="a-meta">{e.meta}</span>}
+          {e.meta && (
+            <span className="a-meta">
+              <MetaText e={e} />
+            </span>
+          )}
         </p>
       ) : null}
     </div>

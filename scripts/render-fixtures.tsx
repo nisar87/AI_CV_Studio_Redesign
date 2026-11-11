@@ -36,7 +36,7 @@ for (const t of templates)
       doc.design.pageSize = size;
       const html = buildDocumentHtml(doc, { fonts: { kind: 'inline', read } });
       const name = `${t}-${f}${process.env.PHOTO === '1' ? '-photo' : ''}${size === 'A4' ? '' : '-letter'}`;
-      const { pdf, pages, overflow } = await renderPdfFromHtml(browser, html);
+      const { pdf, pages, overflow, fitted, nearlyFits } = await renderPdfFromHtml(browser, html);
       const pdfPath = path.join(outDir, `${name}.pdf`);
       fs.writeFileSync(pdfPath, pdf);
       const info = execFileSync('pdfinfo', [pdfPath]).toString();
@@ -52,7 +52,7 @@ for (const t of templates)
         path.join(outDir, name),
       ]);
       console.log(
-        `${ok ? 'ok  ' : 'FAIL'} ${name.padEnd(28)} pages=${pages} pdfPages=${pdfPages} overflow=${overflow}`,
+        `${ok ? 'ok  ' : 'FAIL'} ${name.padEnd(28)} pages=${pages} pdfPages=${pdfPages} overflow=${overflow}${fitted ? ` fitted=${fitted}` : ''}${nearlyFits ? ' NEARLY-EMPTY-LAST-PAGE' : ''}`,
       );
     }
 await browser.close();

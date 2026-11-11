@@ -51,6 +51,8 @@ export type TemplateHooks = {
    */
   label?: (section: RSection) => ReactNode;
   summary: (text: string) => ReactNode;
+  /** Skills render one item per tag/line, so big groups may be split across pages at item boundaries. */
+  splitSkills?: boolean;
 };
 
 function Bullets({ items }: { items: string[] }) {
@@ -64,6 +66,8 @@ function Bullets({ items }: { items: string[] }) {
 }
 
 const BULLETS_IN_HEAD = 2;
+/** Skills per chunk when a large group is split across pages. */
+const SKILL_CHUNK = 6;
 
 /** Join class names. (Not a template literal: the Tailwind Prettier plugin trims spaces in those.) */
 export function classes(...xs: (string | false | null | undefined)[]): string {
@@ -149,14 +153,33 @@ function sectionBlocksRaw(
 
   if (section.kind === 'skills' || COMPACT_KINDS.has(section.kind)) {
     const isSkills = section.kind === 'skills';
-    const n = section.entries.length;
-    section.entries.forEach((e, i) =>
+    // Large skill groups are split into chunks so a page never leaves usable side-column space empty
+    // just because one group is long. The label stays with the first chunk.
+    const split = isSkills && (hooks.splitSkills || design.skillStyle === 'tags');
+    const items: { e: REntry; cont: boolean }[] = [];
+    for (const e of section.entries) {
+      if (split && e.tags.length > SKILL_CHUNK + 2) {
+        for (let k = 0; k < e.tags.length; k += SKILL_CHUNK)
+          items.push({
+            e: { ...e, label: k === 0 ? e.label : '', tags: e.tags.slice(k, k + SKILL_CHUNK) },
+            cont: k > 0,
+          });
+      } else items.push({ e, cont: false });
+    }
+    const n = items.length;
+    // Split chunks may break between any two chunks (never leaving the last chunk alone).
+    const wasSplit = items.some((it) => it.cont);
+    items.forEach(({ e, cont }, i) =>
       out.push(
         <Block
           kind={section.kind}
-          key={e.ref}
-          keep={listKeep(i, n)}
-          className={classes(isSkills ? 'b-skills' : 'b-compact', i === 0 && 'b-first')}
+          key={`${e.ref}-${i}`}
+          keep={wasSplit ? (i === n - 2 ? 'with-next' : 'together') : listKeep(i, n)}
+          className={classes(
+            isSkills ? 'b-skills' : 'b-compact',
+            i === 0 && 'b-first',
+            cont && 'b-cont',
+          )}
           refId={e.ref}
         >
           {isSkills ? hooks.skills(e, design) : hooks.compactItem(e, section)}
@@ -320,6 +343,23 @@ export function Portrait({
     <div className={`cv-portrait cv-portrait--initials ${className}`} aria-hidden="true">
       <span>{model.initials}</span>
     </div>
+  );
+}
+
+/** Entry meta text, as a link when it has one (e.g. project URLs). */
+export function MetaText({ e }: { e: REntry }) {
+  return e.metaHref ? <a href={e.metaHref}>{breakable(e.meta)}</a> : <>{e.meta}</>;
+}
+
+/** "Subtitle, meta" with the meta part linked when possible. */
+export function SubMeta({ e, sep }: { e: REntry; sep: string }) {
+  const sub = e.title ? e.subtitle : '';
+  return (
+    <>
+      {sub}
+      {sub && e.meta ? sep : ''}
+      {e.meta && <MetaText e={e} />}
+    </>
   );
 }
 

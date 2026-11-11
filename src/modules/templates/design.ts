@@ -101,10 +101,10 @@ export function designCssVars(d: ResolvedDesign): string {
   const f = d.font;
   const body = +(d.density.bodyPt * f.bodyScale).toFixed(2);
   return `:root{
---page-w:${d.page.widthMm}mm;--page-h:${d.page.heightMm}mm;--margin:${d.density.marginMm}mm;
+--page-w:${d.page.widthMm}mm;--page-h:${d.page.heightMm}mm;--fit-gap:1;--fit-margin:1;--fit-lh:0;--margin:calc(${d.density.marginMm}mm * var(--fit-margin));
 --accent:${d.accent};--accent-soft:${d.accentSoft};--accent-tint:${d.accentTint};--accent-line:${d.accentLine};--accent-deep:${d.accentDeep};--accent-bright:${d.accentBright};
 --ink:#1b1e23;--ink-2:#41464e;--ink-3:#686e77;--rule:#d9dce1;
 --font-heading:'${f.heading}',${f.headingFallback};--font-body:'${f.body}',${f.bodyFallback};--heading-weight:${f.headingWeight};
---fs:${body}pt;--lh:${d.density.lineHeight};--section-gap:${d.density.sectionGapPt}pt;--item-gap:${d.density.itemGapPt}pt;
+--fs:${body}pt;--lh:calc(${d.density.lineHeight} - var(--fit-lh));--section-gap:calc(${d.density.sectionGapPt}pt * var(--fit-gap));--item-gap:calc(${d.density.itemGapPt}pt * var(--fit-gap));
 }`;
 }

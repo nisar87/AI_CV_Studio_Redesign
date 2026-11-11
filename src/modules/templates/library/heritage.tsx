@@ -1,4 +1,5 @@
 import {
+  SubMeta,
   ContactList,
   joinParts,
   Portrait,
@@ -26,7 +27,9 @@ const hooks: TemplateHooks = {
         {e.dates && <span className="h-dates">{e.dates}</span>}
       </div>
       {(e.title ? e.subtitle : '') || e.meta ? (
-        <p className="h-sub">{joinParts([e.title ? e.subtitle : '', e.meta], ', ')}</p>
+        <p className="h-sub">
+          <SubMeta e={e} sep=", " />
+        </p>
       ) : null}
     </div>
   ),

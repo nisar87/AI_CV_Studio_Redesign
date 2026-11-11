@@ -115,6 +115,12 @@ Templates emit flat lists of blocks per flow (`main`, `aside`). Granularity:
 
 Because the browser engine, fonts, CSS and algorithm are identical, the PDF has the same pages as the preview. The preview in non-Chromium browsers (Safari/Firefox) can differ by a line in rare cases because of font rasterization differences; the Download page always shows the server-generated page count.
 
+### Fit pass (avoid near-empty last pages)
+After laying out, if the CV has more than one page and the last page is under 30% full, the runtime retries with up to two bounded steps of tighter spacing (`--fit-gap`, `--fit-margin`, `--fit-lh` CSS variables: gaps −20%/−38%, margins −8%/−16%, line height −0.03/−0.06). Font sizes and section order never change. The tighter result is kept only if it removes a page with zero overflow. Preview and PDF run the same pass, so they still match.
+
+### Full-width continuation pages and splitting
+Pages after the side column's content switch to full width (`cv-page--wide`); main blocks are measured at both widths. Skill groups longer than 8 items split into chunks of 6 so long lists don't leave earlier side-column space empty.
+
 ### Orphans and quality rules enforced by the paginator
 - No section heading at the bottom of a page.
 - No entry head separated from its first bullets.

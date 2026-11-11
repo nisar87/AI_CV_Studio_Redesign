@@ -1,4 +1,5 @@
 import {
+  SubMeta,
   ContactList,
   joinParts,
   Portrait,
@@ -13,6 +14,7 @@ import type { TemplateDefinition } from '../types';
  */
 
 const hooks: TemplateHooks = {
+  splitSkills: true,
   heading: (s) => (
     <h2 className="f-h">
       {s.title}
@@ -29,7 +31,9 @@ const hooks: TemplateHooks = {
         {e.dates && <span className="f-dates">{e.dates}</span>}
       </div>
       {(e.title ? e.subtitle : '') || e.meta ? (
-        <p className="f-sub">{joinParts([e.title ? e.subtitle : '', e.meta], ', ')}</p>
+        <p className="f-sub">
+          <SubMeta e={e} sep=", " />
+        </p>
       ) : null}
     </div>
   ),
@@ -116,7 +120,7 @@ const css = `
 .b-compact.b-first,.b-skills.b-first{padding-top:1pt}
 .f-row{display:flex;justify-content:space-between;align-items:baseline;gap:.9em}
 .f-title{font-family:var(--font-heading);font-weight:650;font-size:1.2em;line-height:1.2;color:var(--ink)}
-.f-dates{flex:none;font-size:.82em;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.f-dates{flex:none;font-size:.86em;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
 .f-sub{margin-top:.1em;color:var(--accent);font-style:italic}
 .f-entry-head{padding-bottom:3pt}
 .cv-bullets{color:var(--ink-2)}
@@ -127,7 +131,7 @@ const css = `
 .f-strong{font-weight:600;color:var(--ink)}
 .f-cred{line-height:1.3}
 .f-muted{color:var(--ink-3);text-align:right}
-.f-small{text-align:left;font-size:.94em;margin-top:1pt}
+.f-small{text-align:left;font-size:.96em;margin-top:1pt;color:var(--ink-2)}
 .f-skill-label{font-weight:600;margin-bottom:2pt;color:var(--ink)}
 .f-skills li{color:var(--ink-2);padding:.6pt 0}
 `;

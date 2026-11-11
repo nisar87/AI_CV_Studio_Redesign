@@ -1,4 +1,5 @@
 import {
+  MetaText,
   ContactList,
   joinParts,
   Portrait,
@@ -13,6 +14,7 @@ import type { TemplateDefinition } from '../types';
  */
 
 const hooks: TemplateHooks = {
+  splitSkills: true,
   heading: (s) => <h2 className="ha-h">{s.title}</h2>,
   summary: (t) => <p className="ha-summary">{t}</p>,
   entryHead: (e) => (
@@ -25,7 +27,11 @@ const hooks: TemplateHooks = {
         <p className="ha-sub">
           {e.title && e.subtitle && <span className="ha-org">{e.subtitle}</span>}
           {e.title && e.subtitle && e.meta && <span className="ha-dot">, </span>}
-          {e.meta && <span className="ha-meta">{e.meta}</span>}
+          {e.meta && (
+            <span className="ha-meta">
+              <MetaText e={e} />
+            </span>
+          )}
         </p>
       ) : null}
     </div>
@@ -98,7 +104,7 @@ const css = `
 .b-compact.b-first,.b-skills.b-first{padding-top:1pt}
 .ha-row{display:flex;justify-content:space-between;align-items:baseline;gap:.9em}
 .ha-title{font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:1.18em;line-height:1.2;color:var(--ink)}
-.ha-dates{flex:none;font-size:.85em;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ha-dates{flex:none;font-size:.9em;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
 .ha-sub{margin-top:.08em;font-size:.97em}
 .ha-org{color:var(--accent);font-weight:600}
 .ha-meta,.ha-dot{color:var(--ink-3)}
@@ -110,7 +116,7 @@ const css = `
 .ha-strong{font-weight:600;color:var(--ink)}
 .ha-cred{line-height:1.3}
 .ha-muted{color:var(--ink-3);text-align:right}
-.ha-small{text-align:left;font-size:.94em;margin-top:1pt}
+.ha-small{text-align:left;font-size:.96em;margin-top:1pt;color:var(--ink-2)}
 .ha-skill-label{font-weight:600;margin-bottom:2pt}
 .ha-list li{position:relative;padding:1.2pt 0 1.2pt 1em;color:var(--ink-2)}
 .ha-list li::before{content:'';position:absolute;left:.1em;top:calc(var(--lh) * 0.5em - .12em);width:.32em;height:.32em;transform:rotate(45deg);background:var(--accent)}

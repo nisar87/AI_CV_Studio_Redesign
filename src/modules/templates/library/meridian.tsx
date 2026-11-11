@@ -1,4 +1,5 @@
 import {
+  MetaText,
   ContactList,
   joinParts,
   Portrait,
@@ -13,6 +14,7 @@ import type { TemplateDefinition } from '../types';
  */
 
 const hooks: TemplateHooks = {
+  splitSkills: true,
   heading: (s) => <h2 className="m-h">{s.title}</h2>,
   summary: (t) => <p className="m-summary">{t}</p>,
   entryHead: (e) => (
@@ -25,7 +27,11 @@ const hooks: TemplateHooks = {
         <p className="m-sub">
           {e.title && e.subtitle && <span className="m-org">{e.subtitle}</span>}
           {e.title && e.subtitle && e.meta && <span className="m-dot"> · </span>}
-          {e.meta && <span className="m-meta">{e.meta}</span>}
+          {e.meta && (
+            <span className="m-meta">
+              <MetaText e={e} />
+            </span>
+          )}
         </p>
       ) : null}
     </div>
@@ -78,6 +84,10 @@ const css = `
 .cv-top--header{margin:calc(-1 * var(--margin)) calc(-1 * var(--margin)) 0;position:relative;z-index:1}
 .m-header{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8mm;background:linear-gradient(100deg,var(--accent-deep),var(--accent));color:#fff;padding:calc(var(--margin) * 0.8) var(--margin) calc(var(--margin) * 0.6 + 5mm);clip-path:polygon(0 0,100% 0,100% calc(100% - 5mm),0 100%)}
 .cv-page--wide::before{display:none}
+.cv-has-aside .cv-page--rest::before{display:none}
+.cv-page--rest .cv-aside{overflow:visible}
+.cv-page--rest .cv-aside > [data-block]{background:var(--accent-tint);margin:0 calc(-1 * var(--margin)) 0 calc(-1 * var(--gutter));padding-left:var(--gutter);padding-right:var(--margin)}
+.cv-page--rest .cv-aside > [data-block]:last-child{box-shadow:0 5mm 0 0 var(--accent-tint)}
 .m-id{min-width:0;flex:1}
 .m-portrait{width:26mm;height:26mm;border-radius:50%;border:2.4pt solid rgba(255,255,255,.9)}
 .m-name{font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:2.6em;line-height:1.06;letter-spacing:-.01em}

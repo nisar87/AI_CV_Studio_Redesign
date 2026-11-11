@@ -1,4 +1,5 @@
 import {
+  MetaText,
   ContactList,
   joinParts,
   Portrait,
@@ -18,6 +19,7 @@ function splitDates(d: string): [string, string] {
 }
 
 const hooks: TemplateHooks = {
+  splitSkills: true,
   heading: (s) => <h2 className="ch-h">{s.title}</h2>,
   summary: (t) => <p className="ch-summary">{t}</p>,
   entryHead: (e) => {
@@ -35,7 +37,11 @@ const hooks: TemplateHooks = {
           <p className="ch-sub">
             {e.title && e.subtitle && <span className="ch-org">{e.subtitle}</span>}
             {e.title && e.subtitle && e.meta && <span className="ch-dot"> · </span>}
-            {e.meta && <span className="ch-meta">{e.meta}</span>}
+            {e.meta && (
+              <span className="ch-meta">
+                <MetaText e={e} />
+              </span>
+            )}
           </p>
         ) : null}
       </div>
