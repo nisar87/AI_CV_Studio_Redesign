@@ -1,0 +1,118 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens — keep in sync with docs/ux/design-system.md.
+ * Tailwind utilities are generated from these (e.g. bg-paper, text-ink-muted, rounded-md).
+ */
+@theme {
+  --color-*: initial;
+  --color-paper: #faf8f4;
+  --color-surface: #ffffff;
+  --color-sunken: #f2eee7;
+  --color-line: #e4ded3;
+  --color-line-strong: #857f75;
+  --color-ink: #1b1f24;
+  --color-ink-muted: #5a5f66;
+  --color-ink-subtle: #6e737a;
+  --color-primary: #1e5a55;
+  --color-primary-hover: #174843;
+  --color-primary-soft: #e3efec;
+  --color-on-primary: #ffffff;
+  --color-accent: #e9a23b;
+  --color-accent-soft: #fbf0dc;
+  --color-accent-ink: #7a4e0b;
+  --color-success: #2f7a4a;
+  --color-success-soft: #e4f2e8;
+  --color-warning: #a15c07;
+  --color-warning-soft: #fbf0dc;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdecea;
+  --color-info: #2c5ba8;
+  --color-info-soft: #e7eef9;
+  --color-transparent: transparent;
+  --color-white: #ffffff;
+  --color-current: currentColor;
+
+  --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Fraunces Variable', ui-serif, Georgia, 'Times New Roman', serif;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-1: 0 1px 2px rgb(27 31 36 / 0.06), 0 1px 1px rgb(27 31 36 / 0.04);
+  --shadow-2: 0 8px 24px rgb(27 31 36 / 0.1), 0 2px 6px rgb(27 31 36 / 0.06);
+  --shadow-page: 0 2px 6px rgb(27 31 36 / 0.06), 0 18px 40px -12px rgb(27 31 36 / 0.18);
+
+  --ease-studio: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  ::selection {
+    background: var(--color-primary-soft);
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-sunken) 25%, #ebe6dd 37%, var(--color-sunken) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}

@@ -7,7 +7,8 @@ _Last updated: 2026-11-11_
 | Phase | Branch | State |
 |---|---|---|
 | 0 Product design & architecture | `phase-0/product-design` | ✅ Complete, merged to `main` |
-| 1 Application foundation | `phase-1/application-foundation` | ⏳ Next |
+| 1 Application foundation | `phase-1/application-foundation` | ✅ Complete, merged to `main` |
+| 2 Document model & template engine | `phase-2/template-engine` | ⏳ Next |
 
 ## Phase 0 report
 
@@ -22,6 +23,16 @@ _Last updated: 2026-11-11_
 - Launch templates: Clarity, Meridian, Heritage.
 
 **Verification:** consistency review of phase numbers, template ids, AI task ids, preset ids and fixture names across documents.
+
+## Phase 1 report
+
+**Completed:** Next.js 16.4 / React 19 / TypeScript strict app; Tailwind v4 with "Paper & Ink" tokens matching `ux/design-system.md`; self-hosted Figtree + Fraunces; UI components (Button/ButtonLink, IconButton, TextField/TextArea, Card/SelectableCard, Chip/Badge, Banner, Tabs, Segmented, Stepper, Skeleton, Toast); site header (mobile menu, skip link), footer; pages Home, Start (profession picker), My CVs (empty state), Designs (shell), Help, Privacy, 404; `/design-system` showcase (dev or `SHOW_DESIGN_SYSTEM=1`); ESLint, Prettier, Vitest, Playwright + axe; GitHub Actions CI; screenshot script.
+
+**Verification (all green):** `npm run verify` (lint, typecheck, format, unit, build); `npm run test:e2e` — 16 passed (desktop 1440 + Pixel 7): every page renders, no horizontal scroll at device width and 360 px, no serious/critical axe violations (WCAG 2.2 AA tags), skip link + visible focus, mobile menu Escape. Visual review of phone/tablet/desktop screenshots (`artifacts/visual/phase-1/`).
+
+**Issues found and fixed:** duplicate header CTA + horizontal overflow at 390 px (responsive class conflict) — fixed, regression test added at 360 px.
+
+**Known:** 8 moderate `npm audit` advisories in dev-only lint tooling (typescript-eslint transitive); no runtime impact; revisit on next eslint-config-next update. `/cv/new` is an honest placeholder until Phase 3.
 
 ## Known blockers
 
