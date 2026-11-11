@@ -15,4 +15,4 @@ export function getUserStore(): UserStore {
 }
 
 /** Safety cap until plans set per-plan limits (R1.2). */
-export const MAX_DOCS_PER_USER = 200;
+export const MAX_DOCS_PER_USER = Number(process.env.MAX_DOCS_PER_USER) || 200;

@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { expect, test } from './support/test';
 
 async function axeClean(page: Page) {
   const results = await new AxeBuilder({ page })
@@ -25,10 +26,7 @@ async function continueStep(page: Page) {
   await page.getByRole('button', { name: /^(Continue|Finish)$/ }).click();
 }
 
-test('J1: a delivery driver creates, edits and downloads a CV without an account', async ({
-  page,
-  isMobile,
-}) => {
+test('J1: a delivery driver creates, edits and downloads a CV', async ({ page, isMobile }) => {
   const started = Date.now();
   await page.goto('/start');
   await page.getByRole('button', { name: /Driving & delivery/ }).click();
@@ -126,7 +124,7 @@ test('J1: a delivery driver creates, edits and downloads a CV without an account
 
   // The CV is listed in My CVs.
   await page.goto('/cv');
-  await expect(page.getByRole('heading', { name: 'My CV' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'My CV', exact: true })).toBeVisible();
 });
 
 test('PDF failure offers Print as a fallback', async ({ page }) => {

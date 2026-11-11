@@ -5,6 +5,7 @@ const chromePath = process.env.CHROME_EXECUTABLE_PATH;
 
 export default defineConfig({
   testDir: './e2e',
+  globalSetup: './e2e/global-setup.ts',
   timeout: 60_000,
   // Preview documents load fonts and paginate before assertions can pass; allow for busy CI machines.
   expect: { timeout: 10_000 },
@@ -44,6 +45,9 @@ export default defineConfig({
         FIREBASE_AUTH_EMULATOR_HOST: '127.0.0.1:9099',
         FIREBASE_PROJECT_ID: 'demo-aicv',
         DATA_STORE: 'memory',
+        E2E_TEST_HOOKS: '1',
+        RATE_LIMIT_SESSION_PER_MINUTE: '100000',
+        MAX_DOCS_PER_USER: '100000',
       },
       port: PORT,
       reuseExistingServer: !process.env.CI,

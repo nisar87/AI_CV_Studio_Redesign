@@ -1,6 +1,7 @@
 'use client';
 
-import { Check } from 'lucide-react';
+import { Check, Crown } from 'lucide-react';
+import { isPremiumDesign, useEntitlements } from '@/features/account/entitlements';
 import { useId } from 'react';
 import { SelectableCard } from '@/components/ui/card';
 import { StyleAssist } from '@/features/ai/style-assist';
@@ -51,6 +52,13 @@ export function DesignPanel({ editor }: { editor: DocumentEditor }) {
   const d = doc.design;
   const set = (patch: Partial<DesignSpec>) => update((x) => ops.setDesign(x, patch));
   const template = getTemplate(d.templateId);
+  const { ent } = useEntitlements();
+  const showPremium = (id: string) =>
+    ent !== null && ent.plan !== 'premium' && isPremiumDesign(ent, id);
+  const available = TEMPLATE_LIST.filter(
+    (t) =>
+      t.id === d.templateId || !ent || ent.designs.find((x) => x.id === t.id)?.enabled !== false,
+  );
   const customLow = contrast(d.accent, '#ffffff') < 4.5;
 
   return (
@@ -68,7 +76,7 @@ export function DesignPanel({ editor }: { editor: DocumentEditor }) {
       />
       <Group title="Look" hint="Your words stay the same — only the design changes.">
         <div role="radiogroup" aria-label="Design" className="grid grid-cols-2 gap-3">
-          {TEMPLATE_LIST.map((t) => {
+          {available.map((t) => {
             const selected = d.templateId === t.id;
             return (
               <button
@@ -76,7 +84,7 @@ export function DesignPanel({ editor }: { editor: DocumentEditor }) {
                 type="button"
                 role="radio"
                 aria-checked={selected}
-                aria-label={`${t.style} · ${t.name}`}
+                aria-label={`${t.style} · ${t.name}${showPremium(t.id) ? ' · Premium' : ''}`}
                 onClick={() =>
                   set({
                     templateId: t.id,
@@ -105,6 +113,11 @@ export function DesignPanel({ editor }: { editor: DocumentEditor }) {
                       <Check aria-hidden size={14} strokeWidth={3} />
                     </span>
                   )}
+                  {showPremium(t.id) && (
+                    <span className="bg-ink/85 absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white">
+                      <Crown aria-hidden size={12} /> Premium
+                    </span>
+                  )}
                 </span>
                 <span className="px-1 pb-1">
                   <span className="text-ink block text-sm font-semibold">{t.style}</span>
@@ -118,6 +131,16 @@ export function DesignPanel({ editor }: { editor: DocumentEditor }) {
           })}
         </div>
         <p className="text-ink-muted text-sm">{template.description}</p>
+        {showPremium(d.templateId) && (
+          <p
+            className="text-ink-muted bg-accent-soft rounded-md px-3 py-2 text-sm"
+            data-gate="premium-note"
+          >
+            <Crown aria-hidden size={14} className="text-accent-ink mr-1 inline" />
+            You can try this Premium design freely. Downloading it needs Premium — or pick a free
+            design.
+          </p>
+        )}
         {template.photo === 'optional' && doc.basics.photo && (
           <CheckboxField
             label="Show my photo"

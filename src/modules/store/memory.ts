@@ -5,6 +5,8 @@ import {
   type PutResult,
   type StoredDoc,
   type UserStore,
+  type Pass,
+  type ConfigVersion,
 } from './types';
 
 /** In-memory store for development and tests (one per server process). */
@@ -68,5 +70,52 @@ export class MemoryUserStore implements UserStore {
 
   async listVersions(uid: string, id: string) {
     return structuredClone(this.versions.get(`${uid}/${id}`) ?? []);
+  }
+
+  private passes = new Map<string, Pass>();
+  private usage = new Map<string, Record<string, number>>();
+  private config = new Map<string, ConfigVersion[]>();
+
+  async getPass(uid: string) {
+    return this.passes.get(uid) ?? null;
+  }
+  async setPass(uid: string, pass: Pass | null) {
+    if (pass) this.passes.set(uid, pass);
+    else this.passes.delete(uid);
+  }
+  async getUsage(uid: string, month: string) {
+    return { ...(this.usage.get(`${uid}/${month}`) ?? {}) };
+  }
+  async reserveUsage(uid: string, month: string, key: string, limit: number) {
+    const k = `${uid}/${month}`;
+    const u = this.usage.get(k) ?? {};
+    const n = u[key] ?? 0;
+    if (limit !== -1 && n >= limit) return false;
+    this.usage.set(k, { ...u, [key]: n + 1 });
+    return true;
+  }
+  async releaseUsage(uid: string, month: string, key: string) {
+    const k = `${uid}/${month}`;
+    const u = this.usage.get(k) ?? {};
+    this.usage.set(k, { ...u, [key]: Math.max(0, (u[key] ?? 0) - 1) });
+  }
+  async getConfig(area: string) {
+    const v = this.config.get(area)?.[0];
+    return v ? { version: v.version, value: structuredClone(v.value) } : null;
+  }
+  async saveConfig(area: string, value: unknown, by: string) {
+    const list = this.config.get(area) ?? [];
+    const version = (list[0]?.version ?? 0) + 1;
+    list.unshift({
+      version,
+      savedAt: new Date().toISOString(),
+      savedBy: by,
+      value: structuredClone(value),
+    });
+    this.config.set(area, list.slice(0, 50));
+    return version;
+  }
+  async listConfigVersions(area: string) {
+    return structuredClone(this.config.get(area) ?? []);
   }
 }

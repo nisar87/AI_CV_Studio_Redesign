@@ -1,11 +1,13 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Browser, type Page } from '@playwright/test';
+import type { Browser, Page } from '@playwright/test';
+import { expect, test } from './support/test';
 
 /**
  * R1.1 — accounts and cloud documents, against the Firebase Auth emulator and the server's
  * in-memory document store. Two browser contexts act as two devices.
  */
 test.describe.configure({ mode: 'serial' });
+test.use({ as: 'visitor' });
 
 const PASSWORD = 'Correct-Horse-9!';
 const uniqueEmail = (tag: string) =>
