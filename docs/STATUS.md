@@ -217,13 +217,18 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
   - Cloud documents with sync and version history.
   - Device CVs move into the account on sign-in; signing out removes them from the device.
   - Verification: 104 unit tests (store and sync, including the two-devices conflict case) and 182 e2e tests, all passing. The new `account.spec` covers the visitor→account move, a second and a third device, edit sync, sign-out cleanup, deletion sync, sign-in for accounts that existed before the redesign, and refused APIs.
-  - The live Firestore check follows the deploy.
+  - **Verified on aicvstudio.app with production Firestore (2026-11-12, owner's admin account, session created by the owner):**
+    - `/api/me` shows the old app's `admin` claim.
+    - A new CV reached Firestore within seconds.
+    - With the local copy removed, the CV was restored from the account and opened in the editor.
+    - An edit synced, and the previous version was kept in `versions`.
+    - Deleting the CV wrote a tombstone and removed the local copy.
+    - No warnings or errors in the Cloud Run logs.
 - Next: **R1.2 Entitlement gate and config**.
 
 ## Next action (exact)
 
-1. Verify R1.1 on aicvstudio.app against production Firestore (sign up, sync between two browsers).
-2. Start **R1.2 Entitlement gate and config** on branch `r1/entitlements-config`.
+1. Start **R1.2 Entitlement gate and config** on branch `r1/entitlements-config`.
 
 ## Deployment (2026-11-12)
 
