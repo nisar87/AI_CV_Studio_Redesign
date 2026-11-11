@@ -7,14 +7,12 @@ runConfig:
   maxInstances: 4 # in-memory rate limits are per instance; keep this small until a shared store exists
 
 env:
-  # Google Gemini key from Cloud Secret Manager (secret GEMINI_API_KEY). Off until the backend
-  # can read it. Grant with:
-  #   firebase apphosting:secrets:grantaccess GEMINI_API_KEY --backend aicvstudio --project ai-cv-studio
-  # then uncomment:
-  # - variable: GEMINI_API_KEY
-  #   secret: GEMINI_API_KEY
-  #   availability:
-  #     - RUNTIME
+  # Google Gemini key from Cloud Secret Manager (secret GEMINI_API_KEY). Access granted with
+  # `firebase apphosting:secrets:grantaccess GEMINI_API_KEY --backend aicvstudio`. Never put the key here.
+  - variable: GEMINI_API_KEY
+    secret: GEMINI_API_KEY
+    availability:
+      - RUNTIME
   - variable: AI_MODEL_FAST
     value: gemini-flash-latest
     availability:
