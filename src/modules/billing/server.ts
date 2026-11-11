@@ -97,7 +97,13 @@ export async function entitlementsFor(user: SessionUser | null) {
     },
     designs: cfg.designs,
     passes: cfg.passes.filter((p) => p.active),
-    features: { ai: cfg.features.ai, import: cfg.features.import, sales: cfg.features.sales },
+    features: {
+      ai: cfg.features.ai,
+      import: cfg.features.import,
+      sales: cfg.features.sales,
+      signups: cfg.features.signups,
+      maintenance: cfg.features.maintenance,
+    },
     announcement: cfg.announcement.enabled ? cfg.announcement.text : null,
   };
 }

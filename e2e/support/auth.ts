@@ -26,3 +26,16 @@ export async function setConfig(request: APIRequestContext, config: unknown) {
   const r = await request.post('/api/test/setup', { data: { config } });
   if (!r.ok()) throw new Error(`config hook failed: ${r.status()} ${await r.text()}`);
 }
+
+/** Give the signed-in account the admin claim, then sign in again so the session carries it. */
+export async function makeAdmin(request: APIRequestContext, email: string) {
+  const r = await request.post('/api/test/setup', { data: { admin: true } });
+  if (!r.ok()) throw new Error(`admin hook failed: ${r.status()}`);
+  const s = await request.post(
+    `${EMULATOR}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=emulator-key`,
+    { data: { email, password: PASSWORD, returnSecureToken: true } },
+  );
+  const { idToken } = (await s.json()) as { idToken: string };
+  const x = await request.post('/api/session', { data: { idToken } });
+  if (!x.ok()) throw new Error(`admin session failed: ${x.status()}`);
+}

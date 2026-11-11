@@ -8,6 +8,7 @@ import {
   revokeSessions,
   setSessionCookie,
 } from '@/modules/identity/session';
+import { getBusinessConfig } from '@/modules/billing/server';
 import { getUserStore } from '@/modules/store';
 
 export const runtime = 'nodejs';
@@ -28,6 +29,15 @@ export async function POST(req: Request) {
     return apiError('INVALID_INPUT', 'Invalid request.', rid);
   try {
     const session = await createSessionCookie(idToken);
+    // New accounts can be paused from the Admin Console; existing accounts still sign in.
+    if (!session.admin && !(await getBusinessConfig()).value.features.signups) {
+      if (!(await getUserStore().knownUser(session.uid)))
+        return apiError(
+          'DISABLED',
+          'New accounts are paused right now. Please try again later.',
+          rid,
+        );
+    }
     await setSessionCookie(session.value, session.maxAge);
     await getUserStore()
       .touchUser(session.uid, { email: session.email, name: session.name })

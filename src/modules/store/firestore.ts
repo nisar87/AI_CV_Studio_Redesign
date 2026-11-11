@@ -9,6 +9,7 @@ import {
   type UserStore,
   type Pass,
   type ConfigVersion,
+  type AuditEntry,
 } from './types';
 
 /**
@@ -16,8 +17,9 @@ import {
  *   users/{uid}                              email, name, lastSeenAt (merged; old app fields untouched)
  *   users/{uid}/documents/{id}               { updatedAt, deleted, title, doc, serverUpdatedAt }
  *   users/{uid}/documents/{id}/versions/{v}  { savedAt, doc }   (last 10)
- *   users/{uid}/billing/pass                 Pass (Premium access until expiresAt)
- *   users/{uid}/usage/{yyyy-mm}              { 'pdf.download': n, ... }
+ *   passes/{uid}                             Pass (Premium access until expiresAt) + uid, email
+ *   usage/{uid}_{yyyy-mm}                    { uid, month, 'pdf.download': n, ... }
+ *   adminAudit/{auto}                        { at, by, action, target, detail }
  *   config/{area}                            { version, value, savedAt, savedBy }
  *   config/{area}/versions/{version}         history for restore
  */
@@ -33,6 +35,10 @@ export class FirestoreUserStore implements UserStore {
       .collection('users')
       .doc(uid)
       .set({ ...info, lastSeenAt: FieldValue.serverTimestamp(), studioV2: true }, { merge: true });
+  }
+
+  async knownUser(uid: string) {
+    return (await this.db.collection('users').doc(uid).get()).exists;
   }
 
   async listDocs(uid: string): Promise<DocSummary[]> {
@@ -134,20 +140,23 @@ export class FirestoreUserStore implements UserStore {
   }
 
   async getPass(uid: string) {
-    const s = await this.db.collection('users').doc(uid).collection('billing').doc('pass').get();
+    const s = await this.db.collection('passes').doc(uid).get();
     return s.exists ? (s.data() as Pass) : null;
   }
   async setPass(uid: string, pass: Pass | null) {
-    const ref = this.db.collection('users').doc(uid).collection('billing').doc('pass');
-    if (pass) await ref.set(pass);
+    const ref = this.db.collection('passes').doc(uid);
+    if (pass) await ref.set({ ...pass, uid });
     else await ref.delete();
   }
   private usageRef(uid: string, month: string) {
-    return this.db.collection('users').doc(uid).collection('usage').doc(month);
+    return this.db.collection('usage').doc(`${uid}_${month}`);
   }
   async getUsage(uid: string, month: string) {
     const s = await this.usageRef(uid, month).get();
-    return (s.data() as Record<string, number> | undefined) ?? {};
+    const { uid: _u, month: _m, ...counts } = (s.data() ?? {}) as Record<string, unknown>;
+    void _u;
+    void _m;
+    return counts as Record<string, number>;
   }
   async reserveUsage(uid: string, month: string, key: string, limit: number) {
     const ref = this.usageRef(uid, month);
@@ -155,7 +164,7 @@ export class FirestoreUserStore implements UserStore {
       const s = await tx.get(ref);
       const n = Number(s.get(key) ?? 0);
       if (limit !== -1 && n >= limit) return false;
-      tx.set(ref, { [key]: n + 1 }, { merge: true });
+      tx.set(ref, { uid, month, [key]: n + 1 }, { merge: true });
       return true;
     });
   }
@@ -188,5 +197,40 @@ export class FirestoreUserStore implements UserStore {
       .limit(50)
       .get();
     return snap.docs.map((d) => d.data() as ConfigVersion);
+  }
+
+  async writeAudit(entry: Omit<AuditEntry, 'id'>) {
+    await this.db.collection('adminAudit').add(entry);
+  }
+  async listAudit(limit: number): Promise<AuditEntry[]> {
+    const snap = await this.db.collection('adminAudit').orderBy('at', 'desc').limit(limit).get();
+    return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<AuditEntry, 'id'>) }));
+  }
+  async listPasses() {
+    const snap = await this.db.collection('passes').orderBy('expiresAt', 'desc').limit(500).get();
+    return snap.docs.map((d) => ({ ...(d.data() as Pass), uid: d.id }));
+  }
+  async usageTotals(month: string) {
+    const snap = await this.db.collection('usage').where('month', '==', month).get();
+    const out: Record<string, number> = {};
+    for (const d of snap.docs)
+      for (const [k, v] of Object.entries(d.data()))
+        if (typeof v === 'number') out[k] = (out[k] ?? 0) + v;
+    return out;
+  }
+  async userStats() {
+    const users = this.db.collection('users');
+    const [count, recent] = await Promise.all([
+      users.where('studioV2', '==', true).count().get(),
+      users.orderBy('lastSeenAt', 'desc').limit(50).get(),
+    ]);
+    return {
+      total: count.data().count,
+      recent: recent.docs.map((d) => ({
+        uid: d.id,
+        email: (d.get('email') as string | null) ?? null,
+        lastSeenAt: d.get('lastSeenAt')?.toDate?.().toISOString?.() ?? null,
+      })),
+    };
   }
 }

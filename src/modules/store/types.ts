@@ -21,6 +21,8 @@ export type PutResult =
 
 export interface UserStore {
   touchUser(uid: string, info: { email: string | null; name: string | null }): Promise<void>;
+  /** Has this account used the studio before (signed in at least once)? */
+  knownUser(uid: string): Promise<boolean>;
   listDocs(uid: string): Promise<DocSummary[]>;
   getDoc(uid: string, id: string): Promise<StoredDoc | null>;
   /** Saves if the incoming edit is not older than the stored one; keeps the replaced version. */
@@ -40,7 +42,26 @@ export interface UserStore {
   getConfig(area: string): Promise<{ version: number; value: unknown } | null>;
   saveConfig(area: string, value: unknown, by: string): Promise<number>;
   listConfigVersions(area: string): Promise<ConfigVersion[]>;
+
+  // Admin Console
+  writeAudit(entry: Omit<AuditEntry, 'id'>): Promise<void>;
+  listAudit(limit: number): Promise<AuditEntry[]>;
+  listPasses(): Promise<(Pass & { uid: string })[]>;
+  usageTotals(month: string): Promise<Record<string, number>>;
+  userStats(): Promise<{
+    total: number;
+    recent: { uid: string; email: string | null; lastSeenAt: string | null }[];
+  }>;
 }
+
+export type AuditEntry = {
+  id: string;
+  at: string;
+  by: string;
+  action: string;
+  target: string;
+  detail?: unknown;
+};
 
 export type Pass = {
   plan: 'premium';

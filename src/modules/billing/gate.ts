@@ -28,6 +28,12 @@ export function canUseDesign(plan: PlanId, cfg: BusinessConfig, id: TemplateId):
 }
 
 export function canUse(plan: PlanId, cfg: BusinessConfig, cap: Metered, used: number): Decision {
+  if (cfg.features.maintenance)
+    return {
+      ok: false,
+      reason: 'disabled',
+      message: 'The studio is being updated. Please try again in a little while.',
+    };
   if (cap === 'ai.action' && !cfg.features.ai)
     return { ok: false, reason: 'disabled', message: 'AI help is switched off right now.' };
   if (cap === 'import.cv' && !cfg.features.import)
