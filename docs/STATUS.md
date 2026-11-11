@@ -13,6 +13,7 @@ _Last updated: 2026-11-11 (template design sprint)_
 | 3b Signature templates (design sprint) | `phase-3b/signature-templates` | ✅ Complete, merged to `main` |
 | 3c External template review fixes | `phase-3c/template-review-fixes` | ✅ Complete, merged to `main` |
 | 3d Pagination & edge-case polish (2nd review) | `phase-3d/pagination-polish` | ✅ Complete, merged to `main` |
+| 3e Final template polish (3rd review) | `phase-3e/final-polish` | ✅ Complete, merged — templates frozen for now |
 | 4 AI assistance | `phase-4/ai-assist` | ⏳ Next — not started |
 
 ## Phase 0 report
@@ -133,6 +134,14 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
 **Evidence provided this time:** samples, stress tests and US Letter exports (teacher, engineer, extreme) for all 10 designs. With the current type sizes the longest fixture is 2 pages; no fixture produces 3 pages any more.
 
 **Verification:** 60 unit tests; 144 e2e tests; `qa:templates` 190 renders (A4 ± photo, Letter): no overflow, no near-empty last page, no Type 3 fonts.
+
+## Phase 3e — response to the third independent review (collection ≈ 8.9/10)
+
+1. **Clarity continuation header (valid — our bug):** the v3 rule targeted the running-header wrapper instead of its row, so it never applied. Fixed (`[data-slot="running"] > *`); e2e now measures the name/role gap for every design on the extreme CV (≥ 12 px or stacked).
+2. **Light second pages on Letter (partly accepted):** measured last-page fill: Chronicle 38%, Heritage 32% (normal two-page CVs), Clarity 19%, Ledger 17% (fit pass cannot remove the page without overflow). Moving whole sections to page 2 was declined: it only moves the empty space to the bottom of page 1, which review 1 penalised. Instead the editor's "Fit on one page" prompt now appears whenever the last page is under 25% full (was 12%), leaving the choice to the user.
+3. **Ordinary jobs split across pages (valid):** entries with ≤ 6 bullets now always stay whole; longer entries still split between bullets. New e2e invariant: no continuation page in any design (A4 + Letter, 4 CVs) starts with stray bullets — confirmed it fails on the old behaviour (Vivid × engineer × Letter).
+
+**Templates are considered final for now.** Lessons from all audits and reviews are captured in `engineering/template-authoring-guide.md` (budgets, engine guarantees, coding rules, release checklist) — read it before creating any new template.
 
 ## Next action (exact)
 

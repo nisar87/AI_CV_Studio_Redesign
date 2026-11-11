@@ -195,3 +195,55 @@ test.describe('pagination polish regressions (desktop only)', () => {
     expect(body).toMatch(/\/URI\s*\(https:\/\/github\.com\/dokafor\/tokenbucket\)/);
   });
 });
+
+test.describe('layout invariants across all designs (desktop only)', () => {
+  test.skip(({ isMobile }) => isMobile, 'Runs once');
+  async function load(
+    page: import('@playwright/test').Page,
+    baseURL: string,
+    doc: typeof FIXTURES.driver,
+  ) {
+    await page.goto('/help');
+    await page.setContent(buildDocumentHtml(doc, { fonts: { kind: 'url', baseUrl: baseURL } }));
+    await page.waitForFunction(
+      () => (window as unknown as { __CV_READY__?: unknown }).__CV_READY__ !== undefined,
+    );
+  }
+
+  test('no page starts with stray bullets from an ordinary-length job (A4 and Letter)', async ({
+    page,
+    baseURL,
+  }) => {
+    for (const templateId of TEMPLATE_IDS)
+      for (const fixture of ['teacher', 'engineer', 'nurse', 'executive'] as const)
+        for (const pageSize of ['A4', 'Letter'] as const) {
+          const doc = structuredClone(withPhoto(FIXTURES[fixture], PHOTO_FOR[fixture]));
+          doc.design = { ...doc.design, templateId, pageSize };
+          await load(page, baseURL!, doc);
+          const stray = await page.evaluate(
+            () =>
+              Array.from(document.querySelectorAll('.cv-page--rest .cv-main')).filter((m) =>
+                m.firstElementChild?.classList.contains('b-bullet'),
+              ).length,
+          );
+          expect(stray, `${templateId} × ${fixture} (${pageSize})`).toBe(0);
+        }
+  });
+
+  test('continuation headers keep name and role visibly apart', async ({ page, baseURL }) => {
+    for (const templateId of TEMPLATE_IDS) {
+      const doc = structuredClone(FIXTURES.extreme);
+      doc.design = { ...doc.design, templateId };
+      await load(page, baseURL!, doc);
+      const gap = await page.evaluate(() => {
+        const row = document.querySelector('.cv-page--rest .cv-top [data-slot="running"] > *');
+        if (!row || row.children.length < 2) return null;
+        const a = row.children[0]!.getBoundingClientRect();
+        const b = row.children[1]!.getBoundingClientRect();
+        // Either side by side with a real gap, or stacked on separate lines.
+        return b.top >= a.bottom - 1 ? 999 : b.left - a.right;
+      });
+      if (gap !== null) expect(gap, templateId).toBeGreaterThanOrEqual(12);
+    }
+  });
+});

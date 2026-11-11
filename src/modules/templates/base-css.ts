@@ -43,7 +43,7 @@ a{color:inherit;text-decoration:none}
 /* Continuation chunk of a split skill group: sits directly under the previous chunk. */
 .b-skills.b-cont{padding-top:3.5pt}
 /* Continuation headers: keep name and role apart; stack them when they don't fit side by side. */
-.cv-top--running > *{column-gap:2.5em;flex-wrap:wrap}
+.cv-top--running [data-slot="running"] > *{column-gap:2.5em;row-gap:1pt;flex-wrap:wrap}
 p,li{text-wrap:pretty}
 h1,h2,h3{text-wrap:balance}
 .cv-foot{position:absolute;right:var(--margin);bottom:calc(var(--margin) * 0.45);font-size:7.5pt;
