@@ -51,6 +51,10 @@ export function DocumentPreview({
   const seq = useRef(0);
   const firstBuild = useRef(true);
   const [slots, setSlots] = useState<[string | null, string | null]>([null, null]);
+  const slotsRef = useRef<[string | null, string | null]>([null, null]);
+  // Last ready result per frame, so a frame that already shows the wanted document can be
+  // re-activated without reloading (e.g. undo back to the previous version).
+  const slotResult = useRef<[PreviewStatus | null, PreviewStatus | null]>([null, null]);
   const [pages, setPages] = useState(1);
   const cbs = useRef({ onStatus, onSelect });
   useEffect(() => {
@@ -67,12 +71,24 @@ export function DocumentPreview({
         const html = buildDocumentHtml(doc, {
           fonts: { kind: 'url', baseUrl: window.location.origin },
         });
-        setSlots((s) => {
-          const a = activeRef.current;
-          const target = s[a] === null ? a : 1 - a;
-          slotSeq.current[target] = ++seq.current;
-          return target === 0 ? [html, s[1]] : [s[0], html];
-        });
+        const s = slotsRef.current;
+        const a = activeRef.current;
+        if (s[a] === html) return; // already showing this exact document
+        const target = s[a] === null ? a : 1 - a;
+        slotSeq.current[target] = ++seq.current;
+        const ready = slotResult.current[target];
+        if (s[target] === html && ready) {
+          // Same document is loaded and ready in the other frame: just show it.
+          activeRef.current = target;
+          setActive(target);
+          setPages(Math.max(1, ready.pages));
+          cbs.current.onStatus?.(ready);
+          return;
+        }
+        slotResult.current[target] = null;
+        const next: [string | null, string | null] = target === 0 ? [html, s[1]] : [s[0], html];
+        slotsRef.current = next;
+        setSlots(next);
       },
       firstBuild.current ? 0 : debounceMs,
     );
@@ -86,6 +102,7 @@ export function DocumentPreview({
       if (idx < 0 || typeof e.data !== 'object' || !e.data) return;
       if (e.data.type === 'cv:ready') {
         const result = e.data.result as PreviewStatus;
+        slotResult.current[idx] = result;
         if ((slotSeq.current[idx] ?? 0) < (slotSeq.current[activeRef.current] ?? 0)) return; // stale document
         setPages(Math.max(1, result.pages));
         activeRef.current = idx;

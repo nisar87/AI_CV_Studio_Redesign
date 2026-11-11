@@ -11,10 +11,15 @@ export function Menu({
   label,
   items,
   className,
+  trigger,
+  align = 'right',
 }: {
   label: string;
   items: MenuItem[];
   className?: string;
+  /** Visible trigger content and classes (default: an icon-only "more" button). */
+  trigger?: { content: ReactNode; className: string };
+  align?: 'left' | 'right';
 }) {
   const [open, setOpen] = useState(false);
   const id = useId();
@@ -42,22 +47,28 @@ export function Menu({
       <button
         ref={button}
         type="button"
-        aria-label={label}
-        title={label}
+        aria-label={trigger ? undefined : label}
+        title={trigger ? undefined : label}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={id}
         onClick={() => setOpen((v) => !v)}
-        className="text-ink-muted hover:bg-sunken hover:text-ink inline-flex size-11 items-center justify-center rounded-md"
+        className={
+          trigger?.className ??
+          'text-ink-muted hover:bg-sunken hover:text-ink inline-flex size-11 items-center justify-center rounded-md'
+        }
       >
-        <MoreHorizontal aria-hidden size={20} />
+        {trigger ? trigger.content : <MoreHorizontal aria-hidden size={20} />}
       </button>
       {open && (
         <div
           id={id}
           role="menu"
           aria-label={label}
-          className="border-line bg-surface shadow-2 absolute top-full right-0 z-30 mt-1 min-w-48 rounded-md border p-1"
+          className={cn(
+            'border-line bg-surface shadow-2 absolute top-full z-30 mt-1 min-w-48 rounded-md border p-1',
+            align === 'right' ? 'right-0' : 'left-0',
+          )}
           onKeyDown={(e) => {
             const idx = itemRefs.current.findIndex((el) => el === document.activeElement);
             if (e.key === 'Escape') {

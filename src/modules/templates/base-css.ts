@@ -57,6 +57,8 @@ h1,h2,h3{text-wrap:balance}
 .cv-sep{position:absolute;left:0;width:1.4em;text-align:center;color:var(--accent-line)}
 [data-ref]{cursor:default}
 @media screen{ .cv-page{box-shadow:0 1px 3px rgba(27,31,36,.08),0 10px 30px -12px rgba(27,31,36,.25)} }
+/* Details waiting for the person's input (from AI suggestions). */
+.cv-ask{background:#fff1b8;color:inherit;font:inherit;border-radius:2px;padding:0 .12em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 @media print{
   [data-cv-pages]{display:block}
   .cv-page{box-shadow:none;break-after:page}

@@ -16,6 +16,18 @@ npm run dev            # http://localhost:3000
 
 If Chrome is not found automatically, set `CHROME_EXECUTABLE_PATH` (see `.env.example`).
 
+### AI help (Google Gemini)
+
+Without a key, development uses a built-in demo provider (answers are labelled "Demo AI"). To use Gemini, create `.env.local` (never commit it):
+
+```bash
+GEMINI_API_KEY=your-key        # from Google AI Studio; use a project with billing enabled
+# AI_MODEL_FAST=gemini-flash-latest   # optional model ids
+# AI_MODEL_SMART=gemini-flash-latest
+```
+
+Check the AI's truthfulness on 48 realistic samples: `npm run ai:eval` (log in `artifacts/ai-eval/`). In production, AI is off unless a key is set.
+
 ## Quality checks
 
 ```bash

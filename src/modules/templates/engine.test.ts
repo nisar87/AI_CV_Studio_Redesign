@@ -183,3 +183,14 @@ describe('class name integrity', () => {
     }
   });
 });
+
+describe('needs-input markers', () => {
+  it('highlights {{?…}} only in text, never inside attributes', async () => {
+    const { markPlaceholders } = await import('./build-document');
+    expect(
+      markPlaceholders('<p title="{{?x}}">Delivered {{?how many?}} parcels &amp; more</p>'),
+    ).toBe(
+      '<p title="{{?x}}">Delivered <mark class="cv-ask">[how many?]</mark> parcels &amp; more</p>',
+    );
+  });
+});

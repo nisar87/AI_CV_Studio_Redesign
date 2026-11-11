@@ -14,7 +14,7 @@
 | Persistence (MVP) | Browser storage behind a `DocumentRepository` interface | Works without accounts; swapped/augmented by a server repository in Phase 6 |
 | Persistence (Phase 6+) | PostgreSQL (Neon) + Drizzle ORM | Relational, cheap, typed migrations |
 | PDF | **Headless Chromium** (`puppeteer-core`; `@sparticuz/chromium` on serverless, system Chrome locally/in Docker) | Prints the *same* HTML the user previews — one render path (see ADR-0002) |
-| AI | Provider-agnostic `AiProvider` interface; first adapter: Anthropic Claude | Structured outputs + strong instruction following; swappable (see ADR-0003) |
+| AI | Provider-agnostic `AiProvider` interface; first adapter: Google Gemini | JSON-schema structured output; swappable (ADR-0003, ADR-0006) |
 | Tests | Vitest (unit), Playwright (e2e, visual, PDF checks), axe-core (a11y) | Fast unit loop; real-browser verification of what users see |
 | Quality gates | ESLint, Prettier, `tsc --noEmit`, GitHub Actions CI | Every PR proves health before merge |
 
@@ -69,4 +69,4 @@ Dependency direction: `app → features → components/modules → lib`. `module
 
 ## Configuration
 
-All runtime configuration through environment variables validated at boot by a Zod schema (`src/lib/env.ts`): `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `AI_MODEL_FAST`, `AI_MODEL_SMART`, `CHROME_EXECUTABLE_PATH` (optional), `RATE_LIMIT_*`, later `DATABASE_URL`, `AUTH_SECRET`. Secrets are server-only; nothing secret is prefixed `NEXT_PUBLIC_`.
+All runtime configuration through environment variables validated at boot by a Zod schema (`src/lib/env.ts`): `AI_PROVIDER`, `GEMINI_API_KEY`, `AI_MODEL_FAST`, `AI_MODEL_SMART`, `AI_REQUESTS_PER_10_MIN`, `AI_REQUESTS_PER_DAY`, `AI_DAILY_BUDGET`, `CHROME_EXECUTABLE_PATH` (optional), `RATE_LIMIT_*`, later `DATABASE_URL`, `AUTH_SECRET`. Secrets are server-only; nothing secret is prefixed `NEXT_PUBLIC_`.

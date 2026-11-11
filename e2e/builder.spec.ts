@@ -232,3 +232,20 @@ test('the design picker offers all ten designs with thumbnails', async ({ page, 
   );
   expect(broken).toBe(0);
 });
+
+test('undo back to an earlier design updates the preview again', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'Covered on desktop');
+  await page.goto('/cv/new?work=driver');
+  await page.getByLabel('Full name').fill('Imran Qureshi');
+  await page.waitForTimeout(600);
+  await page.goto(page.url().replace(/\/guided$/, ''));
+  await page.getByRole('tab', { name: 'Design' }).click();
+  await expect(previewFrame(page).locator('html[data-template="clarity"]')).toHaveCount(1);
+  await page.getByRole('radio', { name: /Bold & modern/ }).click();
+  await expect(previewFrame(page).locator('html[data-template="vivid"]')).toHaveCount(1);
+  // The previous document is still loaded in the hidden frame; undo must show it again.
+  await page.keyboard.press('Control+z');
+  await expect(previewFrame(page).locator('html[data-template="clarity"]')).toHaveCount(1);
+  await page.keyboard.press('Control+Shift+z');
+  await expect(previewFrame(page).locator('html[data-template="vivid"]')).toHaveCount(1);
+});

@@ -27,7 +27,7 @@
 
 ```ts
 interface AiProvider {
-  id: 'anthropic' | 'openai' | 'google' | 'mock';
+  id: 'gemini' | 'anthropic' | 'openai' | 'mock';
   generateObject<T>(req: {
     model: string; system: string; user: string;
     schema: JsonSchema; maxTokens: number; temperature: number; signal?: AbortSignal;
@@ -35,9 +35,10 @@ interface AiProvider {
 }
 ```
 
-- **Initial provider: Anthropic Claude** (fast tier: Claude Haiku; smart tier: Claude Sonnet) using tool-based structured output. Chosen for reliable instruction following on the truthfulness constraint and strong structured output. Model names are configuration (`AI_MODEL_FAST`, `AI_MODEL_SMART`), not code.
+- **Initial provider: Google Gemini** (ADR-0006, replacing the original Anthropic choice in ADR-0003). Structured output via `generateContent` with `responseMimeType: application/json` + `responseJsonSchema` derived from the task's Zod schema. Model ids are configuration (`AI_MODEL_FAST`, `AI_MODEL_SMART`, default alias `gemini-flash-latest`). Key: `GEMINI_API_KEY`, server-only, sent as the `x-goog-api-key` header.
 - A `mock` provider returns deterministic fixtures for tests, local development without keys, and e2e runs.
-- Adding OpenAI or Gemini means one adapter file; tasks are provider-agnostic.
+- Adding Anthropic or OpenAI means one adapter file; tasks are provider-agnostic.
+- Provider selection (`src/modules/ai/config.ts`): `AI_PROVIDER=gemini|mock|off`. When unset: Gemini if a key is present; otherwise the mock in development/test and **off** in production (a production deployment never shows fake suggestions). The UI labels mock answers as "Demo AI".
 
 ## Prompt management
 

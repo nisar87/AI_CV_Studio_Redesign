@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import type { PresetId } from '@/modules/resume/professions';
+import { DescribeBox } from './describe-box';
 import { ProfessionPicker } from './profession-picker';
 
 export function StartFlow() {
@@ -16,5 +17,10 @@ export function StartFlow() {
     router.push(`/cv/new?work=${id}${design ? `&design=${encodeURIComponent(design)}` : ''}`);
   }
 
-  return <ProfessionPicker onChoose={choose} busy={busy} />;
+  return (
+    <>
+      <DescribeBox onCreate={(href) => router.push(href)} />
+      <ProfessionPicker onChoose={choose} busy={busy} />
+    </>
+  );
 }

@@ -49,7 +49,7 @@ MVP = Phases 1–4. First public release = Phases 5–6 + Phase 11 hardening. Gr
 
 ## Phase 4 — AI assistance
 **Branch:** `phase-4/ai-assist` · **Depends on:** 3
-**Scope:** `AiProvider` interface; Anthropic + mock adapters; task framework (prompt versioning, schema, repair, truth guard); tasks `intake.interpret`, `design.interpret`, `write.summary`, `write.improveBullets`, `write.fromNotes`, `suggest.skills`; rate limiting and budget switch; UI: describe box on Start, "Describe a style" in Design tab, "Help me write" menus, suggestion cards, needs-input markers and checklist; AI off switch.
+**Scope:** `AiProvider` interface; Gemini + mock adapters (ADR-0006); task framework (prompt versioning, schema, repair, truth guard); tasks `intake.interpret`, `design.interpret`, `write.summary`, `write.improveBullets`, `write.fromNotes`, `suggest.skills`; rate limiting and budget switch; UI: describe box on Start, "Describe a style" in Design tab, "Help me write" menus, suggestion cards, needs-input markers and checklist; AI off switch.
 **Acceptance:**
 1. With the mock provider, all AI UI flows pass e2e, including failure paths (timeout, invalid output, rate limit) with non-AI fallback.
 2. Truth guard unit tests: invented numbers, dates, organizations and certifications are converted or rejected.

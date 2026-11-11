@@ -12,7 +12,7 @@
 
 **Primary: Vercel** (Node.js runtime functions). Next.js is first-class there; preview deployments per PR come free.
 - PDF function uses `@sparticuz/chromium` (+ `puppeteer-core`), memory 1769 MB, max duration 30 s.
-- AI routes: Node runtime, 30 s max duration.
+- AI routes: Node runtime, 60 s max duration (20 s per model call, one retry). Set `GEMINI_API_KEY` as a server-only secret on a billing-enabled Google Cloud project.
 
 **Portable alternative: Docker** (`Dockerfile` with Next.js standalone output + Debian Chromium) for Fly.io/Render/any VM. Kept working in CI by building the image, so we are never locked in. If PDF cold starts or bundle limits become a problem on Vercel, the PDF route moves to a small container service behind the same `/api/pdf` contract.
 

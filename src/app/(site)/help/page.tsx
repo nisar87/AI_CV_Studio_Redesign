@@ -23,7 +23,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: 'How does the writing help work?',
-    a: 'It suggests clearer, more professional wording for what you have already written. It never adds jobs, dates, qualifications or numbers you did not give us. When a sentence would be stronger with a detail only you know, it asks you instead of guessing.',
+    a: 'It suggests clearer, more professional wording for what you have already written. It never adds jobs, dates, qualifications or numbers you did not give us. When a sentence would be stronger with a detail only you know, it asks you instead of guessing — those parts are highlighted until you fill them in. You can turn AI help off on the privacy page.',
   },
   {
     q: 'Can I use it on my phone?',
