@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   output: 'standalone',
+  // Serverless Chromium ships a compressed binary that must stay on disk, not be bundled.
+  serverExternalPackages: ['@sparticuz/chromium', 'puppeteer-core'],
+  outputFileTracingIncludes: {
+    '/api/pdf': ['./node_modules/@sparticuz/chromium/bin/**'],
+    '/api/health': ['./node_modules/@sparticuz/chromium/bin/**'],
+  },
   async headers() {
     return [
       { source: '/:path*', headers: securityHeaders },
