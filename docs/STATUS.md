@@ -229,12 +229,16 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
 - **Old Flutter site removed (owner approved):**
   - `aicvstudio.app` detached from the Hosting site.
   - Deleted Cloud Functions: `gemini`, `extractlinkedinprofile`, `renderaiwowpdf`, `notificationsender`, `adminsetuserpremiumaccess`.
-  - The old static files still exist at `ai-cv-studio.web.app` (default Hosting site, cannot be deleted from the console; `firebase hosting:disable` takes it offline).
 - **Left untouched (separate products):** `career-os-*` services and their secrets.
 - **Old Firestore/Auth data:** not deleted. `career-os` shares the project, so wholesale deletion needs a separate check.
-- **AI help is OFF in production.** The backend cannot yet read secret `GEMINI_API_KEY`: two builds failed with `fah/misconfigured-secret` even after granting Secret Accessor. To enable it:
-  1. Run `firebase apphosting:secrets:grantaccess GEMINI_API_KEY --backend aicvstudio --project ai-cv-studio` (adds the roles the build also needs).
-  2. Uncomment the `GEMINI_API_KEY` block in `apphosting.yaml`.
+- **AI help is ON in production** (2026-11-12, after `firebase apphosting:secrets:grantaccess GEMINI_API_KEY --backend aicvstudio`). Live checks on aicvstudio.app with real Gemini:
+  - Both brief examples give sensible choices:
+    - Teacher → teacher preset, blue accent, elegant (executive) font, "School Teacher".
+    - Driver → driver preset, Clarity, "Delivery Driver".
+  - Improved bullets added no facts and asked "How many parcels did you deliver each day?" instead.
+  - Messy notes became 4 faithful points.
+  - The full `npm run ai:eval` (48 samples) is still to be run for the Phase 4 acceptance record.
+- The old Hosting site is disabled (`firebase hosting:disable`; `ai-cv-studio.web.app` returns 404).
 
 ## Known blockers
 
