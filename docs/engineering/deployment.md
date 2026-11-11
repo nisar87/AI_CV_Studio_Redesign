@@ -44,6 +44,6 @@ The owner's existing Firebase project `ai-cv-studio` serves `aicvstudio.app`. Th
 
 - Config: `apphosting.yaml` (2 vCPU, 2 GiB for Chromium, max 4 instances, env vars).
 - PDF: `@sparticuz/chromium` (no system Chrome on App Hosting). Kept out of the bundle via `serverExternalPackages`; its binary is traced into the standalone output. Verified: production server with system Chrome hidden returns a 1-page PDF with embedded TrueType fonts.
-- Secret: `GEMINI_API_KEY` comes from Cloud Secret Manager secret `gemini-api-key` (`firebase apphosting:secrets:set gemini-api-key`, then grant the backend access). Without it AI help is off; everything else works.
+- Secret: `GEMINI_API_KEY` comes from Cloud Secret Manager secret `GEMINI_API_KEY`; `firebase-app-hosting-compute@ai-cv-studio.iam.gserviceaccount.com` has Secret Accessor on it. Without it AI help is off; everything else works.
 - Rollouts: the backend is connected to GitHub `nisar87/AI_CV_Studio_Redesign`, branch `main`; every push to `main` deploys.
 - Domain: `aicvstudio.app` moves from the old Hosting site to the App Hosting backend (Firebase console → App Hosting → backend → Settings → Domains); DNS records shown there must be set at the domain registrar.

@@ -7,12 +7,12 @@ runConfig:
   maxInstances: 4 # in-memory rate limits are per instance; keep this small until a shared store exists
 
 env:
-  # Google Gemini key, stored in Cloud Secret Manager (never in this file). Enable once the
-  # secret exists (firebase apphosting:secrets:set gemini-api-key); until then AI help is off.
-  # - variable: GEMINI_API_KEY
-  #   secret: gemini-api-key
-  #   availability:
-  #     - RUNTIME
+  # Google Gemini key from Cloud Secret Manager (secret GEMINI_API_KEY, shared with the
+  # project; the App Hosting compute account has Secret Accessor on it). Never put the key here.
+  - variable: GEMINI_API_KEY
+    secret: GEMINI_API_KEY
+    availability:
+      - RUNTIME
   - variable: AI_MODEL_FAST
     value: gemini-flash-latest
     availability:
