@@ -279,7 +279,7 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
       pages: r.pages,
       overflow: r.overflow,
       fitted: fitted,
-      nearlyFits: r.pages > 1 && r.lastFill < 0.12
+      nearlyFits: r.pages > 1 && r.lastFill < 0.25
     };
     window.__CV_READY__ = result;
     document.documentElement.setAttribute('data-cv-ready', String(r.pages));

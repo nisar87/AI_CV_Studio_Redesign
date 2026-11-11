@@ -15,6 +15,7 @@ This folder is the single source of truth for what we are building, why, and how
 | | [ux/design-system.md](ux/design-system.md) | Brand, tokens, components, voice, accessibility |
 | Engineering | [engineering/application-architecture.md](engineering/application-architecture.md) | Stack, module boundaries, folder layout |
 | | [engineering/template-engine.md](engineering/template-engine.md) | How CVs are laid out, paginated, previewed and exported |
+| | [engineering/template-authoring-guide.md](engineering/template-authoring-guide.md) | **Read before making a template:** budgets, engine guarantees, coding rules, release checklist, lessons from reviews |
 | | [engineering/ai-architecture.md](engineering/ai-architecture.md) | How AI is used, constrained, validated and paid for |
 | | [engineering/data-model.md](engineering/data-model.md) | The resume document schema and persistence |
 | | [engineering/api-contracts.md](engineering/api-contracts.md) | HTTP endpoints, payloads, errors |
