@@ -3,6 +3,8 @@ import { createAiLimiter, limitsFromEnv } from '@/modules/ai/limits';
 import { runTask } from '@/modules/ai/run';
 import { isTaskId, type AiResponse, type TaskId } from '@/modules/ai/schemas';
 import { apiError, clientKey, readJson, requestId } from '@/lib/http';
+import { denialCode, reserve } from '@/modules/billing/server';
+import { currentUser } from '@/modules/identity/session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,6 +51,13 @@ export async function POST(req: Request, ctx: { params: Promise<{ task: string }
   const { input, attempt } = (body.value ?? {}) as { input?: unknown; attempt?: unknown };
   const tries = Math.max(0, Math.min(5, Math.floor(Number(attempt) || 0)));
 
+  // Entitlement gate: AI actions are part of Premium (monthly allowance, counted on success only).
+  const gate = await reserve(await currentUser(), 'ai.action');
+  if (!gate.decision.ok)
+    return apiError(denialCode(gate.decision), gate.decision.message, rid, {
+      reason: gate.decision.reason,
+    });
+
   const started = Date.now();
   const r = await runTask(task as TaskId, input, tries, {
     provider,
@@ -69,6 +78,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ task: string }
   );
 
   if (!r.ok) {
+    await gate.release();
     if (r.code === 'INVALID_INPUT')
       return apiError('INVALID_INPUT', 'Some details could not be read.', rid, {
         issues: r.issues,

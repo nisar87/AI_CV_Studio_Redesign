@@ -13,7 +13,9 @@ import { getUserStore } from '@/modules/store';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const limiter = createRateLimiter({ capacity: 20, refillPerMinute: 10 });
+// Sign-ins per minute per IP (burst = 2x). Configurable for load tests and e2e.
+const PER_MINUTE = Number(process.env.RATE_LIMIT_SESSION_PER_MINUTE ?? 10);
+const limiter = createRateLimiter({ capacity: PER_MINUTE * 2, refillPerMinute: PER_MINUTE });
 
 /** POST { idToken } → sets the session cookie. */
 export async function POST(req: Request) {

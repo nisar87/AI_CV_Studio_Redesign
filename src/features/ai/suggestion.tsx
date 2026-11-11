@@ -1,13 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, RotateCcw, Sparkles, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Check, Crown, RotateCcw, Sparkles, X } from 'lucide-react';
+import { Button, ButtonLink } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/cn';
 import { splitPlaceholders } from '@/modules/ai/placeholders';
 import type { AiResponse, TaskId, TaskInput } from '@/modules/ai/schemas';
 import { callAi } from './client';
+import { useEntitlements } from '@/features/account/entitlements';
+
+const currentPath = () => (typeof window === 'undefined' ? '/' : window.location.pathname);
 
 /** "Try again" is capped per field (docs/engineering/ai-architecture.md → Regeneration). */
 export const MAX_ATTEMPTS = 5;
@@ -16,7 +19,7 @@ type State<T extends TaskId> =
   | { kind: 'idle' }
   | { kind: 'loading'; label: string }
   | { kind: 'done'; data: AiResponse<T>; label: string }
-  | { kind: 'error'; message: string; label: string };
+  | { kind: 'error'; message: string; label: string; code: string };
 
 /** Runs one AI task for a field and keeps the suggestion state. */
 export function useSuggestion<T extends TaskId>(task: T) {
@@ -38,7 +41,9 @@ export function useSuggestion<T extends TaskId>(task: T) {
       const r = await callAi(task, input, nextAttempt, ctrl.signal);
       if (ctrl.signal.aborted) return;
       setState(
-        r.ok ? { kind: 'done', data: r.data, label } : { kind: 'error', message: r.message, label },
+        r.ok
+          ? { kind: 'done', data: r.data, label }
+          : { kind: 'error', message: r.message, label, code: r.code },
       );
     },
     [task],
@@ -100,6 +105,8 @@ export function SuggestionCard<T extends TaskId>({
   useLabel?: string;
 }) {
   const { state } = s;
+  const { ent } = useEntitlements();
+  const salesOpen = Boolean(ent?.features.sales);
   if (state.kind === 'idle') return null;
   return (
     <section
@@ -123,6 +130,25 @@ export function SuggestionCard<T extends TaskId>({
         </p>
       )}
       {state.kind === 'error' && <p className="text-ink text-[15px]">{state.message}</p>}
+      {state.kind === 'error' && state.code === 'SIGN_IN_REQUIRED' && (
+        <ButtonLink
+          size="sm"
+          href={`/signin?next=${encodeURIComponent(currentPath())}`}
+          className="self-start"
+        >
+          Sign in
+        </ButtonLink>
+      )}
+      {state.kind === 'error' && state.code === 'PREMIUM_REQUIRED' && salesOpen && (
+        <ButtonLink
+          size="sm"
+          href={`/premium?next=${encodeURIComponent(currentPath())}`}
+          className="self-start"
+          icon={<Crown aria-hidden size={16} />}
+        >
+          See Premium
+        </ButtonLink>
+      )}
       {state.kind === 'done' && (
         <>
           <div className="text-ink text-[15px] leading-6">{children(state.data)}</div>

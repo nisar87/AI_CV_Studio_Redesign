@@ -224,7 +224,36 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
     - An edit synced, and the previous version was kept in `versions`.
     - Deleting the CV wrote a tombstone and removed the local copy.
     - No warnings or errors in the Cloud Run logs.
-- Next: **R1.2 Entitlement gate and config**.
+- **R1.2 Entitlement gate and config — built and verified locally (2026-11-12).**
+  - **Typed `BusinessConfig`** (`src/modules/billing/config.ts`):
+    - plans with monthly limits per capability,
+    - design catalogue (enabled, free or premium tier),
+    - passes,
+    - feature switches (ai, import, sales, signups, maintenance),
+    - announcement.
+    It is stored in `config/business` with version history and cached for 60 s on the server.
+  - **The gate:**
+    - Pure `canUse` / `canUseDesign` decisions.
+    - Server-side `reserve` / `release`: atomic monthly counters in `users/{uid}/usage/{yyyy-mm}`, counted on success only.
+    - Premium passes in `users/{uid}/billing/pass`.
+    - Wired into `/api/pdf` (design tier, then download allowance) and `/api/ai/*` (Premium AI allowance).
+    - `/api/me/entitlements` serves the display.
+  - **UI:**
+    - The download page asks visitors to sign in.
+    - Free users see "N of M downloads left" and a limit banner.
+    - A Premium-design card offers "Use a free design instead", which keeps the words.
+    - Premium badges in the design picker; disabled designs are hidden.
+    - Plan and usage on the account page.
+    - AI refusals offer Sign in or See Premium.
+    - Print is only a fallback, for allowed designs.
+    - All Premium offers stay hidden until `features.sales` is on.
+  - **Production starting config (defaults):**
+    - Downloads need an account; free accounts get 30 a month.
+    - All designs are free.
+    - AI is Premium-only (and still paused by `AI_PROVIDER=off`).
+    - Sales are off until R1.4.
+  - **Tests:** 109 unit tests, plus `entitlements.spec`: visitor, free limit, Premium-design gate, crafted requests refused, failed AI not counted, Premium usage counted. Every e2e test now runs as its own fresh account (`e2e/support/test.ts`), and the full suite passes.
+- Next: **R1.3 Admin Console v1**.
 
 ## Next action (exact)
 

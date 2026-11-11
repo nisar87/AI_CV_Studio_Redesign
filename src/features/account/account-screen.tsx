@@ -7,6 +7,7 @@ import { Banner } from '@/components/ui/banner';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 import { useAccount } from './account-context';
+import { useEntitlements } from './entitlements';
 import { authMessage, refreshVerification, resendVerification } from './firebase-client';
 
 export function AccountScreen() {
@@ -14,6 +15,7 @@ export function AccountScreen() {
   const router = useRouter();
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
+  const { ent } = useEntitlements();
   // Signing out on purpose goes home, not to the sign-in page.
   const leaving = useRef(false);
 
@@ -131,6 +133,58 @@ export function AccountScreen() {
           </Banner>
         )}
       </section>
+
+      {ent && ent.plan !== 'visitor' && (
+        <section
+          aria-labelledby="plan-h"
+          data-testid="plan"
+          className="border-line bg-surface shadow-1 flex flex-col gap-4 rounded-lg border p-5"
+        >
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="plan-h" className="text-xl font-semibold">
+              Your plan: {ent.planLabel}
+            </h2>
+            {ent.plan === 'premium' && ent.passExpiresAt && (
+              <p className="text-ink-muted text-sm">
+                Premium until{' '}
+                {new Date(ent.passExpiresAt).toLocaleDateString(undefined, {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </p>
+            )}
+          </div>
+          <dl className="grid gap-2 sm:grid-cols-3">
+            {(
+              [
+                ['pdf.download', 'PDF downloads'],
+                ['import.cv', 'CV imports'],
+                ['ai.action', 'AI actions'],
+              ] as const
+            ).map(([k, label]) => {
+              const lim = ent.limits[k];
+              return (
+                <div key={k} className="bg-sunken rounded-md px-3 py-2">
+                  <dt className="text-ink-muted text-sm">{label} this month</dt>
+                  <dd className="font-semibold">
+                    {lim === 0
+                      ? 'Premium only'
+                      : lim === -1
+                        ? `${ent.usage[k]} used`
+                        : `${ent.usage[k]} of ${lim}`}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+          {ent.plan !== 'premium' && ent.features.sales && ent.passes.length > 0 && (
+            <ButtonLink href="/premium" className="self-start">
+              See Premium
+            </ButtonLink>
+          )}
+        </section>
+      )}
 
       <section className="flex flex-wrap gap-3" aria-label="Account actions">
         <ButtonLink href="/cv" variant="secondary">

@@ -2,9 +2,23 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { ArrowLeft, CircleCheck, CircleDashed, Download, FileJson, Printer } from 'lucide-react';
+import {
+  ArrowLeft,
+  CircleCheck,
+  CircleDashed,
+  Crown,
+  Download,
+  FileJson,
+  LogIn,
+  Printer,
+} from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonLink } from '@/components/ui/button';
+import { useAccount } from '@/features/account/account-context';
+import { isPremiumDesign, remaining, useEntitlements } from '@/features/account/entitlements';
+import { ops } from '@/modules/resume/ops';
+import { getRepository } from '@/modules/storage/repository';
+import { getTemplate } from '@/modules/templates/registry';
 import { useToast } from '@/components/ui/toast';
 import { DocumentPreview, type PreviewStatus } from '@/features/preview/document-preview';
 import { PreviewStatusLine } from '@/features/editor/editor-screen';
@@ -24,13 +38,42 @@ function saveBlob(blob: Blob, filename: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-export function DownloadScreen({ doc }: { doc: ResumeDocument }) {
+type Blocked = {
+  code: 'SIGN_IN_REQUIRED' | 'PREMIUM_REQUIRED' | 'LIMIT_REACHED' | 'DISABLED';
+  message: string;
+};
+
+export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
   const toast = useToast();
+  const account = useAccount();
+  const { ent, refresh } = useEntitlements();
+  const [doc, setDoc] = useState(initialDoc);
   const [status, setStatus] = useState<PreviewStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState<Blocked | null>(null);
   const items = checklist(doc);
   const editHref = `/cv/${doc.id}`;
+  const here = `/cv/${doc.id}/download`;
+  const signedOut = account.status === 'signedOut';
+  const lockedDesign = ent
+    ? ent.plan !== 'premium' && isPremiumDesign(ent, doc.design.templateId)
+    : false;
+  const left = ent && ent.plan !== 'visitor' ? remaining(ent, 'pdf.download') : null;
+
+  /** Switch to the first free design (keeps all content), from the locked-design card. */
+  function switchToFreeDesign() {
+    const free = ent?.designs.find((d) => d.enabled && d.tier === 'free');
+    if (!free) return;
+    const next = ops.setDesign(doc, { templateId: free.id });
+    getRepository().save(next);
+    setDoc(next);
+    setBlocked(null);
+    toast.show({
+      message: `Switched to ${getTemplate(free.id).name}. Your words are unchanged.`,
+      tone: 'success',
+    });
+  }
 
   async function downloadPdf() {
     setBusy(true);
@@ -43,12 +86,24 @@ export function DownloadScreen({ doc }: { doc: ResumeDocument }) {
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as {
-          error?: { message?: string };
+          error?: { code?: string; message?: string };
         } | null;
+        const code = body?.error?.code;
+        if (
+          code === 'SIGN_IN_REQUIRED' ||
+          code === 'PREMIUM_REQUIRED' ||
+          code === 'LIMIT_REACHED' ||
+          code === 'DISABLED'
+        ) {
+          setBlocked({ code, message: body?.error?.message ?? '' });
+          refresh();
+          return;
+        }
         throw new Error(body?.error?.message ?? 'We couldn’t create the PDF just now.');
       }
       saveBlob(await res.blob(), pdfFilename(doc.basics.name));
       toast.show({ message: 'Your PDF is downloading', tone: 'success' });
+      refresh();
     } catch (e) {
       setFailed(
         e instanceof Error && e.message !== 'Failed to fetch'
@@ -146,45 +201,116 @@ export function DownloadScreen({ doc }: { doc: ResumeDocument }) {
                   <Button size="sm" variant="secondary" onClick={downloadPdf}>
                     Try again
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    icon={<Printer aria-hidden size={16} />}
-                    onClick={print}
-                  >
-                    Print or save as PDF
-                  </Button>
+                  {!signedOut && !lockedDesign && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      icon={<Printer aria-hidden size={16} />}
+                      onClick={print}
+                    >
+                      Print or save as PDF
+                    </Button>
+                  )}
                 </div>
               }
             >
-              {failed} You can also use your browser’s print window and choose “Save as PDF”.
+              {failed}{' '}
+              {!signedOut &&
+                !lockedDesign &&
+                'You can also use your browser’s print window and choose “Save as PDF”.'}
             </Banner>
           )}
 
-          <div className="flex flex-col gap-3">
-            <Button
-              size="lg"
-              icon={<Download aria-hidden size={20} />}
-              loading={busy}
-              loadingText="Preparing your PDF…"
-              onClick={downloadPdf}
+          {(blocked?.code === 'PREMIUM_REQUIRED' || lockedDesign) && (
+            <section
+              aria-labelledby="premium-h"
+              data-gate="premium-design"
+              className="border-accent/40 bg-accent-soft flex flex-col gap-3 rounded-lg border p-5"
             >
-              Download PDF
+              <h2 id="premium-h" className="flex items-center gap-2 text-lg font-semibold">
+                <Crown aria-hidden size={20} className="text-accent-ink" />{' '}
+                {getTemplate(doc.design.templateId).name} is a Premium design
+              </h2>
+              <p className="text-ink-muted">
+                Premium unlocks every design, AI writing help and more downloads. Or switch to a
+                free design — your words stay exactly the same.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {ent?.features.sales && (
+                  <ButtonLink
+                    href={`/premium?next=${encodeURIComponent(here)}`}
+                    icon={<Crown aria-hidden size={18} />}
+                  >
+                    See Premium
+                  </ButtonLink>
+                )}
+                <Button variant="secondary" onClick={switchToFreeDesign}>
+                  Use a free design instead
+                </Button>
+              </div>
+            </section>
+          )}
+
+          {blocked?.code === 'LIMIT_REACHED' && (
+            <Banner
+              tone="warning"
+              title="Monthly download limit reached"
+              action={
+                ent?.features.sales ? (
+                  <ButtonLink
+                    size="sm"
+                    href={`/premium?next=${encodeURIComponent(here)}`}
+                    icon={<Crown aria-hidden size={16} />}
+                  >
+                    See Premium
+                  </ButtonLink>
+                ) : undefined
+              }
+            >
+              {blocked.message}
+            </Banner>
+          )}
+          {blocked?.code === 'DISABLED' && <Banner tone="warning">{blocked.message}</Banner>}
+
+          <div className="flex flex-col gap-3">
+            {signedOut || blocked?.code === 'SIGN_IN_REQUIRED' ? (
+              <>
+                <ButtonLink
+                  size="lg"
+                  href={`/signin?next=${encodeURIComponent(here)}`}
+                  icon={<LogIn aria-hidden size={20} />}
+                >
+                  Sign in to download
+                </ButtonLink>
+                <p className="text-ink-muted text-sm">
+                  A free account saves your CV safely and lets you download it as a PDF. It takes
+                  under a minute.
+                </p>
+              </>
+            ) : (
+              <>
+                <Button
+                  size="lg"
+                  icon={<Download aria-hidden size={20} />}
+                  loading={busy}
+                  loadingText="Preparing your PDF…"
+                  disabled={lockedDesign || account.status === 'loading'}
+                  onClick={downloadPdf}
+                >
+                  Download PDF
+                </Button>
+                {left !== null && Number.isFinite(left) && (
+                  <p className="text-ink-muted text-sm" data-testid="downloads-left">
+                    {left} of {ent!.limits['pdf.download']} downloads left this month.
+                  </p>
+                )}
+              </>
+            )}
+            <Button variant="secondary" icon={<FileJson aria-hidden size={18} />} onClick={backup}>
+              Save a backup file
             </Button>
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="secondary" icon={<Printer aria-hidden size={18} />} onClick={print}>
-                Print
-              </Button>
-              <Button
-                variant="secondary"
-                icon={<FileJson aria-hidden size={18} />}
-                onClick={backup}
-              >
-                Save a backup
-              </Button>
-            </div>
             <p className="text-ink-muted text-sm">
-              A backup file lets you open this CV in another browser later.
+              A backup file lets you open this CV in another browser, even without an account.
             </p>
           </div>
         </main>

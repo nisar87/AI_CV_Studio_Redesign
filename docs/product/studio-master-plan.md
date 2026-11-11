@@ -1,6 +1,6 @@
 # AI CV Studio — Studio Master Plan
 
-_Status: proposal for owner approval · 2026-11-12 · Replaces `business-model-plan.md`_
+_Status: **approved by the owner 2026-11-12** · Replaces `business-model-plan.md`_
 
 ## 0. In one page
 
@@ -249,7 +249,14 @@ Each later release is planned in detail only when the previous one is live, usin
 | Gemini terms (age 18+, paid tier for privacy) | Billing-enabled project (done); a 18+ statement at sign-up; privacy text matches reality |
 | Scope creep returns | §7 rules; each release scope fixed at the start; new ideas go to the next release's list |
 
-## 9. Owner decisions needed before R1
+## 9. Owner decisions (resolved 2026-11-12)
+
+- Plan approved, with a free hand to implement it the best way.
+- **Fresh start.** The old app never had real users, so no old accounts, Premium records or saved CVs are carried over. The old app is not a flow reference.
+- **Reference products** are the best current CV tools (Resume.io, Zety, Kickresume, Enhancv, Teal, Rezi). Flows may change wherever that gives a better modern product.
+- Prices, limits and payment accounts start from the defaults below and are edited in the Admin Console.
+
+### Original decision list (kept for reference)
 
 1. **Approve this plan**, or say what to change.
 2. **Prices and passes:** the proposal is PKR 499 for 1 month and PKR 1,299 for 3 months. These are editable later in the Console.
