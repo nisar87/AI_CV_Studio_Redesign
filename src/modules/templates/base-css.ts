@@ -16,7 +16,20 @@ ul{list-style:none}
 [data-cv-pages]{display:flex;flex-direction:column;align-items:flex-start;gap:24px}
 .cv-page{position:relative;width:var(--page-w);height:var(--page-h);background:#fff;overflow:hidden;
   display:flex;flex-direction:column;padding:var(--margin)}
-.cv-top{flex:none}
+.cv-top{flex:none;position:relative;z-index:1}
+.cv-body{position:relative;z-index:1}
+.cv-decor{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.cv-icon{width:1em;height:1em;flex:none;display:inline-block;vertical-align:-.13em}
+.cv-contacts--icons .cv-contact{display:flex;align-items:center;gap:.45em}
+.cv-contacts--icons .cv-icon{color:var(--accent);width:.95em;height:.95em}
+.cv-contacts--stacked .cv-contacts{flex-direction:column;flex-wrap:nowrap;margin-left:0;row-gap:.35em}
+.cv-contacts--stacked .cv-contact{padding-left:0;align-items:flex-start}
+.cv-contacts--stacked .cv-icon{margin-top:.22em}
+.cv-contacts--stacked .cv-contact-text{min-width:0;overflow-wrap:break-word}
+.cv-contacts--stacked .cv-contact-label{display:none}
+.cv-portrait{flex:none;overflow:hidden;position:relative}
+.cv-portrait img{display:block;width:100%;height:100%;object-fit:cover}
+.cv-portrait--initials{display:flex;align-items:center;justify-content:center}
 .cv-body{flex:1 1 auto;min-height:0;display:flex;align-items:stretch}
 .cv-main{flex:1 1 auto;min-width:0;overflow:hidden}
 .cv-aside{flex:none;overflow:hidden}

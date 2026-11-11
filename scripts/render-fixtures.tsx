@@ -7,7 +7,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import puppeteer from 'puppeteer-core';
-import { FIXTURES, type FixtureId } from '../src/modules/resume/fixtures';
+import { FIXTURES, PHOTO_FOR, withPhoto, type FixtureId } from '../src/modules/resume/fixtures';
+import { getTemplate } from '../src/modules/templates/registry';
 import { TEMPLATE_IDS, type TemplateId, type PageSize } from '../src/modules/resume/schema';
 import { buildDocumentHtml } from '../src/modules/templates/build-document';
 import { renderPdfFromHtml } from '../src/modules/export/render';
@@ -27,11 +28,14 @@ let failures = 0;
 for (const t of templates)
   for (const f of fixtures)
     for (const size of pageSizes) {
-      const doc = structuredClone(FIXTURES[f]);
+      let doc = structuredClone(FIXTURES[f]);
+      if (process.env.PHOTO === '1') doc = withPhoto(doc, PHOTO_FOR[f]);
       doc.design.templateId = t;
+      const rec = getTemplate(t).support.defaults.fontPair;
+      if (rec && process.env.OWN_FONT !== '1') doc.design.fontPair = rec;
       doc.design.pageSize = size;
       const html = buildDocumentHtml(doc, { fonts: { kind: 'inline', read } });
-      const name = `${t}-${f}${size === 'A4' ? '' : '-letter'}`;
+      const name = `${t}-${f}${process.env.PHOTO === '1' ? '-photo' : ''}${size === 'A4' ? '' : '-letter'}`;
       const { pdf, pages, overflow } = await renderPdfFromHtml(browser, html);
       const pdfPath = path.join(outDir, `${name}.pdf`);
       fs.writeFileSync(pdfPath, pdf);
@@ -40,7 +44,13 @@ for (const t of templates)
       const ok = pdfPages === pages && overflow === 0;
       if (!ok) failures++;
       // PNG of each page for visual review
-      execFileSync('pdftoppm', ['-png', '-r', '60', pdfPath, path.join(outDir, name)]);
+      execFileSync('pdftoppm', [
+        '-png',
+        '-r',
+        process.env.DPI ?? '60',
+        pdfPath,
+        path.join(outDir, name),
+      ]);
       console.log(
         `${ok ? 'ok  ' : 'FAIL'} ${name.padEnd(28)} pages=${pages} pdfPages=${pdfPages} overflow=${overflow}`,
       );

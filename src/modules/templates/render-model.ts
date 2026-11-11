@@ -28,7 +28,7 @@ export type REntry = {
 
 export type RSection = {
   id: string;
-  kind: SectionKind | 'summary';
+  kind: SectionKind | 'summary' | 'contact';
   title: string;
   entries: REntry[];
   text?: string;
@@ -36,6 +36,12 @@ export type RSection = {
 
 export type RenderModel = {
   name: string;
+  /** Name split for designs that set first and last name differently. */
+  firstName: string;
+  lastName: string;
+  initials: string;
+  /** Photo data URL, or '' when there is none or the design/user hides it. */
+  photo: string;
   headline: string;
   contacts: Contact[];
   sections: RSection[];
@@ -150,8 +156,21 @@ export function toRenderModel(doc: ResumeDocument): RenderModel {
     if (entries.length)
       sections.push({ id: s.id, kind: s.kind, title: clean(s.title) || s.kind, entries });
   }
+  const name = clean(b.name);
+  const words = name.split(' ').filter(Boolean);
+  const firstName = words.length > 1 ? words.slice(0, -1).join(' ') : name;
+  const lastName = words.length > 1 ? words[words.length - 1]! : '';
+  const initials = (
+    words.length > 1
+      ? (words[0]![0] ?? '') + (words[words.length - 1]![0] ?? '')
+      : (words[0] ?? '').slice(0, 2)
+  ).toUpperCase();
   return {
-    name: clean(b.name),
+    name,
+    firstName,
+    lastName,
+    initials,
+    photo: doc.design.options.showPhoto === false ? '' : b.photo,
     headline: clean(b.headline),
     contacts,
     sections,

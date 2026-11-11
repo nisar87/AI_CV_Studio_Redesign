@@ -25,6 +25,7 @@ type Basics = {
   email: string; phone: string; location: string;
   links: { id: string; label: string; url: string }[];
   summary: string;
+  photo: string;              // '' or a small JPEG/PNG/WebP data URL (resized in the browser)
 };
 ```
 
@@ -46,6 +47,8 @@ type Basics = {
 Every section: `{ id, kind, title, hidden, items }`. `title` defaults from the preset/locale ("Work history", "Licences") and is user-editable.
 
 Dates are strings: `"YYYY"` or `"YYYY-MM"`, or empty. `current: true` renders "Present". We do not require consistent dates — real lives have gaps.
+
+`design.options.showPhoto` (optional boolean) hides the photo without deleting it.
 
 Placeholders: text fields may contain `{{?question}}` markers produced by AI (Phase 4). Renderers show them highlighted in preview and the Download checklist blocks a "clean" export until they are resolved (the user may still export).
 

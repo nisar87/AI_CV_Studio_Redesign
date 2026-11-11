@@ -100,7 +100,18 @@ export const SECTION_KINDS = [
   'custom',
 ] as const;
 
-export const TEMPLATE_IDS = ['clarity', 'meridian', 'heritage'] as const;
+export const TEMPLATE_IDS = [
+  'clarity',
+  'meridian',
+  'heritage',
+  'atelier',
+  'ledger',
+  'chronicle',
+  'vivid',
+  'folio',
+  'halo',
+  'sprout',
+] as const;
 export const FONT_PAIR_IDS = ['modern', 'classic', 'humanist', 'executive', 'technical'] as const;
 export const DENSITIES = ['compact', 'balanced', 'airy'] as const;
 export const PAGE_SIZES = ['A4', 'Letter'] as const;
@@ -117,6 +128,8 @@ export const designSpec = z.object({
     .object({
       headerAlign: z.enum(['left', 'center']).optional(),
       skillStyle: z.enum(['tags', 'inline']).optional(),
+      /** Show the profile photo in designs that support one (default: yes, if a photo was added). */
+      showPhoto: z.boolean().optional(),
     })
     .default({}),
 });
@@ -132,6 +145,12 @@ export const basics = z.object({
     .max(10)
     .default([]),
   summary: text(1500),
+  /** Optional profile photo as a small JPEG/PNG/WebP data URL (resized in the browser). */
+  photo: z
+    .string()
+    .max(400_000)
+    .regex(/^$|^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/, 'Invalid image')
+    .default(''),
 });
 
 export const resumeDocument = z.object({

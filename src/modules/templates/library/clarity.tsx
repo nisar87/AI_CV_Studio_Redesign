@@ -1,4 +1,10 @@
-import { ContactList, joinParts, type TemplateComponentProps, type TemplateHooks } from '../blocks';
+import {
+  ContactList,
+  joinParts,
+  Portrait,
+  type TemplateComponentProps,
+  type TemplateHooks,
+} from '../blocks';
 import type { TemplateDefinition } from '../types';
 
 /**
@@ -62,28 +68,44 @@ const hooks: TemplateHooks = {
 function Header({ model, design }: TemplateComponentProps) {
   return (
     <header className={`c-header c-header--${design.headerAlign}`}>
-      <h1 className="c-name">{model.name || 'Your name'}</h1>
-      {model.headline && <p className="c-headline">{model.headline}</p>}
-      {model.contacts.length > 0 && <ContactList contacts={model.contacts} separator="·" />}
+      <div className="c-hrow">
+        <div className="c-id">
+          <h1 className="c-name">{model.name || 'Your name'}</h1>
+          {model.headline && <p className="c-headline">{model.headline}</p>}
+          {model.contacts.length > 0 && <ContactList contacts={model.contacts} icons />}
+        </div>
+        <Portrait model={model} className="c-portrait" fallback="none" />
+      </div>
     </header>
   );
 }
 
 const css = `
-.cv-page::before{content:'';position:absolute;left:0;right:0;top:0;height:5pt;background:var(--accent)}
-.c-header{padding-bottom:4pt}
+.c-header{position:relative;padding:1mm 0 3pt 6mm}
+.c-header::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3.2pt;border-radius:2pt;background:var(--accent)}
+.c-header--center{padding-left:0}
+.c-header--center::before{display:none}
+.c-hrow{display:flex;align-items:center;justify-content:space-between;gap:7mm}
+.c-id{min-width:0;flex:1}
+.c-portrait{width:25mm;height:25mm;border-radius:4pt}
+.c-header--center .c-hrow{flex-direction:column-reverse;gap:4mm}
+.c-header--center .c-portrait{border-radius:50%}
 .c-header--center{text-align:center}
 .c-header--center .cv-contacts{justify-content:center;margin-left:0}
 .c-header--center .cv-contact:first-child{padding-left:0}
 .c-header--center .cv-contact:first-child .cv-sep{display:none}
-.c-name{font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:2.55em;line-height:1.08;letter-spacing:-.012em;color:var(--ink)}
+.c-name{font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:2.85em;line-height:1.08;letter-spacing:-.012em;color:var(--ink)}
 .c-headline{margin-top:.3em;font-size:1.18em;font-weight:600;color:var(--accent);letter-spacing:.005em}
-.c-header .cv-contacts{margin-top:.75em;font-size:.93em;color:var(--ink-2)}
+.c-header .cv-contacts-wrap{margin-top:.8em}
+.c-header .cv-contacts{column-gap:0;row-gap:.3em;font-size:.93em;color:var(--ink-2)}
+.c-header .cv-contact{padding-right:1.3em}
+.c-header--center .cv-contact{padding-left:0;padding-right:.65em;margin-left:.65em}
 .cv-top--running{padding-bottom:2pt}
 .c-running{display:flex;justify-content:space-between;font-size:.82em;color:var(--ink-3);letter-spacing:.04em}
 .c-running strong{font-family:var(--font-heading);font-weight:var(--heading-weight);color:var(--ink-2);letter-spacing:0}
 .b-heading{padding-top:var(--section-gap);padding-bottom:5pt}
-.c-h{display:flex;align-items:center;gap:.7em;font-family:var(--font-body);font-size:.84em;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}
+.c-h{display:flex;align-items:center;gap:.7em;font-family:var(--font-body);font-size:.86em;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.c-h::before{content:'';width:10pt;height:2.4pt;border-radius:1pt;background:var(--accent);flex:none}
 .c-h::after{content:'';flex:1;height:.75pt;background:var(--accent-line)}
 .b-entry{padding-top:var(--item-gap)}
 .b-entry.b-first,.b-summary.b-first,.b-skills.b-first,.b-compact.b-first{padding-top:1pt}
@@ -117,6 +139,8 @@ export const clarity: TemplateDefinition = {
     skillStyle: ['inline', 'tags'],
     defaults: { headerAlign: 'left', skillStyle: 'inline' },
   },
+  photo: 'optional',
+  tags: ['Single column', 'Most readable', 'Any job'],
   asideKinds: [],
   css,
   hooks,

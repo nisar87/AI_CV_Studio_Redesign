@@ -67,7 +67,7 @@ export const PRESETS: Record<PresetId, Preset> = {
     headlineExample: 'Primary School Teacher',
     sections: [T.experience, T.education, T.certifications, T.skills],
     suggestedExtras: [T.languages, T.volunteering, T.awards],
-    design: { templateId: 'meridian', accent: '#1e4f7a', fontPair: 'humanist' },
+    design: { templateId: 'halo', accent: '#1e4f7a', fontPair: 'humanist' },
     hints: {
       role: 'e.g. Year 4 Class Teacher',
       organization: 'e.g. Oakfield Primary School',
@@ -117,7 +117,7 @@ export const PRESETS: Record<PresetId, Preset> = {
     headlineExample: 'Sales Assistant',
     sections: [T.experience, T.skills, T.education],
     suggestedExtras: [T.languages, T.certifications],
-    design: { templateId: 'clarity', accent: '#7a2e4d', fontPair: 'humanist' },
+    design: { templateId: 'sprout', accent: '#7a2e4d', fontPair: 'humanist' },
     hints: {
       role: 'e.g. Sales Assistant',
       organization: 'e.g. Harbour Street Café',
@@ -141,7 +141,7 @@ export const PRESETS: Record<PresetId, Preset> = {
     headlineExample: 'Qualified Electrician',
     sections: [T.experience, T.licences, T.skills, T.education],
     suggestedExtras: [T.certifications, T.projects],
-    design: { templateId: 'clarity', accent: '#9a4a12', fontPair: 'technical' },
+    design: { templateId: 'chronicle', accent: '#9a4a12', fontPair: 'classic' },
     hints: {
       role: 'e.g. Electrician',
       organization: 'e.g. Bright Spark Electrical Ltd',
@@ -166,7 +166,7 @@ export const PRESETS: Record<PresetId, Preset> = {
     headlineExample: 'Office Administrator',
     sections: [T.experience, T.skills, T.education],
     suggestedExtras: [T.certifications, T.languages],
-    design: { templateId: 'clarity', accent: '#2d4a6b', fontPair: 'classic' },
+    design: { templateId: 'atelier', accent: '#2d4a6b', fontPair: 'modern' },
     hints: {
       role: 'e.g. Office Administrator',
       organization: 'e.g. Greenway Accountants',
@@ -190,7 +190,7 @@ export const PRESETS: Record<PresetId, Preset> = {
     headlineExample: 'Software Engineer',
     sections: [T.experience, T.skills, T.projects, T.education],
     suggestedExtras: [T.certifications, T.languages, T.awards],
-    design: { templateId: 'meridian', accent: '#2b4c9b', fontPair: 'technical' },
+    design: { templateId: 'ledger', accent: '#2b4c9b', fontPair: 'modern' },
     hints: {
       role: 'e.g. Senior Software Engineer',
       organization: 'e.g. Northwind Payments',
@@ -239,7 +239,7 @@ export const PRESETS: Record<PresetId, Preset> = {
     headlineExample: 'Business Graduate',
     sections: [T.education, T.projects, T.experience, T.skills, T.volunteering],
     suggestedExtras: [T.awards, T.languages, T.certifications],
-    design: { templateId: 'meridian', accent: '#3a5a8c', fontPair: 'modern' },
+    design: { templateId: 'sprout', accent: '#2d6a3e', fontPair: 'humanist' },
     hints: {
       role: 'e.g. Part-time Retail Assistant',
       organization: 'e.g. Bookshop on Market Street',

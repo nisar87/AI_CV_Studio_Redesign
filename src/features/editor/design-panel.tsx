@@ -3,6 +3,7 @@
 import { Check } from 'lucide-react';
 import { useId } from 'react';
 import { SelectableCard } from '@/components/ui/card';
+import { CheckboxField } from './fields';
 import { Segmented } from '@/components/ui/segmented';
 import { cn } from '@/lib/cn';
 import { ops } from '@/modules/resume/ops';
@@ -54,22 +55,64 @@ export function DesignPanel({ editor }: { editor: DocumentEditor }) {
   return (
     <div className="flex flex-col gap-8">
       <Group title="Look" hint="Your words stay the same — only the design changes.">
-        <div role="radiogroup" aria-label="Design" className="grid gap-3">
-          {TEMPLATE_LIST.map((t) => (
-            <SelectableCard
-              key={t.id}
-              role="radio"
-              aria-checked={d.templateId === t.id}
-              selected={d.templateId === t.id}
-              onClick={() => set({ templateId: t.id })}
-            >
-              <span className="font-semibold">
-                {t.style} <span className="text-ink-muted font-normal">· {t.name}</span>
-              </span>
-              <span className="text-ink-muted pr-8 text-sm">{t.description}</span>
-            </SelectableCard>
-          ))}
+        <div role="radiogroup" aria-label="Design" className="grid grid-cols-2 gap-3">
+          {TEMPLATE_LIST.map((t) => {
+            const selected = d.templateId === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                aria-label={`${t.style} · ${t.name}`}
+                onClick={() =>
+                  set({
+                    templateId: t.id,
+                    ...(t.support.defaults.fontPair
+                      ? { fontPair: t.support.defaults.fontPair }
+                      : {}),
+                  })
+                }
+                className={cn(
+                  'group flex flex-col gap-2 rounded-lg p-1.5 text-left transition-colors',
+                  selected ? 'bg-primary-soft ring-primary ring-2' : 'hover:bg-sunken',
+                )}
+              >
+                <span className="bg-surface shadow-1 ring-line relative block overflow-hidden rounded-[3px] ring-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- static thumbnails */}
+                  <img
+                    src={`/templates/${t.id}.webp`}
+                    alt=""
+                    width={397}
+                    height={562}
+                    className="block h-auto w-full"
+                    loading="lazy"
+                  />
+                  {selected && (
+                    <span className="bg-primary text-on-primary shadow-1 absolute top-2 right-2 inline-flex size-6 items-center justify-center rounded-full">
+                      <Check aria-hidden size={14} strokeWidth={3} />
+                    </span>
+                  )}
+                </span>
+                <span className="px-1 pb-1">
+                  <span className="text-ink block text-sm font-semibold">{t.style}</span>
+                  <span className="text-ink-muted block text-xs">
+                    {t.name}
+                    {t.photo === 'optional' ? ' · Photo' : ''}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
         </div>
+        <p className="text-ink-muted text-sm">{template.description}</p>
+        {template.photo === 'optional' && doc.basics.photo && (
+          <CheckboxField
+            label="Show my photo"
+            checked={d.options.showPhoto !== false}
+            onChange={(showPhoto) => set({ options: { showPhoto } })}
+          />
+        )}
       </Group>
 
       <Group title="Colour">

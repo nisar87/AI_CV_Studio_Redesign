@@ -5,9 +5,9 @@ import { ArrowRight } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { Segmented } from '@/components/ui/segmented';
 import { DocumentPreview } from '@/features/preview/document-preview';
-import { FIXTURES } from '@/modules/resume/fixtures';
+import { FIXTURES, PHOTO_FOR, withPhoto } from '@/modules/resume/fixtures';
 import type { ResumeDocument } from '@/modules/resume/schema';
-import { TEMPLATE_LIST } from '@/modules/templates/registry';
+import { getTemplate, TEMPLATE_LIST } from '@/modules/templates/registry';
 
 const SAMPLES = {
   driver: { label: 'Driver', doc: FIXTURES.driver },
@@ -20,8 +20,18 @@ type SampleId = keyof typeof SAMPLES;
 function withTemplate(
   doc: ResumeDocument,
   templateId: ResumeDocument['design']['templateId'],
+  sample: string,
 ): ResumeDocument {
-  return { ...doc, design: { ...doc.design, templateId } };
+  const t = getTemplate(templateId);
+  const base = t.photo === 'optional' ? withPhoto(doc, PHOTO_FOR[sample] ?? 'a') : doc;
+  return {
+    ...base,
+    design: {
+      ...base.design,
+      templateId,
+      fontPair: t.support.defaults.fontPair ?? base.design.fontPair,
+    },
+  };
 }
 
 export function TemplateGallery() {
@@ -43,9 +53,12 @@ export function TemplateGallery() {
       <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {TEMPLATE_LIST.map((t) => (
           <li key={t.id} className="flex flex-col gap-4">
-            <div className="bg-surface shadow-page overflow-hidden rounded-[4px]">
+            <div
+              className="bg-surface shadow-page overflow-hidden rounded-[4px] bg-cover bg-top"
+              style={{ backgroundImage: `url(/templates/${t.id}.webp)` }}
+            >
               <DocumentPreview
-                doc={withTemplate(base, t.id)}
+                doc={withTemplate(base, t.id, sample)}
                 firstPageOnly
                 debounceMs={0}
                 title={`${t.name} design with an example ${SAMPLES[sample].label.toLowerCase()} CV`}

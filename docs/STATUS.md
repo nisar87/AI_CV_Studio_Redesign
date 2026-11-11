@@ -1,6 +1,6 @@
 # Project Status (checkpoint)
 
-_Last updated: 2026-11-11 (end of session 1)_
+_Last updated: 2026-11-11 (template design sprint)_
 
 ## Current state
 
@@ -10,6 +10,7 @@ _Last updated: 2026-11-11 (end of session 1)_
 | 1 Application foundation | `phase-1/application-foundation` | ✅ Complete, merged to `main` |
 | 2 Document model & template engine | `phase-2/template-engine` | ✅ Complete, merged to `main` |
 | 3 CV builder MVP | `phase-3/cv-builder` | ✅ Complete, merged to `main` |
+| 3b Signature templates (design sprint) | `phase-3b/signature-templates` | ✅ Complete, merged to `main` |
 | 4 AI assistance | `phase-4/ai-assist` | ⏳ Next — not started |
 
 ## Phase 0 report
@@ -55,6 +56,35 @@ _Last updated: 2026-11-11 (end of session 1)_
 **Issues found and fixed:** stale preview frame could win after the preview became visible (sequence-numbered frames); date selects truncated in narrow columns (short month labels); Escape now closes the phone preview.
 
 **Known / deferred:** the J1 "under 10 minutes" criterion is verified for a scripted run only — moderated tests with real users (driver, teacher, graduate) are recommended before launch; drag-and-drop reordering is not implemented (buttons cover it accessibly); `localStorage` quota errors surface as "Not saved" but no export prompt yet.
+
+## Phase 3b report — signature templates
+
+**Goal:** at least 10 designs with a genuine WOW factor, some with photos, each audited until it reaches 9.5/10.
+
+**Completed:** 7 new designs (Atelier, Ledger, Chronicle, Vivid, Folio, Halo, Sprout) and upgrades to Clarity (accent bar, icons, photo), Meridian (gradient band with angled edge, photo) and Heritage (monogram letterhead). Optional profile photo (browser-side crop/resize, show/hide, initials fallback in four designs). Visual design picker with real thumbnails; gallery of all ten with sample photos; profession presets spread across the new designs; static TrueType fonts; Nunito Sans replaces Lato.
+
+**Audit method:** every design rendered to PDF with 8 realistic CVs (driver, teacher, nurse, graduate, engineer, executive, a name-only CV and an extreme stress case), with and without photos, A4 and Letter; reviewed at full size against a rubric (hierarchy, typography, signature, balance, robustness, ATS safety, colour); four review rounds.
+
+**Final scores (honest, against the best commercial CV templates):**
+
+| Design | Score | Note |
+|---|---|---|
+| Atelier | 9.6 | Strongest "wow"; sidebar holds up from one to three pages |
+| Vivid | 9.5 | Most modern; overlapping portrait is the signature |
+| Folio | 9.5 | Most editorial; best with a photo |
+| Ledger | 9.5 | Most striking without colour; excellent for tech and senior roles |
+| Chronicle | 9.5 | Timeline reads instantly; best for long histories |
+| Halo | 9.5 | Most personal; monogram fallback is as good as a photo |
+| Meridian | 9.5 | Angled band lifted it from "standard" to distinctive |
+| Sprout | 9.5 | Friendliest; side panel fixed long line lengths |
+| Heritage | 9.5 | Monogram letterhead gives the classic design a signature |
+| Clarity | 9.5 | Deliberately the quietest — scored as best-in-class minimal |
+
+**Issues found and fixed during the audit (12):** stacked contact icons invisible (CSS override); class names glued by the Tailwind Prettier plugin (twice — now `classes()` + test); first-item spacing in every list section; Ledger labels overlapping the next section and breaking mid-word; tight Ledger name tracking; Vivid heading stranded alone on page 1 (planner fix + tests); email/URL breaking mid-word (soft break points); Sprout's checkbox-like marker and over-long lines; Meridian looking generic; Heritage lacking a signature; Type 3 fonts in every PDF (static fonts); Lato missing "ğ" (Nunito Sans).
+
+**Verification (all green):** `npm run verify` (59 unit tests); 121 e2e tests including **103 PDF parity checks** (10 designs × 8 CVs on A4, × Letter, and with photos): preview pages = PDF pages, zero overflow, all fonts embedded as TrueType (no Type 3), text extractable, page sizes correct; photo add/hide/remove and 10-design picker flows; axe clean. `qa:templates` 170/170 combinations including photos and Letter.
+
+**Known limits:** sample portraits are illustrations; real photos should be checked in a moderated test. Designs are tuned for the five font pairs; very unusual colour choices are contrast-corrected but not every combination was reviewed by eye. Scores are the author's judgement — a blind comparison with real job seekers is recommended (see roadmap Phase 11).
 
 ## Next action (exact)
 

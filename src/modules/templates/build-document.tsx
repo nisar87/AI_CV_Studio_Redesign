@@ -36,16 +36,31 @@ export function resolveDocumentDesign(doc: ResumeDocument): ResolvedDesign {
 export function buildDocumentHtml(doc: ResumeDocument, opts: BuildOptions): string {
   const template = getTemplate(doc.design.templateId);
   const design = resolveDesign(doc.design, template.support);
-  const model = toRenderModel(doc);
+  const base = toRenderModel(doc);
+  const model = template.photo === 'none' ? { ...base, photo: '' } : base;
   const aside = new Set<string>(template.asideKinds);
 
   const mainBlocks = model.sections
     .filter((s) => !aside.has(s.kind))
     .flatMap((s) => sectionBlocks(s, template.hooks, design));
+  const asideContact =
+    template.contactsIn === 'aside' && template.AsideContact && model.contacts.length > 0
+      ? [
+          <div
+            data-block=""
+            data-keep="together"
+            className="b-contact"
+            data-ref="basics/contact"
+            key="contact"
+          >
+            <template.AsideContact model={model} design={design} />
+          </div>,
+        ]
+      : [];
   const asideBlocks = model.sections
     .filter((s) => aside.has(s.kind))
     .flatMap((s) => sectionBlocks(s, template.hooks, design));
-  const { Header, Running } = template;
+  const { Header, Running, Decor } = template;
 
   const body = renderToStaticMarkup(
     <>
@@ -59,7 +74,17 @@ export function buildDocumentHtml(doc: ResumeDocument, opts: BuildOptions): stri
           </div>
         )}
         <div data-flow="main">{mainBlocks}</div>
-        {asideBlocks.length > 0 && <div data-flow="aside">{asideBlocks}</div>}
+        {asideContact.length + asideBlocks.length > 0 && (
+          <div data-flow="aside">
+            {asideContact}
+            {asideBlocks}
+          </div>
+        )}
+        {Decor && (
+          <div data-slot="decor">
+            <Decor model={model} design={design} />
+          </div>
+        )}
       </div>
       <div data-cv-pages="" />
     </>,
@@ -78,7 +103,7 @@ export function buildDocumentHtml(doc: ResumeDocument, opts: BuildOptions): stri
   const title = model.name ? `${model.name} — CV` : 'CV';
 
   return `<!DOCTYPE html>
-<html lang="${escapeHtml(doc.locale.split('-')[0] || 'en')}" data-template="${template.id}">
+<html lang="${escapeHtml(doc.locale.split('-')[0] || 'en')}" data-template="${template.id}" data-photo="${model.photo ? '1' : '0'}">
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${escapeHtml(csp)}">

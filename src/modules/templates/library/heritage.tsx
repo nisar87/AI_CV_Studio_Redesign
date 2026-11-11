@@ -1,4 +1,10 @@
-import { ContactList, joinParts, type TemplateComponentProps, type TemplateHooks } from '../blocks';
+import {
+  ContactList,
+  joinParts,
+  Portrait,
+  type TemplateComponentProps,
+  type TemplateHooks,
+} from '../blocks';
 import type { TemplateDefinition } from '../types';
 
 /**
@@ -52,21 +58,23 @@ const hooks: TemplateHooks = {
 function Header({ model }: TemplateComponentProps) {
   return (
     <header className="h-header">
+      <Portrait model={{ ...model, photo: '' }} className="h-monogram" />
       <h1 className="h-name">{model.name || 'Your name'}</h1>
       {model.headline && <p className="h-headline">{model.headline}</p>}
-      {model.contacts.length > 0 && <ContactList contacts={model.contacts} separator="◆" />}
+      {model.contacts.length > 0 && <ContactList contacts={model.contacts} separator="•" />}
     </header>
   );
 }
 
 const css = `
+.h-monogram{width:13mm;height:13mm;margin:0 auto 3.5mm;border-radius:50%;border:.8pt solid var(--accent);box-shadow:0 0 0 2pt #fff,0 0 0 2.6pt var(--accent-line);color:var(--accent);font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:13pt;letter-spacing:.06em}
 .h-header{text-align:center;padding-bottom:6pt;border-bottom:.75pt solid var(--accent-line);margin-bottom:2pt}
-.h-name{font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:2.9em;line-height:1.05;letter-spacing:.015em;color:var(--ink)}
+.h-name{font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:3.1em;line-height:1.05;letter-spacing:.015em;color:var(--ink)}
 .h-headline{margin-top:.45em;font-size:.88em;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);font-weight:600}
 .h-header .cv-contact:first-child{padding-left:0}
 .h-header .cv-contact:first-child .cv-sep{display:none}
 .h-header .cv-contacts{justify-content:center;margin-left:0;margin-top:.9em;font-size:.92em;color:var(--ink-2)}
-.h-header .cv-sep{font-size:.55em;vertical-align:.2em;color:var(--accent-line)}
+.h-header .cv-sep{color:var(--accent-line)}
 .cv-top--running{padding-bottom:4pt}
 .h-running{text-align:center;font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:1.1em;letter-spacing:.04em;color:var(--ink-2);border-bottom:.5pt solid var(--accent-line);padding-bottom:4pt}
 .b-heading{padding-top:calc(var(--section-gap) * 1.1);padding-bottom:6pt}
@@ -102,6 +110,8 @@ export const heritage: TemplateDefinition = {
     skillStyle: ['inline'],
     defaults: { headerAlign: 'center', skillStyle: 'inline' },
   },
+  photo: 'none',
+  tags: ['Serif', 'Senior roles', 'Traditional'],
   asideKinds: [],
   css,
   hooks,

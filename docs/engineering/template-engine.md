@@ -46,22 +46,44 @@ The spec is small on purpose. It is the *only* surface AI can touch for visuals,
 |---|---|---|---|
 | modern | Inter Tight | Inter | Neutral, contemporary |
 | classic | Source Serif 4 | Source Sans 3 | Traditional, trustworthy |
-| humanist | Lora | Lato | Warm, approachable (teaching, healthcare) |
-| executive | Cormorant Garamond | Source Sans 3 | Understated luxury |
-| technical | IBM Plex Sans | IBM Plex Sans | Precise, engineering |
+| humanist ("Warm") | Lora | Nunito Sans | Warm, approachable (teaching, care, first jobs) |
+| executive ("Elegant") | Cormorant Garamond | Source Sans 3 | Understated luxury |
+| technical ("Precise") | IBM Plex Sans | IBM Plex Sans | Precise, engineering |
 
-Fonts are limited to Latin + Latin-extended subsets in MVP; documents containing other scripts fall back to system fonts (documented limitation; Phase 10 adds Noto families).
+Fonts are **static weights**, listed in `src/modules/templates/font-catalog.ts` and copied by `npm run fonts:sync`. Variable fonts were tried first: Chrome embeds them in PDFs as Type 3 glyphs, which some parsers handle poorly; static fonts embed as TrueType (CID) and made PDFs 30–50% smaller. An e2e check fails if any PDF contains a Type 3 font. Every family covers Latin + Latin Extended (verified for characters such as ğ ł ø ß ő Ş); Lato was replaced by Nunito Sans because it lacks Turkish ğ. Other scripts fall back to system fonts (Phase 10 adds Noto families).
 
 ### Density
 A single scale factor feeds type size (9.5 / 10 / 10.5 pt body), line-height, section gap and page margins (14 / 17 / 20 mm). Templates use only these variables, so density always stays proportional.
 
-## Launch templates
+## Templates (10)
 
-| Template | Layout | For | ATS notes |
-|---|---|---|---|
-| **Clarity** | Single column; name and contact in a clean header; accent rule under section titles | Everyone; default for drivers, retail, trades, office | Linear reading order; perfect parsing |
-| **Meridian** | Header band (name, headline, contacts) + main column (profile, experience, education, projects) + tinted side column (skills, languages, certifications, licences, awards) | Teachers, nurses, technical roles, graduates | Sidebar comes after the main column in DOM order (see "Reading order") |
-| **Heritage** | Single column, centred serif name, small-caps section titles, generous whitespace | Executives, managers, senior professionals | Linear |
+Each design is built around one signature idea, so the set feels like ten different products rather than one layout in ten colours.
+
+| Template | Picker label | Signature | Photo | Layout | Recommended font |
+|---|---|---|---|---|---|
+| **Clarity** | Modern & clear | Left accent bar beside a large name; contact icons; hairline section rules | optional (rounded square) | single column | modern |
+| **Atelier** | Creative sidebar | Full-height deep colour sidebar with portrait/monogram, contact, skills | optional (circle, ring) | sidebar left | modern |
+| **Ledger** | Bold editorial | Oversized name over a heavy rule; numbered section labels in a label column | optional (portrait rectangle) | label column | modern |
+| **Meridian** | Bold & organised | Gradient header band with an angled lower edge; tinted side column | optional (circle) | side column right | classic |
+| **Chronicle** | Timeline | Dates in a margin column beside a fine line with a marker per role; tinted contact bar | optional (circle, ring) | gutter + single column | classic |
+| **Vivid** | Bold & modern | Gradient band with geometric art; portrait overlapping the band edge; pill section labels | optional (large circle) / initials | side column right | modern |
+| **Halo** | Warm portrait | Centred portrait in a double ring; ornament rule; calm two columns | optional (circle) / initials | side column left | humanist |
+| **Folio** | Editorial | Two-tone stacked name; framed photo with offset colour block; serif titles ending in an accent full stop | optional (portrait rectangle) | side column right | classic |
+| **Sprout** | Friendly & fresh | Soft rounded header card with rings; rounded side panel; date chips | optional (circle) / initials | rounded side panel right | humanist |
+| **Heritage** | Calm & classic | Monogram letterhead; centred serif name; ruled centred section titles | none (monogram) | single column | executive |
+
+Profession presets choose a sensible default (driver/office → Clarity or Atelier, teacher → Halo, nurse → Meridian, trades → Chronicle, tech → Ledger, retail/student → Sprout, executive → Heritage). Choosing a design in the picker also applies its recommended font; the user can change it afterwards.
+
+### Photos
+`basics.photo` holds a ≤ 300 KB JPEG data URL, centre-cropped and resized to 480 px **in the browser** (never uploaded except inside the PDF request). `design.options.showPhoto` hides it without deleting it. Designs declare `photo: 'optional' | 'none'`; some fall back to initials (Atelier, Vivid, Halo, Sprout) so the layout keeps its balance without a photo.
+
+### Engine features used by templates
+- `contactsIn: 'aside'` — contact details become the first block of the side column (Atelier, Folio). They are still real text; most parsers find them anywhere.
+- `hooks.label` — label-column layouts (Ledger): the label is rendered inside the first block of its section so it takes real space and can never overlap; short lists are grouped into one block.
+- `Decor` — optional decorative layer cloned onto every page behind content.
+- Every block carries a `k-<kind>` class (timeline styling in Chronicle).
+- `ContactList` supports icons and stacked mode; addresses get soft break points after `@ . /` so they never break mid-word.
+- Class names in template code are joined with `classes()`, never template literals: the Tailwind Prettier plugin trims spaces inside `className` template strings, which silently glued class names together twice during development. A unit test guards this.
 
 **Reading order:** In two-column templates the DOM order is: header → main column → sidebar. Text extraction and screen readers therefore read the most important content first; visually the sidebar is placed by CSS grid. Contact details are duplicated nowhere — they live in the header for all templates.
 
