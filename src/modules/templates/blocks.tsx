@@ -277,7 +277,7 @@ export function ContactList({
               {c.label && c.kind === 'link' ? (
                 <span className="cv-contact-label">{c.label}: </span>
               ) : null}
-              {breakable(c.text)}
+              {c.href ? <a href={c.href}>{breakable(c.text)}</a> : breakable(c.text)}
             </span>
           </li>
         ))}
@@ -286,9 +286,9 @@ export function ContactList({
   );
 }
 
-/** Adds soft break opportunities after @ . / so addresses wrap at natural points, not mid-word. */
+/** Adds soft break opportunities after @ and / so addresses wrap at natural points, never mid-word or mid-domain. */
 export function breakable(text: string): ReactNode {
-  const parts = text.split(/(?<=[@./])/);
+  const parts = text.split(/(?<=[@/])/);
   if (parts.length < 2) return text;
   return parts.map((p, i) => (
     <span key={i}>

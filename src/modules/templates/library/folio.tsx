@@ -122,14 +122,14 @@ const css = `
 .cv-bullets{color:var(--ink-2)}
 .cv-bullets li::before{border-radius:0;width:.42em;height:.08em;top:calc(var(--lh) * 0.5em);background:var(--accent)}
 .cv-bullets li+li{margin-top:1.6pt}
-.f-summary{font-family:var(--font-heading);font-size:1.16em;line-height:1.5;color:var(--ink);font-style:italic}
+.f-summary{font-family:var(--font-heading);font-size:1.08em;line-height:1.5;color:var(--ink)}
 .f-lang{display:flex;justify-content:space-between;gap:.6em}
 .f-strong{font-weight:600;color:var(--ink)}
 .f-cred{line-height:1.3}
 .f-muted{color:var(--ink-3);text-align:right}
 .f-small{text-align:left;font-size:.94em;margin-top:1pt}
 .f-skill-label{font-weight:600;margin-bottom:2pt;color:var(--ink)}
-.f-skills li{color:var(--ink-2);padding:1pt 0;border-bottom:.5pt dotted var(--accent-line)}
+.f-skills li{color:var(--ink-2);padding:.6pt 0}
 `;
 
 export const folio: TemplateDefinition = {

@@ -25,9 +25,9 @@ type DensityScale = {
 };
 
 export const DENSITY: Record<Density, DensityScale> = {
-  compact: { bodyPt: 9.4, lineHeight: 1.36, marginMm: 13, sectionGapPt: 11, itemGapPt: 7 },
-  balanced: { bodyPt: 10, lineHeight: 1.45, marginMm: 16, sectionGapPt: 15, itemGapPt: 9.5 },
-  airy: { bodyPt: 10.5, lineHeight: 1.55, marginMm: 19, sectionGapPt: 19, itemGapPt: 12 },
+  compact: { bodyPt: 9.8, lineHeight: 1.36, marginMm: 13, sectionGapPt: 11, itemGapPt: 7 },
+  balanced: { bodyPt: 10.5, lineHeight: 1.42, marginMm: 16, sectionGapPt: 15, itemGapPt: 9.5 },
+  airy: { bodyPt: 11, lineHeight: 1.5, marginMm: 19, sectionGapPt: 19, itemGapPt: 12 },
 };
 
 /** Curated accent palette offered in the Design panel (all ≥ 4.5:1 on white). */

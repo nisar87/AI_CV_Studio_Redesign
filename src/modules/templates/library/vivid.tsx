@@ -115,7 +115,7 @@ const css = `
 .v-portrait{position:absolute;right:var(--margin);top:calc(46mm - var(--photo) * 0.62);width:var(--photo);height:var(--photo);border-radius:50%;border:3.2pt solid #fff;box-shadow:0 3pt 10pt rgba(0,0,0,.18);background:var(--accent-soft)}
 .cv-portrait--initials.v-portrait{color:var(--accent);font-family:var(--font-heading);font-weight:800;font-size:27pt;letter-spacing:-.01em}
 .v-contacts{padding:4.5mm calc(var(--margin) + var(--photo) + 6mm) 0 var(--margin);min-height:calc(var(--photo) * 0.38 + 2mm)}
-.v-contacts .cv-contacts{column-gap:0;row-gap:.35em;font-size:.93em;color:var(--ink-2)}
+.v-contacts .cv-contacts{column-gap:0;row-gap:.35em;font-size:.97em;color:var(--ink-2)}
 .v-contacts .cv-contact{padding-right:1.3em}
 html[data-photo="0"] .v-portrait:not(.cv-portrait--initials){display:none}
 .cv-page--rest::before{content:'';position:absolute;left:0;right:0;top:0;height:5pt;background:linear-gradient(90deg,var(--accent-deep),var(--accent))}

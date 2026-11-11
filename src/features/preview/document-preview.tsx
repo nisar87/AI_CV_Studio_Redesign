@@ -20,6 +20,8 @@ type Props = {
   onSelect?: (ref: string) => void;
   className?: string;
   title?: string;
+  /** Illustration only (gallery, thumbnails): hidden from assistive tech and not focusable. */
+  decorative?: boolean;
 };
 
 const GAP = 24;
@@ -37,6 +39,7 @@ export function DocumentPreview({
   onSelect,
   className,
   title = 'CV preview',
+  decorative = false,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const frames = useRef<(HTMLIFrameElement | null)[]>([null, null]);
@@ -127,8 +130,10 @@ export function DocumentPreview({
                 frames.current[i] = el;
               }}
               title={i === active ? title : `${title} (updating)`}
-              aria-hidden={i === active ? undefined : true}
-              tabIndex={i === active ? 0 : -1}
+              aria-hidden={i === active && !decorative ? undefined : true}
+              tabIndex={i === active && !decorative ? 0 : -1}
+              inert={decorative || i !== active ? true : undefined}
+              data-active={i === active ? '' : undefined}
               sandbox="allow-scripts"
               srcDoc={src}
               className="absolute top-0 left-0 origin-top-left border-0 bg-transparent"

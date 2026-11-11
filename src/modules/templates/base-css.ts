@@ -33,7 +33,15 @@ ul{list-style:none}
 .cv-body{flex:1 1 auto;min-height:0;display:flex;align-items:stretch}
 .cv-main{flex:1 1 auto;min-width:0;overflow:hidden}
 .cv-aside{flex:none;overflow:hidden}
-[data-block]{display:flow-root}
+/* Continuation pages without side-column content use the full width. */
+.cv-page.cv-page--wide .cv-main{padding-left:0;padding-right:0;border:0}
+/* Every block is positioned so Chrome paints (and PDF text extraction reads) blocks strictly in
+   document order. Without this, positioned children (e.g. bullet items) were painted after all
+   in-flow text, so extracted text listed every bullet after the last section. */
+[data-block]{display:flow-root;position:relative}
+a{color:inherit;text-decoration:none}
+p,li{text-wrap:pretty}
+h1,h2,h3{text-wrap:balance}
 .cv-foot{position:absolute;right:var(--margin);bottom:calc(var(--margin) * 0.42);font-size:7.5pt;
   color:var(--ink-3);letter-spacing:.04em;font-variant-numeric:tabular-nums}
 .cv-bullets li{position:relative;padding-left:1.05em}

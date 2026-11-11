@@ -74,15 +74,17 @@ function Header({ model }: TemplateComponentProps) {
 }
 
 const css = `
-:root{--side-w:56mm;--side-pad:7mm;--gap:9mm}
+:root{--side-w:50mm;--side-pad:6mm;--gap:8mm}
+.cv-page--wide::before{display:none}
+.cv-page--wide .a-running{margin-left:0}
 .cv-page::before{content:'';position:absolute;top:0;bottom:0;left:0;width:calc(var(--margin) + var(--side-w) + var(--side-pad));background:var(--accent-deep)}
 .cv-body{flex-direction:row-reverse}
-.cv-aside{width:var(--side-w);color:#fff;font-size:.93em}
+.cv-aside{width:var(--side-w);color:#fff;font-size:.95em}
 .cv-main{padding-left:calc(var(--side-pad) + var(--gap))}
-.a-header{display:flex;align-items:center;padding-bottom:9mm}
+.a-header{display:flex;align-items:center;padding-bottom:5mm}
 .a-header-side{width:calc(var(--side-w) + var(--side-pad));padding-right:var(--side-pad);display:flex;justify-content:center;flex:none}
 .a-header-main{padding-left:var(--gap);min-width:0;flex:1}
-.a-portrait{width:40mm;height:40mm;border-radius:50%;box-shadow:0 0 0 2.2pt var(--accent-deep),0 0 0 3.4pt rgba(255,255,255,.55)}
+.a-portrait{width:34mm;height:34mm;border-radius:50%;box-shadow:0 0 0 2.2pt var(--accent-deep),0 0 0 3.4pt rgba(255,255,255,.55)}
 .cv-portrait--initials.a-portrait{background:rgba(255,255,255,.1);color:#fff;font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:30pt;letter-spacing:.02em}
 .a-name{font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:2.95em;line-height:1.02;letter-spacing:-.015em;color:var(--ink)}
 .a-name span{display:block}

@@ -162,6 +162,7 @@ export function MyCvs() {
                   <DocumentPreview
                     doc={doc}
                     firstPageOnly
+                    decorative
                     debounceMs={0}
                     title={`Thumbnail of ${doc.title}`}
                   />

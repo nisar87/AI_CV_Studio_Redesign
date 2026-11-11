@@ -11,20 +11,25 @@
  * planPages(blocks, capacity) → { pages: number[][], overflow: number[] }
  * blocks: [{ height, keep: 'none' | 'with-next' | 'together' }]; capacity(pageIndex) → px.
  */
-export const PLAN_PAGES_JS = String.raw`function planPages(blocks, capacity) {
+export const PLAN_PAGES_JS = String.raw`function planPages(blocks, capacity, wideFrom) {
   var EPS = 0.5;
   var pages = [[]];
   var overflow = [];
   var used = 0;
   var i = 0;
+  // Pages from wideFrom on are full width (no side column): blocks may be shorter there.
+  function h(k, p) {
+    var b = blocks[k];
+    return wideFrom !== undefined && p >= wideFrom && b.wide != null ? b.wide : b.height;
+  }
   while (i < blocks.length) {
+    var page = pages.length - 1;
     var j = i;
-    var groupHeight = blocks[i].height;
+    var groupHeight = h(i, page);
     while (blocks[j].keep === 'with-next' && j + 1 < blocks.length) {
       j++;
-      groupHeight += blocks[j].height;
+      groupHeight += h(j, page);
     }
-    var page = pages.length - 1;
     var cap = capacity(page);
     var k;
     if (used + groupHeight <= cap + EPS) {
@@ -33,24 +38,24 @@ export const PLAN_PAGES_JS = String.raw`function planPages(blocks, capacity) {
       i = j + 1;
     } else if (pages[page].length === 0) {
       for (k = i; k <= j; k++) {
-        var h = blocks[k].height;
-        // A keep-with-next block (a heading) only goes where its successor fits too.
         var last = pages.length - 1;
-        var need = h;
-        if (blocks[k].keep === 'with-next' && k + 1 <= j && h + blocks[k + 1].height <= capacity(last + 1) + EPS) {
-          need = h + blocks[k + 1].height;
+        var hk = h(k, last);
+        var need = hk;
+        if (blocks[k].keep === 'with-next' && k + 1 <= j && h(k, last + 1) + h(k + 1, last + 1) <= capacity(last + 1) + EPS) {
+          need = hk + h(k + 1, last);
         }
         if (pages[last].length > 0 && used + need > capacity(last) + EPS) {
           pages.push([]);
           used = 0;
         } else if (pages[last].length === 0 && need > capacity(last) + EPS && need <= capacity(last + 1) + EPS) {
-          // Fits on a fuller page (e.g. page 1 is shorter because of the header): leave this one.
           pages.push([]);
           used = 0;
         }
-        if (h > capacity(pages.length - 1) + EPS) overflow.push(k);
-        pages[pages.length - 1].push(k);
-        used += h;
+        last = pages.length - 1;
+        hk = h(k, last);
+        if (hk > capacity(last) + EPS) overflow.push(k);
+        pages[last].push(k);
+        used += hk;
       }
       i = j + 1;
     } else {
@@ -145,15 +150,38 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     var capAside1 = p1.aside ? p1.aside.clientHeight : 0;
     var capAsideN = p2.aside ? p2.aside.clientHeight : 0;
 
-    var mainPlan = planPages(measureFlow(mainBlocks, p2.main), function (p) { return p === 0 ? capMain1 : capMainN; });
+    // Side column first: it decides from which page on the main column can use the full width.
     var asidePlan = hasAside
       ? planPages(measureFlow(asideBlocks, p2.aside), function (p) { return p === 0 ? capAside1 : capAsideN; })
       : { pages: [[]], overflow: [] };
+    var wideFrom;
+    var capMainWide = capMainN;
+    var mainMeasure;
+    if (hasAside) {
+      wideFrom = asidePlan.pages.length;
+      var p3 = makePage(false, false);
+      p3.page.className += ' cv-page--wide';
+      if (running) p3.top.appendChild(running.cloneNode(true));
+      measure.appendChild(p3.page);
+      capMainWide = p3.main.clientHeight;
+      var wide = measureFlow(mainBlocks, p3.main);
+      mainMeasure = measureFlow(mainBlocks, p2.main);
+      for (var q = 0; q < mainMeasure.length; q++) mainMeasure[q].wide = wide[q].height;
+    } else {
+      mainMeasure = measureFlow(mainBlocks, p2.main);
+    }
+    var mainPlan = planPages(
+      mainMeasure,
+      function (p) { return p === 0 ? capMain1 : wideFrom !== undefined && p >= wideFrom ? capMainWide : capMainN; },
+      wideFrom
+    );
 
     var total = Math.max(mainPlan.pages.length, asidePlan.pages.length);
     target.removeChild(measure);
     for (var p = 0; p < total; p++) {
-      var pg = makePage(p === 0, hasAside);
+      var isWide = hasAside && p > 0 && p >= wideFrom;
+      var pg = makePage(p === 0, hasAside && !isWide);
+      if (isWide) pg.page.className += ' cv-page--wide';
       if (p === 0 && header) pg.top.appendChild(header);
       else if (p > 0 && running) pg.top.appendChild(running.cloneNode(true));
       var mi = mainPlan.pages[p] || [];
@@ -187,6 +215,7 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
 
   document.addEventListener('click', function (ev) {
     var t = ev.target;
+    if (t && t.closest && t.closest('a')) ev.preventDefault();
     var ref = t && t.closest ? t.closest('[data-ref]') : null;
     if (ref && window.parent !== window) {
       window.parent.postMessage({ type: 'cv:select', ref: ref.getAttribute('data-ref') }, '*');

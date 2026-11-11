@@ -52,6 +52,18 @@ describe('planPages', () => {
     expect(pages[0]).toEqual([0, 1]);
   });
 
+  it('uses the shorter full-width heights from wideFrom on', () => {
+    const blocks = [
+      b(60),
+      { height: 60, keep: 'none' as const, wide: 40 },
+      { height: 60, keep: 'none' as const, wide: 40 },
+    ];
+    // Page 2+ is wide: the two blocks (40 + 40) fit together there.
+    expect(planPages(blocks, cap(100), 1).pages).toEqual([[0], [1, 2]]);
+    // Without wide pages they need a page each.
+    expect(planPages(blocks, cap(100)).pages).toEqual([[0], [1], [2]]);
+  });
+
   it('flags a single block taller than a page', () => {
     const { pages, overflow } = planPages([b(20), b(150), b(20)], cap(100));
     expect(pages).toEqual([[0], [1], [2]]);
