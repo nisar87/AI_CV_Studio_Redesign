@@ -40,3 +40,8 @@ Source: `github.com/nisar87/AI_CV_Studio` (inspected November 2026). Nothing fro
 - The template engine is the most important engineering investment (see `../engineering/template-engine.md`).
 - The AI layer is a set of narrow, schema-validated tasks rather than one "do everything" prompt (see `../engineering/ai-architecture.md`).
 - The first release is a calm, excellent CV builder that already feels AI-native; breadth comes later.
+
+
+## Correction (2026-11-12)
+
+This review filed the old app's accounts, Premium limits, manual payments and admin review under "premature platform work". That was wrong: they are the business model of a paid product. The *way* they were built was the problem (screen-by-screen checks, counters on the device, rules never deployed, side systems before paying users), not their existence. See `business-model-plan.md` for how the new product handles them.

@@ -59,6 +59,18 @@ MVP = Phases 1–4. First public release = Phases 5–6 + Phase 11 hardening. Gr
 
 ---
 
+## Revised sequence after Phase 4 (2026-11-12)
+
+AI CV Studio is a paid product. The phases below follow `product/business-model-plan.md`, which replaces the original Phase 5 and Phase 6 ordering:
+
+- **4b Accounts and plans**: Firebase Auth (existing project and users), one server-side entitlement gate, design/download/AI limits, server counters, deployed Firestore rules. AI switches back on for Premium only.
+- **4c Get Premium**: manual payments (JazzCash / EasyPaisa / bank), the `/admin/payments` page, time-limited passes.
+- **5a Import**: PDF/Word into the CV model (free allowance for free designs).
+- **5b Job tailoring**: Premium only.
+- **Later, only if data shows need**: cloud sync, card gateway, admin settings editor, cover letters (Phase 7+).
+
+Acceptance criteria are in the plan, section 6. The original Phase 5/6 text below is kept for reference.
+
 ## Phase 5 — Import and job tailoring
 Paste text import (`import.structure`), PDF/DOCX text extraction with paste fallback, JSON Resume import; master/version model; job ad analysis with evidence; tailored version creation with change review; plain-text export; CV review checklist.
 **Acceptance highlights:** imported content always reviewed before it is saved; master never modified by tailoring; every gap claim cites job-ad text.

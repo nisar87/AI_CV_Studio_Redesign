@@ -211,9 +211,11 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
 
 ## Next action (exact)
 
-1. Owner: put the key in `.env.local` as `GEMINI_API_KEY=…` (never commit it), then run `npm run ai:eval`. Send the summary line and the log file. If the model id is not available to the key, set `AI_MODEL_FAST` / `AI_MODEL_SMART` to an id listed in Google AI Studio.
-2. Review the log. Adjust prompts (bump the task `version`) or guard rules for any problem found, then mark Phase 4 criteria 3–4 complete.
-3. Then start **Phase 5 — Import and job tailoring** (`phase-5/import-tailoring`) per `delivery/roadmap.md`.
+1. **Owner:** answer the decisions in `product/business-model-plan.md` §8 (prices, free allowances, payment accounts, old users, old data).
+2. Then start **Phase 4b — Accounts and plans** on branch `phase-4b/accounts-plans`, per the plan's §4 and §6.
+3. Run the live AI evaluation (`npm run ai:eval`) during 4b, before AI is switched back on for Premium users.
+
+AI help is **paused in production** (owner decision, 2026-11-12) and the "free / no sign-up" claims are removed, until 4b lands.
 
 ## Deployment (2026-11-12)
 

@@ -24,6 +24,7 @@ This folder is the single source of truth for what we are building, why, and how
 | | [engineering/deployment.md](engineering/deployment.md) | Environments, hosting, CI/CD |
 | Delivery | [delivery/roadmap.md](delivery/roadmap.md) | Phases, scope, acceptance criteria |
 | | [delivery/git-workflow.md](delivery/git-workflow.md) | Branching, PRs, release discipline |
+| Business model | [product/business-model-plan.md](product/business-model-plan.md) | Paid product: accounts, Premium, manual payments, import — plan and roadmap |
 | Decisions | [adr/](adr/) | Architecture decision records (why we chose X over Y) |
 
 ## Product principles (non-negotiable)
