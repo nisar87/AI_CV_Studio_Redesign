@@ -234,8 +234,8 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
     It is stored in `config/business` with version history and cached for 60 s on the server.
   - **The gate:**
     - Pure `canUse` / `canUseDesign` decisions.
-    - Server-side `reserve` / `release`: atomic monthly counters in `users/{uid}/usage/{yyyy-mm}`, counted on success only.
-    - Premium passes in `users/{uid}/billing/pass`.
+    - Server-side `reserve` / `release`: atomic monthly counters in `usage/{uid}_{yyyy-mm}`, counted on success only.
+    - Premium passes in `passes/{uid}`.
     - Wired into `/api/pdf` (design tier, then download allowance) and `/api/ai/*` (Premium AI allowance).
     - `/api/me/entitlements` serves the display.
   - **UI:**
@@ -253,11 +253,37 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
     - AI is Premium-only (and still paused by `AI_PROVIDER=off`).
     - Sales are off until R1.4.
   - **Tests:** 109 unit tests, plus `entitlements.spec`: visitor, free limit, Premium-design gate, crafted requests refused, failed AI not counted, Premium usage counted. Every e2e test now runs as its own fresh account (`e2e/support/test.ts`), and the full suite passes.
-- Next: **R1.3 Admin Console v1**.
+  - **Live on aicvstudio.app (2026-11-12):** `/api/me/entitlements` answers from production config.
+- **R1.3 Admin Console v1 — built, deployed and verified on production (2026-11-12).**
+  - **`/admin`**, for accounts with the `admin` claim (checked by the server on every call):
+    - **Overview:** accounts, active Premium, this month's downloads and AI actions, switches, recently active users.
+    - **Users:** find by email; grant or extend Premium (7/30/90/365 days), remove Premium, reset this month's usage, block or allow sign-in.
+    - **Settings:**
+      - Plan limits per month.
+      - Design catalogue: shown or hidden, free or Premium, "new" mark.
+      - Premium passes and prices.
+      - Switches: sales, AI, import, sign-ups, maintenance.
+      - Site-wide announcement.
+    - Save is refused if someone else saved in between (version check). At least one design must stay free and shown.
+    - **History & audit:** every settings version, with restore; every admin action with a readable diff.
+  - **Switches now enforced:**
+    - Maintenance pauses all metered actions and shows a notice.
+    - Paused sign-ups refuse new accounts at session creation; existing accounts and admins still sign in.
+    - The announcement shows on every site page.
+  - **Firestore layout:** `passes/{uid}`, `usage/{uid}_{month}`, `config/business` (+ `versions`), `adminAudit`. All access is server-side.
+  - **Tests:**
+    - 113 unit tests (diff summary, maintenance).
+    - `e2e/admin.spec` (8 tests incl. axe on all four pages) runs in its own Playwright project after all others, because it changes site-wide settings.
+    - Full suite: 201 passed, 0 failed (127 skipped are the existing desktop-only/mobile-only cases).
+  - **Production check with the owner's admin session:**
+    - All admin endpoints return 200 and the pages render.
+    - Granting 7 days of Premium to the admin account made `/api/me/entitlements` report Premium at once; removing it returned Free.
+    - Both actions are in the audit log.
+- Next: **R1.4 Get Premium (manual payments)**.
 
 ## Next action (exact)
 
-1. Start **R1.2 Entitlement gate and config** on branch `r1/entitlements-config`.
+1. Start **R1.4 Get Premium** on branch `r1/premium`: `/premium` page, payment instructions from config, request form, Payments page in the Admin Console (approve → pass with expiry), then turn on `features.sales`.
 
 ## Deployment (2026-11-12)
 
@@ -275,7 +301,7 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
   - Deleted Cloud Functions: `gemini`, `extractlinkedinprofile`, `renderaiwowpdf`, `notificationsender`, `adminsetuserpremiumaccess`.
 - **Left untouched (separate products):** `career-os-*` services and their secrets.
 - **Old Firestore/Auth data:** not deleted. `career-os` shares the project, so wholesale deletion needs a separate check.
-- **AI help is ON in production** (2026-11-12, after `firebase apphosting:secrets:grantaccess GEMINI_API_KEY --backend aicvstudio`). Live checks on aicvstudio.app with real Gemini:
+- **AI help is paused in production** (`AI_PROVIDER: 'off'` in `apphosting.yaml`, owner decision 2026-11-12) until R1.6, when it reopens for Premium only. It was verified working earlier (2026-11-12, after `firebase apphosting:secrets:grantaccess GEMINI_API_KEY --backend aicvstudio`). Live checks on aicvstudio.app with real Gemini:
   - Both brief examples give sensible choices:
     - Teacher → teacher preset, blue accent, elegant (executive) font, "School Teacher".
     - Driver → driver preset, Clarity, "Delivery Driver".
