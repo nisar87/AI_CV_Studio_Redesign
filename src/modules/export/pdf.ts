@@ -51,6 +51,10 @@ async function launch(): Promise<Browser> {
       ],
     });
   }
+  // @sparticuz/chromium unpacks its bundled system libraries (NSS, expat…) only when it detects
+  // AWS Lambda/Vercel/Netlify. Cloud Run (Firebase App Hosting) lacks those libraries, so opt in
+  // explicitly; must be set before the module is first imported. Verified on Ubuntu 24.04.
+  process.env.AWS_LAMBDA_JS_RUNTIME ??= 'nodejs22.x';
   const chromium = (await import('@sparticuz/chromium')).default;
   return puppeteer.launch({
     executablePath: await chromium.executablePath(),
@@ -72,7 +76,15 @@ export async function chromiumAvailable(): Promise<boolean> {
   try {
     await getBrowser();
     return true;
-  } catch {
+  } catch (err) {
+    browserPromise = null;
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        area: 'pdf',
+        message: `Chromium launch failed: ${(err as Error).message}`.slice(0, 1000),
+      }),
+    );
     return false;
   }
 }
