@@ -43,6 +43,9 @@ export function DocumentPreview({
   const [width, setWidth] = useState(0);
   const [active, setActive] = useState(0);
   const activeRef = useRef(0);
+  // Build sequence per frame: only the newest document may become visible.
+  const slotSeq = useRef<[number, number]>([0, 0]);
+  const seq = useRef(0);
   const firstBuild = useRef(true);
   const [slots, setSlots] = useState<[string | null, string | null]>([null, null]);
   const [pages, setPages] = useState(1);
@@ -64,6 +67,7 @@ export function DocumentPreview({
         setSlots((s) => {
           const a = activeRef.current;
           const target = s[a] === null ? a : 1 - a;
+          slotSeq.current[target] = ++seq.current;
           return target === 0 ? [html, s[1]] : [s[0], html];
         });
       },
@@ -79,6 +83,7 @@ export function DocumentPreview({
       if (idx < 0 || typeof e.data !== 'object' || !e.data) return;
       if (e.data.type === 'cv:ready') {
         const result = e.data.result as PreviewStatus;
+        if ((slotSeq.current[idx] ?? 0) < (slotSeq.current[activeRef.current] ?? 0)) return; // stale document
         setPages(Math.max(1, result.pages));
         activeRef.current = idx;
         setActive(idx);

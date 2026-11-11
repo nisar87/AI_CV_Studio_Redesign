@@ -11,6 +11,7 @@ import {
 import { ButtonLink } from '@/components/ui/button';
 import { Container } from '@/components/ui/misc';
 import { PaperStack } from '@/features/home/paper-stack';
+import { ContinueCardClient } from '@/features/library/client';
 import { PROFESSIONS } from '@/modules/resume/professions';
 
 const STEPS = [
@@ -55,6 +56,7 @@ export default function HomePage() {
       <section className="relative overflow-hidden">
         <Container className="grid items-center gap-12 pt-10 pb-16 md:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:pt-20 lg:pb-24">
           <div className="flex flex-col items-start gap-6">
+            <ContinueCardClient />
             <p className="bg-primary-soft text-primary inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold">
               Free PDF download · No sign-up needed
             </p>
