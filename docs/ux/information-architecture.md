@@ -25,7 +25,7 @@ Rule: a user never needs more than **two clicks from Home to start writing**, an
 ## Navigation model
 
 ### Global (marketing and list pages)
-Top bar: logo (→ Home) · "My CVs" · "Templates" · "Help" · primary button **Create a CV**. On phones: logo, primary button, and a menu button opening the same links in a sheet.
+Top bar: logo (→ Home) · "My CVs" · "Designs" (route `/templates`) · "Help" · primary button **Create a CV**. On phones: logo, primary button, and a menu button opening the same links in a sheet.
 
 ### Focused (guided flow and editor)
 Global navigation is replaced by a slim **studio bar**: back to My CVs · CV name (click to rename) · save status ("Saved on this device") · Undo · Redo · **Download**. Reducing chrome keeps attention on the document.
