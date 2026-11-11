@@ -106,7 +106,11 @@ const css = `
 .b-compact.b-first,.b-skills.b-first{padding-top:1pt}
 .cv-main [data-block]:not(.b-heading){padding-left:calc(8pt + .55em + 4pt)}
 .cv-has-aside .cv-main{padding-right:7mm}
-.cv-has-aside .cv-aside{width:31%;margin-top:var(--section-gap);padding:0 5mm 5mm;border-radius:4mm;background:var(--accent-tint);font-size:.95em}
+.cv-has-aside .cv-aside{width:31%;margin-top:var(--section-gap);font-size:.95em}
+.cv-aside > [data-block]{background:var(--accent-tint);padding-left:5mm;padding-right:5mm;padding-bottom:2.5mm}
+.cv-aside > [data-block]:first-child{border-radius:4mm 4mm 0 0}
+.cv-aside > [data-block]:last-child{border-radius:0 0 4mm 4mm}
+.cv-aside > [data-block]:only-child{border-radius:4mm}
 .cv-has-aside .cv-page--rest .cv-aside{margin-top:0}
 .cv-aside .s-h{font-size:1.1em}
 .cv-aside .s-row{display:block}

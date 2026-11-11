@@ -11,6 +11,7 @@ _Last updated: 2026-11-11 (template design sprint)_
 | 2 Document model & template engine | `phase-2/template-engine` | ✅ Complete, merged to `main` |
 | 3 CV builder MVP | `phase-3/cv-builder` | ✅ Complete, merged to `main` |
 | 3b Signature templates (design sprint) | `phase-3b/signature-templates` | ✅ Complete, merged to `main` |
+| 3c External template review fixes | `phase-3c/template-review-fixes` | ✅ Complete, merged to `main` |
 | 4 AI assistance | `phase-4/ai-assist` | ⏳ Next — not started |
 
 ## Phase 0 report
@@ -85,6 +86,36 @@ _Last updated: 2026-11-11 (template design sprint)_
 **Verification (all green):** `npm run verify` (59 unit tests); 121 e2e tests including **103 PDF parity checks** (10 designs × 8 CVs on A4, × Letter, and with photos): preview pages = PDF pages, zero overflow, all fonts embedded as TrueType (no Type 3), text extractable, page sizes correct; photo add/hide/remove and 10-design picker flows; axe clean. `qa:templates` 170/170 combinations including photos and Letter.
 
 **Known limits:** sample portraits are illustrations; real photos should be checked in a moderated test. Designs are tuned for the five font pairs; very unusual colour choices are contrast-corrected but not every combination was reviewed by eye. Scores are the author's judgement — a blind comparison with real job seekers is recommended (see roadmap Phase 11).
+
+## Phase 3c — response to the external template review (2026-11-11)
+
+An independent review of the 10 sample PDFs scored the set 7.1–8.5 (average 7.8), against our own 9.5. Each point was checked against the actual PDFs before acting.
+
+**Accepted and fixed (verified):**
+- **PDF reading order (confirmed, serious):** bullets were extracted after all later sections in 9 of 10 designs because positioned list items are painted in a later pass. Every block is now positioned, so paint/extraction order equals document order. New e2e test per design checks that a job's first bullet extracts before the next job and education.
+- **No clickable links (confirmed):** phone, email and web links are now real `tel:` / `mailto:` / `https:` links in the PDF (checked by test). Links never navigate the preview.
+- **Text size:** body text raised to 9.8 / 10.5 / 11 pt (compact / balanced / airy).
+- **Empty side column on continuation pages (Vivid, confirmed):** pages after the side column's content now switch to full width; the planner measures each block at both widths. Applies to all side-column designs.
+- **Space allocation:** Atelier sidebar narrowed (≈ 37% → 33% of the page) and portrait/header reduced; Ledger label column 27% → 22%; Halo and Meridian headers compacted; Sprout's side panel now fits its content instead of the full page.
+- **Folio:** emails/URLs break only after "@" or "/" (never "example." | "com"); upright profile text; plain skills list.
+- **Heritage:** profile left-aligned for scanning; balanced line breaks in expertise.
+- **Chronicle:** stacked dates read as a range ("Sep 2020 –" / "Present"); larger contact text.
+- **Lone words on new lines** (e.g. "(B)"): balanced headings and "pretty" paragraph wrapping everywhere.
+- **Sample content:** engineer bullets no longer repeat across roles.
+- **Driver preset:** licences now come right after the profile (employers check them first).
+
+**Not accepted (with reason):**
+- *Section order complaints (Clarity licences, Ledger skills on page 2):* that is the CV's content order, which users control; only the driver default was changed.
+- *Unused space on short one-page CVs:* reflects short content, not the layout (partly mitigated by larger text).
+- *Ink-heavy sidebars/bands, pills and chips, "interface feel" of Sprout:* these are the deliberate identities of those designs; users who want restraint have Clarity, Chronicle and Heritage.
+- *"Continued" labels on page 2:* uncommon in CVs; the running header already names the candidate.
+- *Robustness "unproven":* the reviewer saw 10 PDFs; the QA harness renders 170 combinations, including a 60-character name, very long emails/URLs, a name-only CV, 3-page careers, Letter paper and photos. Stress PDFs are now delivered with the samples.
+
+**Still open (valid, not yet done):** PDF tagging is Chrome's default ("NonStruct"); accessible tagging needs a dedicated pass (Phase 11). Real-photo cropping has only been tested with illustrations.
+
+**Revised self-assessment:** our earlier 9.5 scores were too generous; the reviewer's average (7.8) was closer to the truth for those exports. After these fixes our estimate is **8.3–9.0** depending on the design (Chronicle, Clarity, Heritage, Ledger highest). The next step to justify 9+ is another independent review of the new PDFs, ideally with real job seekers.
+
+**Verification:** 60 unit tests; 141 e2e tests (incl. 103 parity checks and 10 new reading-order + link checks); `qa:templates` 170/170.
 
 ## Next action (exact)
 

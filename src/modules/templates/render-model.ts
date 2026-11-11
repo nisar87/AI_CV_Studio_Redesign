@@ -10,6 +10,8 @@ export type Contact = {
   kind: 'phone' | 'email' | 'location' | 'link';
   text: string;
   label?: string;
+  /** Link target for PDFs (tel:, mailto:, https:). */
+  href?: string;
 };
 
 export type REntry = {
@@ -128,18 +130,36 @@ function entriesOf(section: Section, locale: string): REntry[] {
   }
 }
 
+/** Only http(s) links are made clickable; anything else stays plain text. */
+function toHref(url: string): string | undefined {
+  const u = clean(url);
+  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(u) ? u : `https://${u}`;
+  return /^https?:\/\/[^\s]+\.[^\s]+/i.test(withScheme) ? withScheme : undefined;
+}
+
 const hasContent = (e: REntry) =>
   Boolean(e.title || e.subtitle || e.bullets.length || e.tags.length || e.label);
 
 export function toRenderModel(doc: ResumeDocument): RenderModel {
   const b = doc.basics;
   const contacts: Contact[] = [];
-  if (clean(b.phone)) contacts.push({ kind: 'phone', text: clean(b.phone) });
-  if (clean(b.email)) contacts.push({ kind: 'email', text: clean(b.email) });
+  if (clean(b.phone))
+    contacts.push({
+      kind: 'phone',
+      text: clean(b.phone),
+      href: `tel:${clean(b.phone).replace(/[^\d+]/g, '')}`,
+    });
+  if (clean(b.email))
+    contacts.push({ kind: 'email', text: clean(b.email), href: `mailto:${clean(b.email)}` });
   if (clean(b.location)) contacts.push({ kind: 'location', text: clean(b.location) });
   for (const l of b.links)
     if (clean(l.url))
-      contacts.push({ kind: 'link', text: displayUrl(l.url), label: clean(l.label) });
+      contacts.push({
+        kind: 'link',
+        text: displayUrl(l.url),
+        label: clean(l.label),
+        href: toHref(l.url),
+      });
 
   const sections: RSection[] = [];
   if (clean(b.summary))

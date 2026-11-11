@@ -73,14 +73,14 @@ function Header({ model }: TemplateComponentProps) {
 const css = `
 :root{--aside-w:31%;--gutter:8mm}
 .ha-header{display:flex;flex-direction:column;align-items:center;text-align:center;padding-bottom:2mm}
-.ha-portrait{width:30mm;height:30mm;border-radius:50%;margin-bottom:4.5mm;box-shadow:0 0 0 2.6pt #fff,0 0 0 3.5pt var(--accent),0 0 0 6pt #fff,0 0 0 6.6pt var(--accent-line)}
+.ha-portrait{width:25mm;height:25mm;border-radius:50%;margin-bottom:3.5mm;box-shadow:0 0 0 2.6pt #fff,0 0 0 3.5pt var(--accent),0 0 0 6pt #fff,0 0 0 6.6pt var(--accent-line)}
 .cv-portrait--initials.ha-portrait{background:var(--accent-soft);color:var(--accent);font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:24pt;letter-spacing:.04em}
 .ha-name{font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:2.7em;line-height:1.08;letter-spacing:.005em;color:var(--ink)}
 .ha-headline{margin-top:.5em;font-size:.86em;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
-.ha-header .cv-contacts-wrap{margin-top:4mm}
-.ha-header .cv-contacts{justify-content:center;margin-left:0;column-gap:1.4em;row-gap:.3em;font-size:.92em;color:var(--ink-2)}
+.ha-header .cv-contacts-wrap{margin-top:3mm}
+.ha-header .cv-contacts{justify-content:center;margin-left:0;column-gap:1.4em;row-gap:.3em;font-size:.96em;color:var(--ink-2)}
 .ha-header .cv-contact{padding-left:0}
-.ha-ornament{display:flex;justify-content:center;align-items:center;gap:6pt;margin-top:5mm;width:100%}
+.ha-ornament{display:flex;justify-content:center;align-items:center;gap:6pt;margin-top:3.5mm;width:100%}
 .ha-ornament::before,.ha-ornament::after{content:'';flex:1;height:.6pt;background:var(--accent-line)}
 .ha-ornament span{width:5pt;height:5pt;transform:rotate(45deg);background:var(--accent)}
 .cv-top--running{padding-bottom:3mm}

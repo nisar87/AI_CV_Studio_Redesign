@@ -60,6 +60,7 @@ export function TemplateGallery() {
               <DocumentPreview
                 doc={withTemplate(base, t.id, sample)}
                 firstPageOnly
+                decorative
                 debounceMs={0}
                 title={`${t.name} design with an example ${SAMPLES[sample].label.toLowerCase()} CV`}
               />

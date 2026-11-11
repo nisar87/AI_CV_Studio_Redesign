@@ -40,7 +40,7 @@ export const PRESETS: Record<PresetId, Preset> = {
   driver: {
     id: 'driver',
     headlineExample: 'Delivery Driver',
-    sections: [T.experience, T.licences, T.skills, T.education],
+    sections: [T.licences, T.experience, T.skills, T.education],
     suggestedExtras: [T.languages, T.certifications],
     design: { templateId: 'clarity', accent: '#1f4e8c', fontPair: 'modern' },
     hints: {

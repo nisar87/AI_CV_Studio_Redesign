@@ -79,7 +79,7 @@ function Header({ model }: TemplateComponentProps) {
 }
 
 const css = `
-:root{--label-w:27%}
+:root{--label-w:22%}
 body{counter-reset:sec}
 .l-header{padding-bottom:5.5mm;border-bottom:2.6pt solid var(--ink)}
 .l-masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:8mm}

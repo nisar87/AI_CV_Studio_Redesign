@@ -89,7 +89,7 @@ test.describe('template engine parity (desktop only)', () => {
 
 test('Designs page renders all three templates with real content', async ({ page }) => {
   await page.goto('/templates');
-  const frames = page.locator('iframe[title*="design with an example"]:not([aria-hidden])');
+  const frames = page.locator('iframe[title*="design with an example"][data-active]');
   await expect(frames).toHaveCount(TEMPLATE_IDS.length);
   for (let i = 0; i < TEMPLATE_IDS.length; i++) {
     await expect(frames.nth(i).contentFrame().locator('html[data-cv-ready]')).toHaveCount(1);
@@ -113,4 +113,28 @@ test('health endpoint reports Chromium', async ({ request }) => {
   const res = await request.get('/api/health');
   expect(res.status()).toBe(200);
   expect((await res.json()).checks.chromium).toBe('ok');
+});
+
+test.describe('PDF text order and links (desktop only)', () => {
+  test.skip(({ isMobile }) => isMobile || !hasPoppler, 'Needs poppler; runs once');
+  for (const templateId of TEMPLATE_IDS) {
+    test(`${templateId}: bullets extract directly under their job, contacts are links`, async ({
+      request,
+    }) => {
+      const doc = structuredClone(FIXTURES.driver);
+      doc.design = { ...doc.design, templateId: templateId as never };
+      const res = await request.post('/api/pdf', { data: { document: doc } });
+      const pdf = Buffer.from(await res.body());
+      const raw = pdfTool('pdftotext', pdf, ['-raw']).replace(/\s+/g, ' ');
+      const firstBullet = raw.indexOf('Deliver around 120 parcels');
+      const secondJob = raw.indexOf('Courier Driver');
+      const education = raw.indexOf('GCSEs including English');
+      expect(firstBullet, 'first bullet present').toBeGreaterThan(-1);
+      expect(firstBullet, 'bullet comes before the next job').toBeLessThan(secondJob);
+      expect(secondJob, 'work history comes before education').toBeLessThan(education);
+      const body = pdf.toString('latin1');
+      expect(body).toMatch(/\/URI\s*\(mailto:imran\.qureshi@example\.com\)/);
+      expect(body).toMatch(/\/URI\s*\(tel:07700900123\)/);
+    });
+  }
 });

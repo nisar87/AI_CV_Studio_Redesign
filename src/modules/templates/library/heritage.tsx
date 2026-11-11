@@ -73,7 +73,7 @@ const css = `
 .h-headline{margin-top:.45em;font-size:.88em;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);font-weight:600}
 .h-header .cv-contact:first-child{padding-left:0}
 .h-header .cv-contact:first-child .cv-sep{display:none}
-.h-header .cv-contacts{justify-content:center;margin-left:0;margin-top:.9em;font-size:.92em;color:var(--ink-2)}
+.h-header .cv-contacts{justify-content:center;margin-left:0;margin-top:.9em;font-size:.97em;color:var(--ink-2)}
 .h-header .cv-sep{color:var(--accent-line)}
 .cv-top--running{padding-bottom:4pt}
 .h-running{text-align:center;font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:1.1em;letter-spacing:.04em;color:var(--ink-2);border-bottom:.5pt solid var(--accent-line);padding-bottom:4pt}
@@ -93,10 +93,10 @@ const css = `
 .cv-bullets{color:var(--ink-2)}
 .cv-bullets li+li{margin-top:2pt}
 .cv-bullets li::before{border-radius:0;transform:rotate(45deg);width:.28em;height:.28em}
-.h-summary{color:var(--ink-2);text-align:center;padding:0 4%;font-size:1.03em}
+.h-summary{color:var(--ink-2);font-size:1.03em}
 .h-strong{font-weight:600;color:var(--ink)}
 .h-muted{color:var(--ink-3)}
-.h-skills{color:var(--ink-2);text-align:center}
+.h-skills{color:var(--ink-2);text-align:center;text-wrap:balance}
 `;
 
 export const heritage: TemplateDefinition = {

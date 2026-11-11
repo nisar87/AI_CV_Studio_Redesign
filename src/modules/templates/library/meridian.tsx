@@ -76,12 +76,13 @@ function Header({ model }: TemplateComponentProps) {
 const css = `
 :root{--aside-w:31%;--gutter:7mm}
 .cv-top--header{margin:calc(-1 * var(--margin)) calc(-1 * var(--margin)) 0;position:relative;z-index:1}
-.m-header{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8mm;background:linear-gradient(100deg,var(--accent-deep),var(--accent));color:#fff;padding:calc(var(--margin) * 0.95) var(--margin) calc(var(--margin) * 0.75 + 6mm);clip-path:polygon(0 0,100% 0,100% calc(100% - 6mm),0 100%)}
+.m-header{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8mm;background:linear-gradient(100deg,var(--accent-deep),var(--accent));color:#fff;padding:calc(var(--margin) * 0.8) var(--margin) calc(var(--margin) * 0.6 + 5mm);clip-path:polygon(0 0,100% 0,100% calc(100% - 5mm),0 100%)}
+.cv-page--wide::before{display:none}
 .m-id{min-width:0;flex:1}
-.m-portrait{width:29mm;height:29mm;border-radius:50%;border:2.4pt solid rgba(255,255,255,.9)}
+.m-portrait{width:26mm;height:26mm;border-radius:50%;border:2.4pt solid rgba(255,255,255,.9)}
 .m-name{font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:2.6em;line-height:1.06;letter-spacing:-.01em}
 .m-headline{margin-top:.28em;font-size:1.16em;font-weight:500;opacity:.92}
-.m-header .cv-contacts{margin-top:.8em;font-size:.92em;color:rgba(255,255,255,.9)}
+.m-header .cv-contacts{margin-top:.7em;font-size:.97em;color:rgba(255,255,255,.9)}
 .m-header .cv-sep{color:rgba(255,255,255,.45)}
 .m-header .cv-contacts-wrap{overflow:hidden}
 .cv-top--running{padding-bottom:4pt}

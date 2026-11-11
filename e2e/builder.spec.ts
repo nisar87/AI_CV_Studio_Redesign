@@ -47,6 +47,12 @@ test('J1: a delivery driver creates, edits and downloads a CV without an account
   await page.getByLabel('Town or city').fill('Leicester');
   await continueStep(page);
 
+  // Licences
+  await page
+    .getByRole('textbox', { name: 'Licence or card' })
+    .fill('Full UK driving licence (B, C1)');
+  await continueStep(page);
+
   // Work history
   await expect(
     page.getByRole('heading', { level: 1, name: 'Where have you worked?' }),
@@ -60,12 +66,6 @@ test('J1: a delivery driver creates, edits and downloads a CV without an account
     .getByLabel('What did you do?')
     .fill('Delivered around 120 parcels a day\nPlanned routes to meet delivery slots');
   await axeClean(page);
-  await continueStep(page);
-
-  // Licences
-  await page
-    .getByRole('textbox', { name: 'Licence or card' })
-    .fill('Full UK driving licence (B, C1)');
   await continueStep(page);
 
   // Skills via suggestions

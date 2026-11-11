@@ -26,7 +26,7 @@ const hooks: TemplateHooks = {
       <div className="ch-entry-head">
         {e.dates && (
           <p className="ch-when">
-            <span>{from}</span>
+            <span>{to ? `${from} –` : from}</span>
             {to && <span className="ch-to">{to}</span>}
           </p>
         )}
@@ -98,7 +98,7 @@ const css = `
 .ch-headline{margin-top:.3em;font-size:1.18em;font-weight:500;color:var(--accent)}
 .ch-portrait{width:28mm;height:28mm;border-radius:50%;box-shadow:0 0 0 2pt #fff,0 0 0 3.2pt var(--accent)}
 .ch-contact-bar{margin-top:5mm;background:var(--accent-tint);border-radius:3pt;padding:6pt 9pt;border-left:2.5pt solid var(--accent)}
-.ch-contact-bar .cv-contacts{column-gap:0;row-gap:.3em;font-size:.92em;color:var(--ink-2)}
+.ch-contact-bar .cv-contacts{column-gap:0;row-gap:.3em;font-size:.97em;color:var(--ink-2)}
 .ch-contact-bar .cv-contact{padding-right:1.3em}
 .cv-top--running{padding-bottom:3mm}
 .ch-running{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.6pt solid var(--accent-line);padding-bottom:3pt;font-size:.85em;color:var(--ink-3)}

@@ -473,12 +473,26 @@ export const graduate = build(
   ],
 );
 
-const eng = (n: number) => [
-  `Designed and led delivery of a service handling ${n} million requests a day with 99.95% availability`,
-  'Mentored engineers through code review, pairing and design reviews',
-  'Introduced contract tests between services, cutting integration incidents',
-  'Worked with product and support teams to prioritise reliability work',
-];
+const eng = (n: number) =>
+  ({
+    40: [
+      'Designed and led delivery of a payments service handling 40 million requests a day with 99.95% availability',
+      'Mentored eight engineers through code review, pairing and design reviews',
+      'Introduced contract tests between services, cutting integration incidents by half',
+      'Set up on-call and incident reviews with product and support teams',
+    ],
+    12: [
+      'Owned the dispatch API handling 12 million requests a day',
+      'Reduced p95 latency from 900 ms to 180 ms by redesigning caching and queries',
+      'Ran the hiring loop for backend engineers and onboarded six new starters',
+      'Worked with operations to prioritise reliability work over new features during peak season',
+    ],
+    2: [
+      'Built the reconciliation service that matched 2 million ledger entries a day',
+      'Replaced nightly batch jobs with event-driven processing, cutting delays from hours to minutes',
+      'Wrote the team’s first testing guidelines and raised coverage on core modules',
+    ],
+  })[n] ?? [];
 
 export const engineer = build(
   'engineer',
