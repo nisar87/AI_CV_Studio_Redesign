@@ -1,0 +1,184 @@
+import { newId } from './create';
+import type { Basics, DesignSpec, ResumeDocument, Section, SectionKind } from './schema';
+
+/**
+ * Pure document operations. Every edit in the UI goes through one of these, which keeps
+ * undo/redo, autosave and tests simple. All functions return a new document.
+ */
+
+type Item = Section['items'][number];
+
+const touch = (doc: ResumeDocument, patch: Partial<ResumeDocument>): ResumeDocument => ({
+  ...doc,
+  ...patch,
+});
+
+function move<T>(xs: T[], from: number, to: number): T[] {
+  if (from < 0 || from >= xs.length || to < 0 || to >= xs.length || from === to) return xs;
+  const out = xs.slice();
+  const [x] = out.splice(from, 1);
+  out.splice(to, 0, x!);
+  return out;
+}
+
+function mapSection(
+  doc: ResumeDocument,
+  sectionId: string,
+  fn: (s: Section) => Section,
+): ResumeDocument {
+  return touch(doc, { sections: doc.sections.map((s) => (s.id === sectionId ? fn(s) : s)) });
+}
+
+export function emptyItem(kind: SectionKind): Item {
+  const id = newId();
+  switch (kind) {
+    case 'experience':
+    case 'volunteering':
+      return {
+        id,
+        role: '',
+        organization: '',
+        location: '',
+        start: '',
+        end: '',
+        current: false,
+        bullets: [],
+      };
+    case 'education':
+      return {
+        id,
+        qualification: '',
+        institution: '',
+        location: '',
+        start: '',
+        end: '',
+        details: [],
+      };
+    case 'skills':
+      return { id, label: '', keywords: [] };
+    case 'languages':
+      return { id, language: '', fluency: '' };
+    case 'certifications':
+    case 'licences':
+    case 'awards':
+      return { id, name: '', issuer: '', date: '', detail: '' };
+    case 'projects':
+      return { id, name: '', role: '', link: '', start: '', end: '', bullets: [] };
+    case 'custom':
+      return { id, title: '', subtitle: '', date: '', bullets: [] };
+  }
+}
+
+export const ops = {
+  rename(doc: ResumeDocument, title: string) {
+    return touch(doc, { title });
+  },
+  updateBasics(doc: ResumeDocument, patch: Partial<Basics>) {
+    return touch(doc, { basics: { ...doc.basics, ...patch } });
+  },
+  addLink(doc: ResumeDocument) {
+    return ops.updateBasics(doc, {
+      links: [...doc.basics.links, { id: newId(), label: '', url: '' }],
+    });
+  },
+  updateLink(doc: ResumeDocument, linkId: string, patch: { label?: string; url?: string }) {
+    return ops.updateBasics(doc, {
+      links: doc.basics.links.map((l) => (l.id === linkId ? { ...l, ...patch } : l)),
+    });
+  },
+  removeLink(doc: ResumeDocument, linkId: string) {
+    return ops.updateBasics(doc, { links: doc.basics.links.filter((l) => l.id !== linkId) });
+  },
+
+  addSection(
+    doc: ResumeDocument,
+    kind: SectionKind,
+    title: string,
+    index = doc.sections.length,
+  ): { doc: ResumeDocument; sectionId: string } {
+    const section = {
+      id: newId(),
+      kind,
+      title,
+      hidden: false,
+      items: [emptyItem(kind)],
+    } as Section;
+    const sections = doc.sections.slice();
+    sections.splice(index, 0, section);
+    return { doc: touch(doc, { sections }), sectionId: section.id };
+  },
+  removeSection(doc: ResumeDocument, sectionId: string) {
+    return touch(doc, { sections: doc.sections.filter((s) => s.id !== sectionId) });
+  },
+  moveSection(doc: ResumeDocument, sectionId: string, delta: -1 | 1) {
+    const i = doc.sections.findIndex((s) => s.id === sectionId);
+    return touch(doc, { sections: move(doc.sections, i, i + delta) });
+  },
+  renameSection(doc: ResumeDocument, sectionId: string, title: string) {
+    return mapSection(doc, sectionId, (s) => ({ ...s, title }));
+  },
+  setSectionHidden(doc: ResumeDocument, sectionId: string, hidden: boolean) {
+    return mapSection(doc, sectionId, (s) => ({ ...s, hidden }));
+  },
+
+  addItem(doc: ResumeDocument, sectionId: string): { doc: ResumeDocument; itemId: string } {
+    let itemId = '';
+    const next = mapSection(doc, sectionId, (s) => {
+      const item = emptyItem(s.kind);
+      itemId = item.id;
+      return { ...s, items: [...s.items, item] } as Section;
+    });
+    return { doc: next, itemId };
+  },
+  updateItem(
+    doc: ResumeDocument,
+    sectionId: string,
+    itemId: string,
+    patch: Record<string, unknown>,
+  ) {
+    return mapSection(
+      doc,
+      sectionId,
+      (s) =>
+        ({
+          ...s,
+          items: s.items.map((it) => (it.id === itemId ? { ...it, ...patch } : it)),
+        }) as Section,
+    );
+  },
+  removeItem(doc: ResumeDocument, sectionId: string, itemId: string) {
+    return mapSection(
+      doc,
+      sectionId,
+      (s) => ({ ...s, items: s.items.filter((it) => it.id !== itemId) }) as Section,
+    );
+  },
+  moveItem(doc: ResumeDocument, sectionId: string, itemId: string, delta: -1 | 1) {
+    return mapSection(doc, sectionId, (s) => {
+      const i = s.items.findIndex((it) => it.id === itemId);
+      return { ...s, items: move(s.items as Item[], i, i + delta) } as Section;
+    });
+  },
+
+  setDesign(doc: ResumeDocument, patch: Partial<DesignSpec>) {
+    return touch(doc, {
+      design: {
+        ...doc.design,
+        ...patch,
+        options: { ...doc.design.options, ...(patch.options ?? {}) },
+      },
+    });
+  },
+};
+
+/** Duplicate a document with fresh ids. */
+export function duplicateDocument(doc: ResumeDocument, now = new Date()): ResumeDocument {
+  const iso = now.toISOString();
+  return {
+    ...structuredClone(doc),
+    id: newId(),
+    title: `${doc.title} (copy)`,
+    createdAt: iso,
+    updatedAt: iso,
+  };
+}

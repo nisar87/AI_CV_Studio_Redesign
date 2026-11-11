@@ -12,7 +12,12 @@ export type BuildOptions = {
   fonts: FontSource;
   /** Origin allowed for font loading in the document CSP (preview mode). */
   fontOrigin?: string;
+  /** Open the browser print dialog once pages are ready (Print fallback). */
+  autoPrint?: boolean;
 };
+
+const AUTO_PRINT_JS =
+  '(function(){var n=0;var t=setInterval(function(){if(window.__CV_READY__||++n>100){clearInterval(t);window.print();}},100);})();';
 
 const escapeHtml = (s: string) =>
   s.replace(
@@ -82,6 +87,6 @@ export function buildDocumentHtml(doc: ResumeDocument, opts: BuildOptions): stri
 <style>${fontFaceCss(design.fontPairId, opts.fonts)}</style>
 <style>${designCssVars(design)}${baseCss(design)}${template.css}</style>
 </head>
-<body>${body}<script>${RUNTIME_JS}</script></body>
+<body>${body}<script>${RUNTIME_JS}</script>${opts.autoPrint ? `<script>${AUTO_PRINT_JS}</script>` : ''}</body>
 </html>`;
 }
