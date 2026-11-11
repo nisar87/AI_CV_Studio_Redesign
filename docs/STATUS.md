@@ -1,6 +1,6 @@
 # Project Status (checkpoint)
 
-_Last updated: 2026-11-12 (Phase 4 — AI assistance, Gemini)_
+_Last updated: 2026-11-12 (live on Firebase App Hosting at aicvstudio.app)_
 
 ## Current state
 
@@ -215,7 +215,28 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
 2. Review the log. Adjust prompts (bump the task `version`) or guard rules for any problem found, then mark Phase 4 criteria 3–4 complete.
 3. Then start **Phase 5 — Import and job tailoring** (`phase-5/import-tailoring`) per `delivery/roadmap.md`.
 
+## Deployment (2026-11-12)
+
+- **Production:** https://aicvstudio.app.
+  - Firebase project `ai-cv-studio`, App Hosting backend `aicvstudio` in europe-west4.
+  - Deploys automatically from GitHub `nisar87/AI_CV_Studio_Redesign`, branch `main`.
+- **Verified on the live domain:** HTTPS; all pages return 200; `/api/health` reports chromium ok; a real PDF downloads (1 page, fonts embedded).
+- **Fix needed for Cloud Run:** `@sparticuz/chromium` must unpack its bundled libraries (`AWS_LAMBDA_JS_RUNTIME` opt-in in `src/modules/export/pdf.ts`).
+- **DNS (Namecheap):**
+  - A record `@` changed to `35.219.200.104`.
+  - Added the `fah-claim` TXT record and the `_acme-challenge_…` CNAME.
+  - Email records (privateemail MX/SPF/DKIM, Firebase mail DKIM) unchanged.
+- **Old Flutter site removed (owner approved):**
+  - `aicvstudio.app` detached from the Hosting site.
+  - Deleted Cloud Functions: `gemini`, `extractlinkedinprofile`, `renderaiwowpdf`, `notificationsender`, `adminsetuserpremiumaccess`.
+  - The old static files still exist at `ai-cv-studio.web.app` (default Hosting site, cannot be deleted from the console; `firebase hosting:disable` takes it offline).
+- **Left untouched (separate products):** `career-os-*` services and their secrets.
+- **Old Firestore/Auth data:** not deleted. `career-os` shares the project, so wholesale deletion needs a separate check.
+- **AI help is OFF in production.** The backend cannot yet read secret `GEMINI_API_KEY`: two builds failed with `fah/misconfigured-secret` even after granting Secret Accessor. To enable it:
+  1. Run `firebase apphosting:secrets:grantaccess GEMINI_API_KEY --backend aicvstudio --project ai-cv-studio` (adds the roles the build also needs).
+  2. Uncomment the `GEMINI_API_KEY` block in `apphosting.yaml`.
+
 ## Known blockers
 
-- **GitHub push access:** this session was not granted push access to `nisar87/AI_CV_Studio_Redesign`, so phase branches were built, verified and merged locally and delivered as `ai-cv-studio.bundle` (all branches and tags) in `D:\Projects\ai_cv_studio_redesign`. Nothing has been pushed; no PRs or GitHub CI runs exist yet. See the root `README.md` → "Publishing this repository".
+- **GitHub:** all branches are pushed to `nisar87/AI_CV_Studio_Redesign` (2026-11-12). Tags could not be pushed from this session (proxy refuses tag refs); they are in `ai-cv-studio.bundle` — run `git push origin --tags` from a local clone.
 - **CI not yet run on GitHub:** `.github/workflows/ci.yml` is written and every step was run locally, but it has never executed on GitHub Actions.
