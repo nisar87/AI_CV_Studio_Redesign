@@ -79,3 +79,26 @@ ai_usage(id, user_id?, device_hash, task, input_tokens, output_tokens, created_a
 ## Migrations
 
 `schemaVersion` increments on breaking changes. `migrate(doc: unknown): ResumeDocument` upgrades step by step and is run on every read (browser and server). Each migration has a fixture test.
+
+## Accounts and cloud documents (Release 1 · R1.1, 2026-11-12)
+
+The server writes all of these with the Admin SDK. Browsers never access Firestore directly, so no client security rules are needed for them.
+
+| Path | Contents |
+|---|---|
+| `users/{uid}` | `email`, `name`, `lastSeenAt`, `studioV2: true` (merged — fields from the old app are left untouched) |
+| `users/{uid}/documents/{id}` | `{ updatedAt, deleted, title, doc: ResumeDocument, serverUpdatedAt }` — `deleted: true` is a tombstone so deletions reach other devices |
+| `users/{uid}/documents/{id}/versions/{auto}` | `{ savedAt, doc }`. The last 10 replaced versions are kept |
+
+**Sync rules** (`src/features/account/sync.ts`):
+
+- Editing stays local and instant. While signed in, each save is pushed after about 1.2 s.
+- On sign-in, the account and this device are merged:
+  - Documents made before sign-in move into the account.
+  - The newer edit wins.
+  - An older edit that arrives late is never lost: it is saved as "(copy from this device)".
+- Signing out removes only this account's documents from the device.
+
+**Sessions:** the Firebase ID token is exchanged for an httpOnly `__session` cookie (14 days, revocation checked). Every API route calls `currentUser()` or `requireUser()`.
+
+**Tests:** e2e runs against the Firebase Auth emulator and the in-memory store (`DATA_STORE=memory`). Production uses Firestore (`DATA_STORE` unset).

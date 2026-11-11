@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server';
 
 export type ErrorCode =
   | 'INVALID_INPUT'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'LIMIT_REACHED'
   | 'PAYLOAD_TOO_LARGE'
   | 'RATE_LIMITED'
   | 'AI_UNAVAILABLE'
@@ -12,6 +16,10 @@ export type ErrorCode =
 
 const STATUS: Record<ErrorCode, number> = {
   INVALID_INPUT: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  LIMIT_REACHED: 402,
   PAYLOAD_TOO_LARGE: 413,
   RATE_LIMITED: 429,
   AI_UNAVAILABLE: 503,

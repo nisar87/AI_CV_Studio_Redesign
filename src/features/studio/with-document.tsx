@@ -5,6 +5,7 @@ import { FileQuestion } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import { getRepository } from '@/modules/storage/repository';
+import { useAccount } from '@/features/account/account-context';
 
 /** Loads a CV from this browser. Rendered client-side only (see studio pages). */
 export function WithDocument({
@@ -14,7 +15,13 @@ export function WithDocument({
   id: string;
   children: (doc: ResumeDocument) => ReactNode;
 }) {
-  const [doc] = useState(() => getRepository().get(id));
+  const [initial] = useState(() => getRepository().get(id));
+  const account = useAccount();
+  // On a new device the CV may still be arriving from the account.
+  const doc = initial ?? (account.synced ? getRepository().get(id) : null);
+  const waiting =
+    !doc && (account.status === 'loading' || (account.status === 'signedIn' && !account.synced));
+  if (waiting) return <StudioLoading />;
   if (!doc) return <MissingDocument />;
   return <>{children(doc)}</>;
 }
@@ -30,8 +37,8 @@ export function MissingDocument() {
       </span>
       <h1 className="font-display text-3xl font-semibold">We can’t find this CV</h1>
       <p className="text-ink-muted max-w-md">
-        CVs are saved in the browser where they were made. It may have been deleted, or made on
-        another device or browser.
+        It may have been deleted, or made on another device while you were signed out. Sign in to
+        see the CVs saved to your account.
       </p>
       <div className="flex gap-3">
         <ButtonLink href="/cv">My CVs</ButtonLink>

@@ -1,0 +1,59 @@
+import { NextResponse } from 'next/server';
+import { apiError, clientKey, createRateLimiter, readJson, requestId } from '@/lib/http';
+import {
+  AuthError,
+  clearSessionCookie,
+  createSessionCookie,
+  currentUser,
+  revokeSessions,
+  setSessionCookie,
+} from '@/modules/identity/session';
+import { getUserStore } from '@/modules/store';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const limiter = createRateLimiter({ capacity: 20, refillPerMinute: 10 });
+
+/** POST { idToken } → sets the session cookie. */
+export async function POST(req: Request) {
+  const rid = requestId();
+  if (!limiter(clientKey(req)).ok)
+    return apiError('RATE_LIMITED', 'Too many sign-in attempts. Please wait a minute.', rid);
+  const body = await readJson(req, 8 * 1024);
+  const idToken = body.ok ? (body.value as { idToken?: unknown })?.idToken : undefined;
+  if (typeof idToken !== 'string' || idToken.length > 4096)
+    return apiError('INVALID_INPUT', 'Invalid request.', rid);
+  try {
+    const session = await createSessionCookie(idToken);
+    await setSessionCookie(session.value, session.maxAge);
+    await getUserStore()
+      .touchUser(session.uid, { email: session.email, name: session.name })
+      .catch((e: Error) =>
+        console.error(
+          JSON.stringify({ level: 'error', route: '/api/session', rid, message: e.message }),
+        ),
+      );
+    return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch (err) {
+    if (err instanceof AuthError) return apiError('UNAUTHORIZED', err.message, rid);
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        route: '/api/session',
+        rid,
+        message: (err as Error).message,
+      }),
+    );
+    return apiError('INTERNAL', 'We couldn’t sign you in just now. Please try again.', rid);
+  }
+}
+
+/** DELETE → signs out (this device; ?everywhere=1 revokes all sessions). */
+export async function DELETE(req: Request) {
+  const user = await currentUser();
+  if (user && new URL(req.url).searchParams.get('everywhere') === '1')
+    await revokeSessions(user.uid).catch(() => {});
+  await clearSessionCookie();
+  return NextResponse.json({ ok: true });
+}

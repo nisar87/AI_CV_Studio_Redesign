@@ -12,7 +12,11 @@ export type DocumentSummary = Pick<
   templateId: ResumeDocument['design']['templateId'];
 };
 
+export type RepositoryEvent = { type: 'save' | 'remove'; id: string };
+
 export interface DocumentRepository {
+  /** Notified after every local save/remove (used by cloud sync). Returns an unsubscribe. */
+  subscribe(listener: (e: RepositoryEvent) => void): () => void;
   list(): DocumentSummary[];
   get(id: string): ResumeDocument | null;
   save(doc: ResumeDocument): void;
@@ -34,7 +38,19 @@ const QUARANTINE = 'cvstudio:v1:quarantine:';
 type KV = Pick<Storage, 'getItem' | 'setItem' | 'removeItem' | 'key'> & { readonly length: number };
 
 export class BrowserDocumentRepository implements DocumentRepository {
+  private listeners = new Set<(e: RepositoryEvent) => void>();
   constructor(private readonly store: KV) {}
+
+  subscribe(listener: (e: RepositoryEvent) => void) {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private emit(e: RepositoryEvent) {
+    this.listeners.forEach((l) => l(e));
+  }
 
   private keys(): string[] {
     const out: string[] = [];
@@ -78,10 +94,12 @@ export class BrowserDocumentRepository implements DocumentRepository {
 
   save(doc: ResumeDocument): void {
     this.store.setItem(PREFIX + doc.id, JSON.stringify(doc));
+    this.emit({ type: 'save', id: doc.id });
   }
 
   remove(id: string): void {
     this.store.removeItem(PREFIX + id);
+    this.emit({ type: 'remove', id });
   }
 
   exportAll(): BackupFile {

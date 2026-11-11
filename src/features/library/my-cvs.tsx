@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Copy, Download, FileText, Pencil, Trash2, Upload } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Button, ButtonLink } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { duplicateDocument } from '@/modules/resume/ops';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import { getRepository } from '@/modules/storage/repository';
 import { getTemplate } from '@/modules/templates/registry';
+import { useAccount } from '@/features/account/account-context';
 
 function load(): ResumeDocument[] {
   const repo = getRepository();
@@ -37,7 +38,11 @@ export function MyCvs() {
   const [docs, setDocs] = useState<ResumeDocument[]>(load);
   const fileInput = useRef<HTMLInputElement>(null);
   const refresh = () => setDocs(load());
+  // CVs can also arrive from the account (sync on another device).
+  useEffect(() => getRepository().subscribe(() => setDocs(load())), []);
   const repo = getRepository();
+  const account = useAccount();
+  const signedIn = account.status === 'signedIn';
 
   const remove = (doc: ResumeDocument) => {
     repo.remove(doc.id);
@@ -97,7 +102,9 @@ export function MyCvs() {
     <div className="flex flex-col gap-6">
       <Banner
         tone="info"
-        title="Your CVs are saved in this browser"
+        title={
+          signedIn ? 'Your CVs are saved to your account' : 'Your CVs are saved in this browser'
+        }
         action={
           <div className="flex flex-wrap gap-2">
             {docs.length > 0 && (
@@ -134,8 +141,28 @@ export function MyCvs() {
           </div>
         }
       >
-        Clearing your browser data removes them. Keep a backup to be safe or to move to another
-        device.
+        {signedIn ? (
+          <>
+            They appear on every device where you sign in
+            {account.sync === 'syncing'
+              ? ' · Saving…'
+              : account.sync === 'offline'
+                ? ' · Offline, will save when you’re back online'
+                : ''}
+            .
+          </>
+        ) : (
+          <>
+            Clearing your browser data removes them.{' '}
+            <Link
+              href="/signin?next=/cv"
+              className="text-primary font-semibold underline underline-offset-4"
+            >
+              Sign in
+            </Link>{' '}
+            to keep them safe in your account and use them on other devices.
+          </>
+        )}
       </Banner>
 
       {docs.length === 0 ? (

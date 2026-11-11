@@ -3,6 +3,7 @@ import '@fontsource-variable/figtree';
 import '@fontsource-variable/fraunces';
 import '@/styles/globals.css';
 import { ToastProvider } from '@/components/ui/toast';
+import { AccountProvider } from '@/features/account/account-context';
 
 export const metadata: Metadata = {
   title: {
@@ -24,7 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <AccountProvider>{children}</AccountProvider>
+        </ToastProvider>
       </body>
     </html>
   );
