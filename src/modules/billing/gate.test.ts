@@ -58,6 +58,21 @@ describe('entitlement gate', () => {
     });
   });
 
+  it('maintenance mode pauses every metered action, even unlimited ones', () => {
+    const m = { ...cfg, features: { ...cfg.features, maintenance: true } };
+    const unlimited = {
+      ...m,
+      plans: {
+        ...m.plans,
+        premium: { ...m.plans.premium, limits: { ...m.plans.premium.limits, 'pdf.download': -1 } },
+      },
+    };
+    expect(canUse('premium', unlimited, 'pdf.download', 0)).toMatchObject({
+      ok: false,
+      reason: 'disabled',
+    });
+  });
+
   it('falls back to defaults for invalid stored config', () => {
     expect(parseConfig({ plans: 'broken' })).toEqual(DEFAULT_CONFIG);
   });

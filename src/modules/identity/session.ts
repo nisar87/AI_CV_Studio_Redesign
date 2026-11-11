@@ -50,6 +50,7 @@ export async function createSessionCookie(idToken: string) {
     uid: decoded.uid,
     email: decoded.email ?? null,
     name: (decoded.name as string | undefined) ?? null,
+    admin: decoded.admin === true,
   };
 }
 

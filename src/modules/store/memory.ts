@@ -7,6 +7,7 @@ import {
   type UserStore,
   type Pass,
   type ConfigVersion,
+  type AuditEntry,
 } from './types';
 
 /** In-memory store for development and tests (one per server process). */
@@ -22,7 +23,13 @@ export class MemoryUserStore implements UserStore {
   }
 
   async touchUser(uid: string, info: { email: string | null; name: string | null }) {
+    this.users.delete(uid);
     this.users.set(uid, info);
+    this.seen?.set(uid, new Date().toISOString());
+  }
+
+  async knownUser(uid: string) {
+    return this.users.has(uid);
   }
 
   async listDocs(uid: string): Promise<DocSummary[]> {
@@ -117,5 +124,33 @@ export class MemoryUserStore implements UserStore {
   }
   async listConfigVersions(area: string) {
     return structuredClone(this.config.get(area) ?? []);
+  }
+
+  private audit: AuditEntry[] = [];
+  private seen = new Map<string, string>();
+
+  async writeAudit(entry: Omit<AuditEntry, 'id'>) {
+    this.audit.unshift({ id: String(this.audit.length + 1), ...structuredClone(entry) });
+  }
+  async listAudit(limit: number) {
+    return structuredClone(this.audit.slice(0, limit));
+  }
+  async listPasses() {
+    return [...this.passes.entries()].map(([uid, p]) => ({ ...p, uid }));
+  }
+  async usageTotals(month: string) {
+    const out: Record<string, number> = {};
+    for (const [k, v] of this.usage)
+      if (k.endsWith(`/${month}`))
+        for (const [c, n] of Object.entries(v)) out[c] = (out[c] ?? 0) + n;
+    return out;
+  }
+  async userStats() {
+    const recent = [...this.users.entries()].map(([uid, u]) => ({
+      uid,
+      email: u.email,
+      lastSeenAt: this.seen.get(uid) ?? null,
+    }));
+    return { total: this.users.size, recent: recent.reverse().slice(0, 50) };
   }
 }

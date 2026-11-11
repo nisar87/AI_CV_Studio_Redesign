@@ -20,9 +20,17 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop',
+      testIgnore: /admin\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },
-    { name: 'mobile', use: { ...devices['Pixel 7'] } },
+    { name: 'mobile', testIgnore: /admin\.spec\.ts/, use: { ...devices['Pixel 7'] } },
+    {
+      // Admin tests change site-wide settings (maintenance, sign-ups), so they run alone, last.
+      name: 'admin',
+      testMatch: /admin\.spec\.ts/,
+      dependencies: ['desktop', 'mobile'],
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+    },
   ],
   webServer: [
     {

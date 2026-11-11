@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { adminAuth } from '@/lib/firebase-admin';
 import { businessConfig, DEFAULT_CONFIG } from '@/modules/billing/config';
 import { invalidateConfigCache } from '@/modules/billing/server';
 import { currentUser } from '@/modules/identity/session';
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * End-to-end test hooks. Exists only when E2E_TEST_HOOKS=1 AND the in-memory store is in use, so
- * it can never touch production data. Body: { premium?: boolean, config?: BusinessConfig }.
+ * it can never touch production data. Body: { premium?, config?, resetConfig?, admin? }.
  */
 const enabled = () => process.env.E2E_TEST_HOOKS === '1' && process.env.DATA_STORE === 'memory';
 
@@ -19,6 +20,7 @@ export async function POST(req: Request) {
     premium?: boolean;
     config?: unknown;
     resetConfig?: boolean;
+    admin?: boolean;
   };
   const store = getUserStore();
   if (body.resetConfig) {
@@ -46,6 +48,12 @@ export async function POST(req: Request) {
           }
         : null,
     );
+  }
+  if (body.admin !== undefined) {
+    // Auth emulator only (hooks are off in production); the caller signs in again to pick it up.
+    const user = await currentUser();
+    if (!user) return NextResponse.json({ error: 'sign in first' }, { status: 401 });
+    await adminAuth().setCustomUserClaims(user.uid, body.admin ? { admin: true } : null);
   }
   return NextResponse.json({ ok: true });
 }
