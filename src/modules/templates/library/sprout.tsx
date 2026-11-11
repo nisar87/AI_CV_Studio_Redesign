@@ -1,4 +1,5 @@
 import {
+  MetaText,
   ContactList,
   joinParts,
   Portrait,
@@ -13,6 +14,7 @@ import type { TemplateDefinition } from '../types';
  */
 
 const hooks: TemplateHooks = {
+  splitSkills: true,
   heading: (s) => (
     <h2 className="s-h">
       <span className="s-mark" aria-hidden="true" />
@@ -30,7 +32,11 @@ const hooks: TemplateHooks = {
         <p className="s-sub">
           {e.title && e.subtitle && <span className="s-org">{e.subtitle}</span>}
           {e.title && e.subtitle && e.meta && <span className="s-dot"> · </span>}
-          {e.meta && <span className="s-meta">{e.meta}</span>}
+          {e.meta && (
+            <span className="s-meta">
+              <MetaText e={e} />
+            </span>
+          )}
         </p>
       ) : null}
     </div>
@@ -116,7 +122,8 @@ const css = `
 .cv-aside .s-row{display:block}
 .cv-aside .s-row .s-dates{display:inline-block;margin-top:1pt;background:#fff}
 .cv-aside .s-tags li{background:#fff}
-.s-row{display:flex;justify-content:space-between;align-items:baseline;gap:.9em}
+.s-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;column-gap:.9em;row-gap:2pt}
+.s-title{flex:1 1 auto}
 .s-title{font-family:var(--font-body);font-size:1.07em;font-weight:700;color:var(--ink)}
 .s-dates{flex:none;font-size:.82em;font-weight:600;color:var(--accent-deep);background:var(--accent-tint);border-radius:10pt;padding:.5pt 7pt;white-space:nowrap;font-variant-numeric:tabular-nums}
 .s-sub{margin-top:.08em;font-size:.97em}

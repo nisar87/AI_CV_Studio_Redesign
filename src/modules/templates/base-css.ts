@@ -15,7 +15,7 @@ ul{list-style:none}
 .cv-measure{position:absolute;left:-20000px;top:0;visibility:hidden}
 [data-cv-pages]{display:flex;flex-direction:column;align-items:flex-start;gap:24px}
 .cv-page{position:relative;width:var(--page-w);height:var(--page-h);background:#fff;overflow:hidden;
-  display:flex;flex-direction:column;padding:var(--margin)}
+  display:flex;flex-direction:column;padding:var(--margin) var(--margin) calc(var(--margin) + 2.5mm)}
 .cv-top{flex:none;position:relative;z-index:1}
 .cv-body{position:relative;z-index:1}
 .cv-decor{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
@@ -40,9 +40,13 @@ ul{list-style:none}
    in-flow text, so extracted text listed every bullet after the last section. */
 [data-block]{display:flow-root;position:relative}
 a{color:inherit;text-decoration:none}
+/* Continuation chunk of a split skill group: sits directly under the previous chunk. */
+.b-skills.b-cont{padding-top:3.5pt}
+/* Continuation headers: keep name and role apart; stack them when they don't fit side by side. */
+.cv-top--running > *{column-gap:2.5em;flex-wrap:wrap}
 p,li{text-wrap:pretty}
 h1,h2,h3{text-wrap:balance}
-.cv-foot{position:absolute;right:var(--margin);bottom:calc(var(--margin) * 0.42);font-size:7.5pt;
+.cv-foot{position:absolute;right:var(--margin);bottom:calc(var(--margin) * 0.45);font-size:7.5pt;
   color:var(--ink-3);letter-spacing:.04em;font-variant-numeric:tabular-nums}
 .cv-bullets li{position:relative;padding-left:1.05em}
 .cv-bullets li::before{content:'';position:absolute;left:.15em;top:calc(var(--lh) * 0.5em - 0.11em);

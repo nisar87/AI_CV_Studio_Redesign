@@ -12,6 +12,7 @@ _Last updated: 2026-11-11 (template design sprint)_
 | 3 CV builder MVP | `phase-3/cv-builder` | ✅ Complete, merged to `main` |
 | 3b Signature templates (design sprint) | `phase-3b/signature-templates` | ✅ Complete, merged to `main` |
 | 3c External template review fixes | `phase-3c/template-review-fixes` | ✅ Complete, merged to `main` |
+| 3d Pagination & edge-case polish (2nd review) | `phase-3d/pagination-polish` | ✅ Complete, merged to `main` |
 | 4 AI assistance | `phase-4/ai-assist` | ⏳ Next — not started |
 
 ## Phase 0 report
@@ -116,6 +117,22 @@ An independent review of the 10 sample PDFs scored the set 7.1–8.5 (average 7.
 **Revised self-assessment:** our earlier 9.5 scores were too generous; the reviewer's average (7.8) was closer to the truth for those exports. After these fixes our estimate is **8.3–9.0** depending on the design (Chronicle, Clarity, Heritage, Ledger highest). The next step to justify 9+ is another independent review of the new PDFs, ideally with real job seekers.
 
 **Verification:** 60 unit tests; 141 e2e tests (incl. 103 parity checks and 10 new reading-order + link checks); `qa:templates` 170/170.
+
+## Phase 3d — response to the second independent review
+
+Second review: collection ≈ 8.5/10 (Clarity 8.8, Ledger 8.7, Halo 8.7, Folio 8.6, Meridian 8.6, Vivid 8.5, Atelier 8.4, Sprout 8.4, Chronicle 8.2, Heritage 8.1). All five priority points were verified in the PDFs and accepted.
+
+1. **Near-empty extra pages (Chronicle graduate, Heritage executive — a regression from the larger text):** the paginator now runs a bounded *fit* pass when the last page would hold < 30% content: up to two steps of tighter section/entry gaps (−20%/−38%), margins (−8%/−16%) and line height (−0.03/−0.06). Text size and section order are never changed; the page is only removed if everything fits with zero overflow. Both cases are now one page (e2e regression test).
+2. **Oversized side-column groups (Atelier, Vivid, Sprout extreme):** skill groups longer than 8 split into chunks of 6 at item boundaries; the label stays with the first chunk; chunks are independent for pagination (an earlier rule that glued ≤ 4 list blocks together had re-joined them). e2e test checks "Skill 1" is on page 1.
+3. **Continuation header (Clarity extreme):** every running header now has a guaranteed 2.5em gap and wraps (stacks) when name + role don't fit.
+4. **Links beyond the header:** project URLs are now PDF links (e2e checks `github.com/dokafor/tokenbucket`).
+5. **Meridian continuation sidebar:** on continuation pages the tint ends with the side-column content instead of filling the page.
+
+Also from the review: protected gap above the page number (+2.5 mm bottom space on every page); Sprout dates move under long titles instead of squeezing them; Halo and Folio dates/details slightly larger and darker.
+
+**Evidence provided this time:** samples, stress tests and US Letter exports (teacher, engineer, extreme) for all 10 designs. With the current type sizes the longest fixture is 2 pages; no fixture produces 3 pages any more.
+
+**Verification:** 60 unit tests; 144 e2e tests; `qa:templates` 190 renders (A4 ± photo, Letter): no overflow, no near-empty last page, no Type 3 fonts.
 
 ## Next action (exact)
 

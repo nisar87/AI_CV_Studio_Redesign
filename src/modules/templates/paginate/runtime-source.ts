@@ -124,20 +124,56 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     }
     return out;
   }
-  function paginate() {
+  var state = null;
+  // Capture the source once; later runs move the same nodes back before laying out again.
+  function capture() {
+    if (state) return state;
     var source = document.querySelector('[data-cv-source]');
     var target = document.querySelector('[data-cv-pages]');
-    if (!source || !target) return;
-    var header = source.querySelector('[data-slot="header"]');
-    var running = source.querySelector('[data-slot="running"]');
+    if (!source || !target) return null;
+    var mainFlow = source.querySelector('[data-flow="main"]');
+    var asideFlow = source.querySelector('[data-flow="aside"]');
+    state = {
+      source: source,
+      target: target,
+      header: source.querySelector('[data-slot="header"]'),
+      running: source.querySelector('[data-slot="running"]'),
+      mainFlow: mainFlow,
+      asideFlow: asideFlow,
+      mainBlocks: blocksOf(mainFlow),
+      asideBlocks: blocksOf(asideFlow)
+    };
     decorSource = source.querySelector('[data-slot="decor"]');
-    var mainBlocks = blocksOf(source.querySelector('[data-flow="main"]'));
-    var asideBlocks = blocksOf(source.querySelector('[data-flow="aside"]'));
+    return state;
+  }
+  function restore(st) {
+    var i;
+    if (st.header) st.source.insertBefore(st.header, st.source.firstChild);
+    for (i = 0; i < st.mainBlocks.length; i++) st.mainFlow.appendChild(st.mainBlocks[i]);
+    if (st.asideFlow) for (i = 0; i < st.asideBlocks.length; i++) st.asideFlow.appendChild(st.asideBlocks[i]);
+    st.target.innerHTML = '';
+    st.source.style.display = '';
+  }
+  function sum(blocks, idx, wide) {
+    var h = 0;
+    for (var i = 0; i < idx.length; i++) {
+      var b = blocks[idx[i]];
+      h += wide && b.wide != null ? b.wide : b.height;
+    }
+    return h;
+  }
+
+  function layout(st) {
+    restore(st);
+    var header = st.header;
+    var running = st.running;
+    var mainBlocks = st.mainBlocks;
+    var asideBlocks = st.asideBlocks;
     var hasAside = asideBlocks.length > 0;
+    var target = st.target;
     document.documentElement.classList.toggle('cv-has-aside', hasAside);
 
     var measure = el('div', 'cv-measure');
-    target.innerHTML = '';
     target.appendChild(measure);
     var p1 = makePage(true, hasAside);
     var p2 = makePage(false, hasAside);
@@ -151,8 +187,9 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     var capAsideN = p2.aside ? p2.aside.clientHeight : 0;
 
     // Side column first: it decides from which page on the main column can use the full width.
+    var asideMeasure = hasAside ? measureFlow(asideBlocks, p2.aside) : [];
     var asidePlan = hasAside
-      ? planPages(measureFlow(asideBlocks, p2.aside), function (p) { return p === 0 ? capAside1 : capAsideN; })
+      ? planPages(asideMeasure, function (p) { return p === 0 ? capAside1 : capAsideN; })
       : { pages: [[]], overflow: [] };
     var wideFrom;
     var capMainWide = capMainN;
@@ -170,11 +207,8 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     } else {
       mainMeasure = measureFlow(mainBlocks, p2.main);
     }
-    var mainPlan = planPages(
-      mainMeasure,
-      function (p) { return p === 0 ? capMain1 : wideFrom !== undefined && p >= wideFrom ? capMainWide : capMainN; },
-      wideFrom
-    );
+    function capMain(p) { return p === 0 ? capMain1 : wideFrom !== undefined && p >= wideFrom ? capMainWide : capMainN; }
+    var mainPlan = planPages(mainMeasure, capMain, wideFrom);
 
     var total = Math.max(mainPlan.pages.length, asidePlan.pages.length);
     target.removeChild(measure);
@@ -191,23 +225,64 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
       if (pg.aside) for (k = 0; k < ai.length; k++) pg.aside.appendChild(asideBlocks[ai[k]]);
       if (total > 1) pg.page.querySelector('.cv-foot').textContent = (p + 1) + ' / ' + total;
       target.appendChild(pg.page);
+      // Height of side-column content, for designs whose column background should end with it.
+      if (pg.aside) pg.page.style.setProperty('--aside-h', sum(asideMeasure, ai, false) + 'px');
     }
-    source.style.display = 'none';
+    st.source.style.display = 'none';
 
-    var lastFill = 1;
-    if (total === 2 && mainPlan.pages.length === 2) {
-      var h = 0;
-      var last = mainPlan.pages[1];
-      for (var m = 0; m < last.length; m++) h += mainBlocks[last[m]].getBoundingClientRect().height;
-      lastFill = capMainN > 0 ? h / capMainN : 1;
-    }
-    var result = {
+    // How full is the last page? (largest of its columns)
+    var lp = total - 1;
+    var fillMain = lp < mainPlan.pages.length ? sum(mainMeasure, mainPlan.pages[lp], wideFrom !== undefined && lp >= wideFrom) / capMain(lp) : 0;
+    var fillAside = hasAside && lp < asidePlan.pages.length ? sum(asideMeasure, asidePlan.pages[lp], false) / (lp === 0 ? capAside1 : capAsideN) : 0;
+    return {
       pages: total,
       overflow: mainPlan.overflow.length + asidePlan.overflow.length,
-      nearlyFits: total === 2 && lastFill < 0.12
+      lastFill: Math.max(fillMain, fillAside)
+    };
+  }
+
+  // Bounded "fit" steps: slightly tighter spacing (never smaller text) to avoid a near-empty last page.
+  var FIT_STEPS = [
+    { gap: 0.8, margin: 0.92, lh: 0.03 },
+    { gap: 0.62, margin: 0.84, lh: 0.06 }
+  ];
+  var LAST_PAGE_MAX_FILL = 0.3;
+  function applyFit(f) {
+    var st = document.documentElement.style;
+    st.setProperty('--fit-gap', f ? String(f.gap) : '1');
+    st.setProperty('--fit-margin', f ? String(f.margin) : '1');
+    st.setProperty('--fit-lh', f ? String(f.lh) : '0');
+  }
+
+  function paginate() {
+    var st = capture();
+    if (!st) return;
+    applyFit(null);
+    var r = layout(st);
+    var fitted = 0;
+    if (r.pages > 1 && r.lastFill < LAST_PAGE_MAX_FILL) {
+      for (var i = 0; i < FIT_STEPS.length; i++) {
+        applyFit(FIT_STEPS[i]);
+        var t = layout(st);
+        if (t.pages < r.pages && t.overflow === 0) {
+          r = t;
+          fitted = i + 1;
+          break;
+        }
+      }
+      if (!fitted) {
+        applyFit(null);
+        r = layout(st);
+      }
+    }
+    var result = {
+      pages: r.pages,
+      overflow: r.overflow,
+      fitted: fitted,
+      nearlyFits: r.pages > 1 && r.lastFill < 0.12
     };
     window.__CV_READY__ = result;
-    document.documentElement.setAttribute('data-cv-ready', String(total));
+    document.documentElement.setAttribute('data-cv-ready', String(r.pages));
     try {
       if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'cv:ready', result: result }, '*');
     } catch (e) {}

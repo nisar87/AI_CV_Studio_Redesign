@@ -138,3 +138,60 @@ test.describe('PDF text order and links (desktop only)', () => {
     });
   }
 });
+
+test.describe('pagination polish regressions (desktop only)', () => {
+  test.skip(({ isMobile }) => isMobile, 'Runs once');
+  async function render(
+    page: import('@playwright/test').Page,
+    baseURL: string,
+    doc: ReturnType<typeof structuredClone<typeof FIXTURES.driver>>,
+  ) {
+    await page.goto('/help');
+    await page.setContent(buildDocumentHtml(doc, { fonts: { kind: 'url', baseUrl: baseURL } }));
+    await page.waitForFunction(
+      () => (window as unknown as { __CV_READY__?: unknown }).__CV_READY__ !== undefined,
+    );
+    return page.evaluate(
+      () =>
+        (window as unknown as { __CV_READY__: { pages: number; nearlyFits: boolean } })
+          .__CV_READY__,
+    );
+  }
+
+  test('a small overflow is absorbed by tighter spacing instead of a near-empty page', async ({
+    page,
+    baseURL,
+  }) => {
+    for (const [templateId, fixture, photo] of [
+      ['chronicle', 'graduate', true],
+      ['heritage', 'executive', false],
+    ] as const) {
+      const base = photo ? withPhoto(FIXTURES[fixture], PHOTO_FOR[fixture]) : FIXTURES[fixture];
+      const doc = structuredClone(base);
+      doc.design = { ...doc.design, templateId };
+      expect((await render(page, baseURL!, doc)).pages, `${templateId} × ${fixture}`).toBe(1);
+    }
+  });
+
+  test('large skill groups split so page 1 side columns are used', async ({ page, baseURL }) => {
+    for (const templateId of ['atelier', 'vivid', 'sprout'] as const) {
+      const doc = structuredClone(FIXTURES.extreme);
+      doc.design = { ...doc.design, templateId };
+      await render(page, baseURL!, doc);
+      const firstPage = page.locator('.cv-page').first();
+      await expect(
+        firstPage.getByText('Skill 1 with words', { exact: true }),
+        templateId,
+      ).toHaveCount(1);
+    }
+  });
+
+  test('project URLs are clickable in the PDF', async ({ request }) => {
+    test.skip(!hasPoppler, 'Needs poppler');
+    const doc = structuredClone(FIXTURES.engineer);
+    doc.design = { ...doc.design, templateId: 'clarity' };
+    const res = await request.post('/api/pdf', { data: { document: doc } });
+    const body = Buffer.from(await res.body()).toString('latin1');
+    expect(body).toMatch(/\/URI\s*\(https:\/\/github\.com\/dokafor\/tokenbucket\)/);
+  });
+});
