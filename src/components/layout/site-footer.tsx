@@ -9,8 +9,7 @@ export function SiteFooter() {
         <div className="flex max-w-sm flex-col gap-3">
           <Logo />
           <p className="text-ink-muted text-sm">
-            A professional CV in your own words. Free to download, honest by design, and saved on
-            your device.
+            A professional CV in your own words. Honest by design, and saved on your device.
           </p>
         </div>
         <nav aria-label="Footer" className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm">
