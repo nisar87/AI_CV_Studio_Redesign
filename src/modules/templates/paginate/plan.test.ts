@@ -40,6 +40,18 @@ describe('planPages', () => {
     expect(overflow).toEqual([]);
   });
 
+  it('never strands a heading when its content only fits on a later, taller page', () => {
+    // Page 1 is short (header); heading + big block fit only on page 2.
+    const { pages, overflow } = planPages([b(10, 'with-next'), b(80)], cap(60, 100));
+    expect(pages).toEqual([[], [0, 1]]);
+    expect(overflow).toEqual([]);
+  });
+
+  it('keeps a heading with its block when the chain is broken', () => {
+    const { pages } = planPages([b(10, 'with-next'), b(70, 'with-next'), b(60)], cap(100));
+    expect(pages[0]).toEqual([0, 1]);
+  });
+
   it('flags a single block taller than a page', () => {
     const { pages, overflow } = planPages([b(20), b(150), b(20)], cap(100));
     expect(pages).toEqual([[0], [1], [2]]);

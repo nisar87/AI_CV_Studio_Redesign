@@ -6,6 +6,8 @@ const chromePath = process.env.CHROME_EXECUTABLE_PATH;
 export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,
+  // Preview documents load fonts and paginate before assertions can pass; allow for busy CI machines.
+  expect: { timeout: 10_000 },
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',

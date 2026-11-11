@@ -6,7 +6,7 @@ Priority expresses importance — **P0** must be in the MVP (Phases 1–4), **P1
 
 > A person with no CV and no technical knowledge can describe what they do, answer a short guided set of questions, receive a professional CV in a strong template, adjust its look in plain-language terms, get honest AI help with wording, and download a PDF identical to what they saw — without creating an account.
 
-MVP explicitly **excludes**: accounts and cloud sync, payments, uploads/import of existing files, job tailoring, cover letters, portfolios, photos, multi-language UI. These are deliberate cuts to keep the first release excellent.
+MVP explicitly **excludes**: accounts and cloud sync, payments, uploads/import of existing files, job tailoring, cover letters, portfolios, multi-language UI. These are deliberate cuts to keep the first release excellent.
 
 ## Inventory
 
@@ -26,12 +26,12 @@ MVP explicitly **excludes**: accounts and cloud sync, payments, uploads/import o
 | Import: paste text | P1 | 5 | AI-structured, user-confirmed |
 | Import: PDF/DOCX upload | P1 | 5 | Text extraction; fall back to paste |
 | Import: JSON Resume file | P1 | 5 | Cheap and useful for technical users |
-| Profile photo | P2 | 8 | Off by default (many markets discourage photos) |
+| Profile photo | P0 | 3b | Optional; 9 of 10 designs can show it; resized locally |
 
 ### Design Studio
 | Feature | Priority | Phase | Notes |
 |---|---|---|---|
-| 3 launch templates, all ATS-safe | P0 | 2 | Clarity (single column), Meridian (sidebar), Heritage (serif executive) |
+| 10 designs, all ATS-safe, each with a signature idea | P0 | 2–3b | See `../engineering/template-engine.md` |
 | Template switch without losing content | P0 | 2–3 | Guaranteed by data/design separation |
 | Accent colour (curated palette + custom with contrast guard) | P0 | 3 | |
 | Font pairing (4–5 curated pairs) | P0 | 3 | |
@@ -39,7 +39,7 @@ MVP explicitly **excludes**: accounts and cloud sync, payments, uploads/import o
 | Style cards ("Calm & classic"…) for non-designers | P0 | 3 | Presets over the above controls |
 | Describe your style in words → validated design spec | P0 | 4 | AI chooses from supported options only |
 | 2–3 AI alternatives to compare | P1 | 4 | |
-| Additional templates (to 6–8 total) | P1 | 8 | Only after passing the quality checklist |
+| Additional templates beyond 10 | P2 | 8 | Only after passing the quality checklist |
 | Section-level layout options (e.g. skills as list/columns) | P2 | 8 | |
 
 ### Export and sharing

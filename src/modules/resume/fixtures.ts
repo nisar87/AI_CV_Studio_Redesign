@@ -2,6 +2,7 @@
  * Realistic fixture CVs spanning professions, lengths and edge cases.
  * Used by tests, the template gallery and visual QA. All people and companies are fictional.
  */
+import { SAMPLE_PHOTOS } from './fixture-photos';
 import { getPreset } from './presets';
 import type { PresetId } from './professions';
 import { designSpec, type ResumeDocument, type Section } from './schema';
@@ -41,6 +42,7 @@ function build(
       phone: '',
       location: '',
       summary: '',
+      photo: '',
       ...basics,
       links: (basics.links ?? []).map((l) => ({ ...l, id: id('l') })),
     },
@@ -765,6 +767,25 @@ export const extreme = build(
     },
   ],
 );
+
+/** Same CV with a sample portrait (for designs that show photos). */
+export function withPhoto(
+  doc: ResumeDocument,
+  which: keyof typeof SAMPLE_PHOTOS = 'a',
+): ResumeDocument {
+  return { ...doc, basics: { ...doc.basics, photo: SAMPLE_PHOTOS[which] } };
+}
+
+export const PHOTO_FOR: Record<string, keyof typeof SAMPLE_PHOTOS> = {
+  driver: 'b',
+  teacher: 'a',
+  nurse: 'a',
+  graduate: 'a',
+  engineer: 'b',
+  executive: 'b',
+  sparse: 'b',
+  extreme: 'a',
+};
 
 export const FIXTURES = {
   driver,

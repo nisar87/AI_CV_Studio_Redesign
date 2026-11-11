@@ -12,6 +12,16 @@ export type TemplateDefinition = {
   /** Style card label in the Design panel. */
   style: string;
   support: TemplateOptionSupport;
+  /** Whether the design can show a profile photo. */
+  photo: 'none' | 'optional';
+  /** Where contact details go: the header (default) or the top of the side column. */
+  contactsIn?: 'header' | 'aside';
+  /** Renders the contact block when contactsIn is 'aside'. */
+  AsideContact?: (props: TemplateComponentProps) => ReactNode;
+  /** Decorative art drawn behind content on every page (purely visual). */
+  Decor?: (props: TemplateComponentProps) => ReactNode;
+  /** Short tags shown in the design picker. */
+  tags: string[];
   /** Section kinds placed in the side column. Empty = single column. */
   asideKinds: SectionKind[];
   css: string;

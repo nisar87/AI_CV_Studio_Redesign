@@ -116,7 +116,7 @@ describe('document builder', () => {
       html
         .replace(/<style>[\s\S]*?<\/style>|<script>[\s\S]*?<\/script>/g, '')
         .replace(/<[^>]+>/g, ' ')
-        .replace(/[·|◆:,—]/g, ' ')
+        .replace(/[·|◆•:,—/]/g, ' ')
         .split(/\s+/)
         .filter(Boolean)
         .sort()
@@ -162,5 +162,24 @@ describe('list keep rules', () => {
       'with-next',
       'together',
     ]);
+  });
+});
+
+describe('block classes', () => {
+  it('marks the first item of every list section with a separate b-first class', () => {
+    const html = buildDocumentHtml(FIXTURES.teacher, { fonts });
+    expect(html).not.toMatch(/b-(skills|compact|entry)b-first/);
+    expect(html).toMatch(/class="b-skills b-first/);
+  });
+});
+
+describe('class name integrity', () => {
+  it('never glues class names together (guards against formatter rewrites)', async () => {
+    const { TEMPLATE_IDS } = await import('@/modules/resume/schema');
+    for (const templateId of TEMPLATE_IDS) {
+      const doc = { ...FIXTURES.engineer, design: { ...FIXTURES.engineer.design, templateId } };
+      const html = buildDocumentHtml(doc, { fonts });
+      expect(html, templateId).not.toMatch(/[a-z]b-first|wrapcv-|stackedcv-/);
+    }
   });
 });

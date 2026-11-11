@@ -6,6 +6,7 @@ import { IconButton } from '@/components/ui/icon-button';
 import { getPreset } from '@/modules/resume/presets';
 import { ops } from '@/modules/resume/ops';
 import type { ResumeDocument } from '@/modules/resume/schema';
+import { PhotoField } from './photo-field';
 import type { DocumentEditor } from './use-document-editor';
 
 export function BasicsForm({
@@ -67,6 +68,9 @@ export function BasicsForm({
         value={b.location}
         onChange={(e) => set({ location: e.target.value }, 'location')}
       />
+      <div className="col-span-2">
+        <PhotoField editor={editor} />
+      </div>
       {showLinks && (
         <div className="col-span-2 flex flex-col gap-3">
           {b.links.map((l) => (

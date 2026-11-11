@@ -1,4 +1,5 @@
 import type { FontPairId } from '@/modules/resume/schema';
+import { FONT_CATALOG as CATALOG } from './font-catalog';
 
 /** Font catalogue for CV documents. Files live in public/fonts/cv (see scripts/sync-fonts.mjs). */
 
@@ -15,43 +16,20 @@ const LATIN =
 const LATIN_EXT =
   'U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF';
 
-const VARIABLE: Record<string, { slug: string; weight: string }> = {
-  Inter: { slug: 'inter', weight: '100 900' },
-  'Inter Tight': { slug: 'inter-tight', weight: '100 900' },
-  'Source Serif 4': { slug: 'source-serif-4', weight: '200 900' },
-  'Source Sans 3': { slug: 'source-sans-3', weight: '200 900' },
-  Lora: { slug: 'lora', weight: '400 700' },
-  'Cormorant Garamond': { slug: 'cormorant-garamond', weight: '300 700' },
-  'IBM Plex Sans': { slug: 'ibm-plex-sans', weight: '100 700' },
-};
-
 function facesFor(family: string): Face[] {
+  const entry = CATALOG[family];
+  if (!entry) return [];
   const faces: Face[] = [];
-  const subsets = ['latin', 'latin-ext'] as const;
-  const styles = ['normal', 'italic'] as const;
-  const v = VARIABLE[family];
-  if (v) {
-    for (const subset of subsets)
-      for (const style of styles)
+  for (const style of ['normal', 'italic'] as const)
+    for (const w of entry[style])
+      for (const subset of ['latin', 'latin-ext'] as const)
         faces.push({
           family,
-          file: `${v.slug}-${subset}-wght-${style}.woff2`,
-          weight: v.weight,
+          file: `${entry.slug}-${subset}-${w}-${style}.woff2`,
+          weight: String(w),
           style,
           subset,
         });
-  } else if (family === 'Lato') {
-    for (const subset of subsets)
-      for (const w of ['400', '700'])
-        for (const style of styles)
-          faces.push({
-            family,
-            file: `lato-${subset}-${w}-${style}.woff2`,
-            weight: w,
-            style,
-            subset,
-          });
-  }
   return faces;
 }
 
@@ -86,7 +64,7 @@ export const FONT_PAIRS: Record<FontPairId, FontPair> = {
     label: 'Classic',
     heading: 'Source Serif 4',
     body: 'Source Sans 3',
-    headingWeight: 650,
+    headingWeight: 600,
     bodyScale: 1.04,
     headingFallback: SERIF,
     bodyFallback: SANS,
@@ -95,9 +73,9 @@ export const FONT_PAIRS: Record<FontPairId, FontPair> = {
     id: 'humanist',
     label: 'Warm',
     heading: 'Lora',
-    body: 'Lato',
+    body: 'Nunito Sans',
     headingWeight: 600,
-    bodyScale: 1.0,
+    bodyScale: 0.98,
     headingFallback: SERIF,
     bodyFallback: SANS,
   },

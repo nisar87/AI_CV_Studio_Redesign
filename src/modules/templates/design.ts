@@ -51,6 +51,10 @@ export type ResolvedDesign = {
   accentSoft: string;
   accentTint: string;
   accentLine: string;
+  /** Deeper shade for large colour areas (sidebars, bands). */
+  accentDeep: string;
+  /** Light tint readable on dark accent areas. */
+  accentBright: string;
   font: FontPair;
   fontPairId: FontPairId;
   density: DensityScale;
@@ -61,7 +65,12 @@ export type ResolvedDesign = {
 export type TemplateOptionSupport = {
   headerAlign: ('left' | 'center')[];
   skillStyle: ('tags' | 'inline')[];
-  defaults: { headerAlign: 'left' | 'center'; skillStyle: 'tags' | 'inline' };
+  defaults: {
+    headerAlign: 'left' | 'center';
+    skillStyle: 'tags' | 'inline';
+    /** Font pair applied when the user picks this design (they can change it afterwards). */
+    fontPair?: FontPairId;
+  };
 };
 
 /** Resolve a user/AI design spec into concrete, safe values for a template. */
@@ -77,6 +86,8 @@ export function resolveDesign(spec: DesignSpec, support: TemplateOptionSupport):
     accentSoft: mix(accent, '#ffffff', 0.9),
     accentTint: mix(accent, '#ffffff', 0.955),
     accentLine: mix(accent, '#ffffff', 0.6),
+    accentDeep: mix(accent, '#000000', 0.22),
+    accentBright: mix(accent, '#ffffff', 0.72),
     font: FONT_PAIRS[spec.fontPair],
     fontPairId: spec.fontPair,
     density: DENSITY[spec.density],
@@ -91,7 +102,7 @@ export function designCssVars(d: ResolvedDesign): string {
   const body = +(d.density.bodyPt * f.bodyScale).toFixed(2);
   return `:root{
 --page-w:${d.page.widthMm}mm;--page-h:${d.page.heightMm}mm;--margin:${d.density.marginMm}mm;
---accent:${d.accent};--accent-soft:${d.accentSoft};--accent-tint:${d.accentTint};--accent-line:${d.accentLine};
+--accent:${d.accent};--accent-soft:${d.accentSoft};--accent-tint:${d.accentTint};--accent-line:${d.accentLine};--accent-deep:${d.accentDeep};--accent-bright:${d.accentBright};
 --ink:#1b1e23;--ink-2:#41464e;--ink-3:#686e77;--rule:#d9dce1;
 --font-heading:'${f.heading}',${f.headingFallback};--font-body:'${f.body}',${f.bodyFallback};--heading-weight:${f.headingWeight};
 --fs:${body}pt;--lh:${d.density.lineHeight};--section-gap:${d.density.sectionGapPt}pt;--item-gap:${d.density.itemGapPt}pt;

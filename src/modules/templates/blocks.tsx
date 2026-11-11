@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { cloneElement, type ReactNode } from 'react';
 import type { ResolvedDesign } from './design';
 import type { Contact, REntry, RenderModel, RSection } from './render-model';
 
@@ -13,15 +13,22 @@ export function Block({
   keep,
   className,
   refId,
+  kind,
   children,
 }: {
   keep: Keep;
   className: string;
   refId?: string;
+  kind?: string;
   children: ReactNode;
 }) {
   return (
-    <div data-block="" data-keep={keep} className={className} data-ref={refId}>
+    <div
+      data-block=""
+      data-keep={keep}
+      className={kind ? `${className} k-${kind}` : className}
+      data-ref={refId}
+    >
       {children}
     </div>
   );
@@ -38,6 +45,11 @@ export type TemplateHooks = {
   /** Skills group. */
   skills: (e: REntry, design: ResolvedDesign) => ReactNode;
   heading: (section: RSection) => ReactNode;
+  /**
+   * Optional label rendered in a side column next to the first block of each section
+   * (label-column layouts). It takes real space, so long labels can never overlap.
+   */
+  label?: (section: RSection) => ReactNode;
   summary: (text: string) => ReactNode;
 };
 
@@ -52,6 +64,11 @@ function Bullets({ items }: { items: string[] }) {
 }
 
 const BULLETS_IN_HEAD = 2;
+
+/** Join class names. (Not a template literal: the Tailwind Prettier plugin trims spaces in those.) */
+export function classes(...xs: (string | false | null | undefined)[]): string {
+  return xs.filter(Boolean).join(' ');
+}
 
 /**
  * Keep rules for short lists (skills, languages, licences…): lists of up to four items stay
@@ -68,9 +85,49 @@ export function sectionBlocks(
   hooks: TemplateHooks,
   design: ResolvedDesign,
 ): ReactNode[] {
+  let out = sectionBlocksRaw(section, hooks, design);
+  if (!hooks.label || out.length < 2) return out;
+  // Label-column layouts: keep short lists in one block so the label sits beside the whole list.
+  const isList = section.kind === 'skills' || COMPACT_KINDS.has(section.kind);
+  if (isList && section.entries.length <= 8) {
+    const items = out.slice(1) as React.ReactElement<{ children: ReactNode; className: string }>[];
+    out = [
+      out[0],
+      <Block
+        kind={section.kind}
+        key={`${section.id}-list`}
+        keep="together"
+        className="b-list b-first"
+      >
+        {items.map((it, i) => (
+          <div key={i} className={it.props.className.replace('b-first', '')}>
+            {it.props.children}
+          </div>
+        ))}
+      </Block>,
+    ];
+  }
+  // Wrap the content of the first block after the heading with the section label.
+  const first = out[1] as React.ReactElement<{ children: ReactNode }>;
+  out[1] = cloneElement(first, {
+    children: (
+      <div className="b-labelled">
+        <div className="b-label">{hooks.label(section)}</div>
+        <div className="b-content">{first.props.children}</div>
+      </div>
+    ),
+  });
+  return out;
+}
+
+function sectionBlocksRaw(
+  section: RSection,
+  hooks: TemplateHooks,
+  design: ResolvedDesign,
+): ReactNode[] {
   const out: ReactNode[] = [];
   out.push(
-    <Block key={`${section.id}-h`} keep="with-next" className="b-heading">
+    <Block kind={section.kind} key={`${section.id}-h`} keep="with-next" className="b-heading">
       {hooks.heading(section)}
     </Block>,
   );
@@ -78,6 +135,7 @@ export function sectionBlocks(
   if (section.kind === 'summary') {
     out.push(
       <Block
+        kind={section.kind}
         key={`${section.id}-t`}
         keep="together"
         className="b-summary b-first"
@@ -95,9 +153,10 @@ export function sectionBlocks(
     section.entries.forEach((e, i) =>
       out.push(
         <Block
+          kind={section.kind}
           key={e.ref}
           keep={listKeep(i, n)}
-          className={`${isSkills ? 'b-skills' : 'b-compact'}${i === 0 ? 'b-first' : ''}`}
+          className={classes(isSkills ? 'b-skills' : 'b-compact', i === 0 && 'b-first')}
           refId={e.ref}
         >
           {isSkills ? hooks.skills(e, design) : hooks.compactItem(e, section)}
@@ -114,7 +173,7 @@ export function sectionBlocks(
     const seq: { keep: Keep; node: ReactNode; cls: string; key: string }[] = [
       {
         key: `${e.ref}-head`,
-        cls: `b-entry${i === 0 ? ' b-first' : ''}`,
+        cls: classes('b-entry', i === 0 && 'b-first'),
         keep: 'together',
         node: (
           <>
@@ -133,7 +192,7 @@ export function sectionBlocks(
     if (seq.length >= 2) seq[seq.length - 2]!.keep = 'with-next';
     for (const s of seq)
       out.push(
-        <Block key={s.key} keep={s.keep} className={s.cls} refId={e.ref}>
+        <Block kind={section.kind} key={s.key} keep={s.keep} className={s.cls} refId={e.ref}>
           {s.node}
         </Block>,
       );
@@ -141,26 +200,125 @@ export function sectionBlocks(
   return out;
 }
 
-export function ContactList({ contacts, separator }: { contacts: Contact[]; separator?: string }) {
+const ICON_PATHS: Record<Contact['kind'], ReactNode> = {
+  phone: (
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.1 9.9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
+  ),
+  email: (
+    <>
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="m22 7-10 6L2 7" />
+    </>
+  ),
+  location: (
+    <>
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </>
+  ),
+  link: (
+    <>
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    </>
+  ),
+};
+
+export function ContactIcon({ kind }: { kind: Contact['kind'] }) {
+  return (
+    <svg
+      className="cv-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {ICON_PATHS[kind]}
+    </svg>
+  );
+}
+
+export function ContactList({
+  contacts,
+  separator,
+  icons = false,
+  stacked = false,
+}: {
+  contacts: Contact[];
+  separator?: string;
+  /** Show a small icon before each item. */
+  icons?: boolean;
+  /** One item per line (side columns). */
+  stacked?: boolean;
+}) {
   // Every item carries a leading separator; the first item on each line has it clipped away
   // (see .cv-contacts in base-css), so wrapped lines never start with a separator.
   return (
-    <div className="cv-contacts-wrap">
+    <div
+      className={classes(
+        'cv-contacts-wrap',
+        stacked && 'cv-contacts--stacked',
+        icons && 'cv-contacts--icons',
+      )}
+    >
       <ul className="cv-contacts">
         {contacts.map((c, i) => (
           <li key={i} className={`cv-contact cv-contact--${c.kind}`}>
-            {separator && (
+            {separator && !stacked && (
               <span className="cv-sep" aria-hidden="true">
                 {separator}
               </span>
             )}
-            {c.label && c.kind === 'link' ? (
-              <span className="cv-contact-label">{c.label}: </span>
-            ) : null}
-            {c.text}
+            {icons && <ContactIcon kind={c.kind} />}
+            <span className="cv-contact-text">
+              {c.label && c.kind === 'link' ? (
+                <span className="cv-contact-label">{c.label}: </span>
+              ) : null}
+              {breakable(c.text)}
+            </span>
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/** Adds soft break opportunities after @ . / so addresses wrap at natural points, not mid-word. */
+export function breakable(text: string): ReactNode {
+  const parts = text.split(/(?<=[@./])/);
+  if (parts.length < 2) return text;
+  return parts.map((p, i) => (
+    <span key={i}>
+      {p}
+      {i < parts.length - 1 && <wbr />}
+    </span>
+  ));
+}
+
+/** Profile photo, or initials when the design wants a mark but there is no photo. */
+export function Portrait({
+  model,
+  className,
+  fallback = 'initials',
+}: {
+  model: RenderModel;
+  className: string;
+  fallback?: 'initials' | 'none';
+}) {
+  if (model.photo)
+    return (
+      <div className={`cv-portrait ${className}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- static CV document, not app UI */}
+        <img src={model.photo} alt={model.name ? `Photo of ${model.name}` : 'Profile photo'} />
+      </div>
+    );
+  if (fallback === 'none' || !model.initials) return null;
+  return (
+    <div className={`cv-portrait cv-portrait--initials ${className}`} aria-hidden="true">
+      <span>{model.initials}</span>
     </div>
   );
 }

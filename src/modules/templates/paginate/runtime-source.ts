@@ -34,7 +34,17 @@ export const PLAN_PAGES_JS = String.raw`function planPages(blocks, capacity) {
     } else if (pages[page].length === 0) {
       for (k = i; k <= j; k++) {
         var h = blocks[k].height;
-        if (pages[pages.length - 1].length > 0 && used + h > capacity(pages.length - 1) + EPS) {
+        // A keep-with-next block (a heading) only goes where its successor fits too.
+        var last = pages.length - 1;
+        var need = h;
+        if (blocks[k].keep === 'with-next' && k + 1 <= j && h + blocks[k + 1].height <= capacity(last + 1) + EPS) {
+          need = h + blocks[k + 1].height;
+        }
+        if (pages[last].length > 0 && used + need > capacity(last) + EPS) {
+          pages.push([]);
+          used = 0;
+        } else if (pages[last].length === 0 && need > capacity(last) + EPS && need <= capacity(last + 1) + EPS) {
+          // Fits on a fuller page (e.g. page 1 is shorter because of the header): leave this one.
           pages.push([]);
           used = 0;
         }
@@ -69,8 +79,15 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     e.className = cls;
     return e;
   }
+  var decorSource = null;
   function makePage(first, hasAside) {
     var page = el('section', 'cv-page ' + (first ? 'cv-page--first' : 'cv-page--rest'));
+    if (decorSource) {
+      var decor = el('div', 'cv-decor');
+      decor.setAttribute('aria-hidden', 'true');
+      decor.innerHTML = decorSource.innerHTML;
+      page.appendChild(decor);
+    }
     var top = el('div', first ? 'cv-top cv-top--header' : 'cv-top cv-top--running');
     var body = el('div', 'cv-body');
     var main = el('div', 'cv-main');
@@ -108,6 +125,7 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     if (!source || !target) return;
     var header = source.querySelector('[data-slot="header"]');
     var running = source.querySelector('[data-slot="running"]');
+    decorSource = source.querySelector('[data-slot="decor"]');
     var mainBlocks = blocksOf(source.querySelector('[data-flow="main"]'));
     var asideBlocks = blocksOf(source.querySelector('[data-flow="aside"]'));
     var hasAside = asideBlocks.length > 0;

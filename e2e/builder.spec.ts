@@ -169,3 +169,66 @@ test('unknown CV ids show a friendly message', async ({ page }) => {
   await page.goto('/cv/does-not-exist');
   await expect(page.getByRole('heading', { name: 'We can’t find this CV' })).toBeVisible();
 });
+
+test('a photo can be added, shown in photo designs, hidden, and removed', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'Covered on desktop');
+  const { SAMPLE_PHOTOS } = await import('../src/modules/resume/fixture-photos');
+  await page.goto('/cv/new?work=teacher');
+  await page.getByLabel('Full name').fill('Grace Mensah');
+  const buffer = Buffer.from(SAMPLE_PHOTOS.a.split(',')[1]!, 'base64');
+  await page
+    .locator('input[type="file"][accept^="image"]')
+    .setInputFiles({ name: 'me.jpg', mimeType: 'image/jpeg', buffer });
+  await expect(page.getByRole('img', { name: 'Your photo' })).toBeVisible();
+  await expect(previewFrame(page).locator('.cv-page .cv-portrait img')).toHaveCount(1);
+
+  await page.goto(page.url().replace(/\/guided$/, ''));
+  await page.getByRole('tab', { name: 'Design' }).click();
+  await page.getByRole('checkbox', { name: 'Show my photo' }).uncheck();
+  await expect(previewFrame(page).locator('.cv-page .cv-portrait img')).toHaveCount(0);
+  // A design without photo support explains itself instead of failing silently.
+  await page.getByRole('radio', { name: /Calm & classic/ }).click();
+  await expect(previewFrame(page).locator('html[data-template="heritage"]')).toHaveCount(1);
+  await page.getByRole('tab', { name: 'Content' }).click();
+  await expect(page.getByText('This design doesn’t show photos')).toBeVisible();
+  await page.getByRole('button', { name: 'Remove' }).first().click();
+  await expect(page.getByRole('img', { name: 'Your photo' })).toHaveCount(0);
+});
+
+test('the design picker offers all ten designs with thumbnails', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'Covered on desktop');
+  await page.goto('/cv/new?work=driver');
+  await page.getByLabel('Full name').fill('Imran Qureshi');
+  await page.waitForTimeout(600);
+  await page.goto(page.url().replace(/\/guided$/, ''));
+  await page.getByRole('tab', { name: 'Design' }).click();
+  const options = page.getByRole('radiogroup', { name: 'Design' }).getByRole('radio');
+  await expect(options).toHaveCount(10);
+  for (const name of [
+    'Creative sidebar',
+    'Bold editorial',
+    'Timeline',
+    'Bold & modern',
+    'Warm portrait',
+    'Editorial',
+    'Friendly & fresh',
+  ]) {
+    await page.getByRole('radio', { name: new RegExp(name) }).click();
+    await expect(page.getByRole('radio', { name: new RegExp(name) })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+  }
+  await expect(previewFrame(page).locator('html[data-template="sprout"]')).toHaveCount(1);
+  await expect(previewFrame(page).locator('.cv-page h1')).toHaveText('Imran Qureshi');
+  const broken = await page.evaluate(
+    () =>
+      Array.from(document.querySelectorAll<HTMLImageElement>('img[src^="/templates/"]')).filter(
+        (i) => !i.complete || i.naturalWidth === 0,
+      ).length,
+  );
+  expect(broken).toBe(0);
+});

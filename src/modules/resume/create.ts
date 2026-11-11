@@ -29,7 +29,16 @@ export function createDocument(
     locale,
     createdAt: now,
     updatedAt: now,
-    basics: { name: '', headline: '', email: '', phone: '', location: '', links: [], summary: '' },
+    basics: {
+      name: '',
+      headline: '',
+      email: '',
+      phone: '',
+      location: '',
+      links: [],
+      summary: '',
+      photo: '',
+    },
     sections: preset.sections.map((s) => emptySection(s.kind, s.title)),
     design: designSpec.parse({ ...preset.design, pageSize: defaultPageSize(locale) }),
   };

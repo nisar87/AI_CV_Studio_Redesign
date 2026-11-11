@@ -1,4 +1,10 @@
-import { ContactList, joinParts, type TemplateComponentProps, type TemplateHooks } from '../blocks';
+import {
+  ContactList,
+  joinParts,
+  Portrait,
+  type TemplateComponentProps,
+  type TemplateHooks,
+} from '../blocks';
 import type { TemplateDefinition } from '../types';
 
 /**
@@ -57,9 +63,12 @@ const hooks: TemplateHooks = {
 function Header({ model }: TemplateComponentProps) {
   return (
     <header className="m-header">
-      <h1 className="m-name">{model.name || 'Your name'}</h1>
-      {model.headline && <p className="m-headline">{model.headline}</p>}
-      {model.contacts.length > 0 && <ContactList contacts={model.contacts} separator="|" />}
+      <div className="m-id">
+        <h1 className="m-name">{model.name || 'Your name'}</h1>
+        {model.headline && <p className="m-headline">{model.headline}</p>}
+        {model.contacts.length > 0 && <ContactList contacts={model.contacts} separator="|" />}
+      </div>
+      <Portrait model={model} className="m-portrait" fallback="none" />
     </header>
   );
 }
@@ -67,7 +76,9 @@ function Header({ model }: TemplateComponentProps) {
 const css = `
 :root{--aside-w:31%;--gutter:7mm}
 .cv-top--header{margin:calc(-1 * var(--margin)) calc(-1 * var(--margin)) 0;position:relative;z-index:1}
-.m-header{background:var(--accent);color:#fff;padding:calc(var(--margin) * 0.95) var(--margin) calc(var(--margin) * 0.75)}
+.m-header{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8mm;background:linear-gradient(100deg,var(--accent-deep),var(--accent));color:#fff;padding:calc(var(--margin) * 0.95) var(--margin) calc(var(--margin) * 0.75 + 6mm);clip-path:polygon(0 0,100% 0,100% calc(100% - 6mm),0 100%)}
+.m-id{min-width:0;flex:1}
+.m-portrait{width:29mm;height:29mm;border-radius:50%;border:2.4pt solid rgba(255,255,255,.9)}
 .m-name{font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:2.6em;line-height:1.06;letter-spacing:-.01em}
 .m-headline{margin-top:.28em;font-size:1.16em;font-weight:500;opacity:.92}
 .m-header .cv-contacts{margin-top:.8em;font-size:.92em;color:rgba(255,255,255,.9)}
@@ -109,7 +120,7 @@ const css = `
 .m-cred-sub{color:var(--ink-3);font-size:.94em;margin-top:1pt}
 .m-skill-label{font-weight:600;margin-bottom:3pt;color:var(--ink)}
 .m-tags{display:flex;flex-wrap:wrap;gap:3.5pt}
-.m-tags li{padding:1.5pt 5.5pt;border-radius:3pt;background:#fff;border:.75pt solid var(--accent-line);color:var(--ink);font-size:.93em;line-height:1.35}
+.m-tags li{padding:1.6pt 6pt;border-radius:3pt;background:#fff;box-shadow:0 0 0 .5pt var(--accent-line);color:var(--ink);font-size:.93em;line-height:1.35}
 .m-skills-inline{color:var(--ink-2)}
 `;
 
@@ -124,6 +135,8 @@ export const meridian: TemplateDefinition = {
     skillStyle: ['tags', 'inline'],
     defaults: { headerAlign: 'left', skillStyle: 'tags' },
   },
+  photo: 'optional',
+  tags: ['Side column', 'Colour header', 'Photo'],
   asideKinds: ['skills', 'languages', 'certifications', 'licences', 'awards'],
   css,
   hooks,
