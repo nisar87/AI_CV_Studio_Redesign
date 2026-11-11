@@ -13,6 +13,12 @@ env:
     secret: GEMINI_API_KEY
     availability:
       - RUNTIME
+  # AI help is paused in production until accounts and Premium exist (owner decision 2026-11-12).
+  # Remove this entry to switch it back on.
+  - variable: AI_PROVIDER
+    value: 'off'
+    availability:
+      - RUNTIME
   - variable: AI_MODEL_FAST
     value: gemini-flash-latest
     availability:

@@ -28,7 +28,7 @@ const STEPS = [
   {
     icon: Download,
     title: 'Download and send',
-    body: 'Get a PDF that looks exactly like the preview and prints perfectly. Free, with no trial or subscription.',
+    body: 'Get a PDF that looks exactly like the preview and prints perfectly.',
   },
 ];
 
@@ -46,7 +46,7 @@ const PROMISES = [
   {
     icon: Sparkles,
     title: 'Yours, on your device',
-    body: 'No account needed. Your CV is saved in your browser, and you can download a backup at any time.',
+    body: 'Your CV is saved in your browser, and you can download a backup at any time.',
   },
 ];
 
@@ -57,15 +57,12 @@ export default function HomePage() {
         <Container className="grid items-center gap-12 pt-10 pb-16 md:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:pt-20 lg:pb-24">
           <div className="flex flex-col items-start gap-6">
             <ContinueCardClient />
-            <p className="bg-primary-soft text-primary inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold">
-              Free PDF download · No sign-up needed
-            </p>
             <h1 className="font-display text-ink text-[40px] leading-[1.08] font-semibold tracking-tight sm:text-5xl lg:text-[58px]">
               A professional CV, <span className="text-primary italic">in your own words.</span>
             </h1>
             <p className="text-ink-muted max-w-[34rem] text-lg leading-relaxed">
               Tell us what kind of work you do and answer a few simple questions. We turn it into a
-              well-designed CV you can change any time and download for free.
+              well-designed CV you can change any time and download as a PDF.
             </p>
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
               <ButtonLink href="/start" size="lg" iconAfter={<ArrowRight aria-hidden size={18} />}>

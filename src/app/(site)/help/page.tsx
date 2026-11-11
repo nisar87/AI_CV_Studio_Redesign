@@ -6,10 +6,6 @@ export const metadata: Metadata = { title: 'Help' };
 
 const FAQ: { q: string; a: React.ReactNode }[] = [
   {
-    q: 'Is it really free?',
-    a: 'Yes. Creating your CV and downloading it as a PDF is free. There is no trial that turns into a subscription.',
-  },
-  {
     q: 'Where is my CV saved?',
     a: 'In this browser, on this device. Nothing is stored on our servers. Download a backup from “My CVs” if you want to keep a copy or move to another device.',
   },

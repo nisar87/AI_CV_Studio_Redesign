@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     template: '%s · AI CV Studio',
   },
   description:
-    'Tell us what you do, answer a few simple questions, and get a professional CV you can edit and download for free.',
+    'Tell us what you do, answer a few simple questions, and get a professional CV you can edit and download as a PDF.',
   applicationName: 'AI CV Studio',
 };
 
