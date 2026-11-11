@@ -1,0 +1,31 @@
+# Firebase App Hosting (Cloud Run) settings — docs/engineering/deployment.md
+runConfig:
+  cpu: 2
+  memoryMiB: 2048 # Chromium needs ~1 GB to render PDFs
+  concurrency: 20
+  minInstances: 0
+  maxInstances: 4 # in-memory rate limits are per instance; keep this small until a shared store exists
+
+env:
+  # Google Gemini key, stored in Cloud Secret Manager (never in this file):
+  #   firebase apphosting:secrets:set gemini-api-key
+  - variable: GEMINI_API_KEY
+    secret: gemini-api-key
+    availability:
+      - RUNTIME
+  - variable: AI_MODEL_FAST
+    value: gemini-flash-latest
+    availability:
+      - RUNTIME
+  - variable: AI_MODEL_SMART
+    value: gemini-flash-latest
+    availability:
+      - RUNTIME
+  - variable: AI_DAILY_BUDGET
+    value: '2000'
+    availability:
+      - RUNTIME
+  - variable: RATE_LIMIT_PDF_PER_MINUTE
+    value: '10'
+    availability:
+      - RUNTIME

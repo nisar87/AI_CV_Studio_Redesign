@@ -37,3 +37,13 @@ See `application-architecture.md#configuration`. Production secrets live in the 
 - Structured JSON logs with request id (no CV content).
 - Error tracking (Sentry, with PII scrubbing) from Phase 6 / launch hardening.
 - `/api/health` for uptime checks.
+
+## Firebase App Hosting (production, chosen November 2026)
+
+The owner's existing Firebase project `ai-cv-studio` serves `aicvstudio.app`. The new app runs on **Firebase App Hosting** (Next.js on Cloud Run) because PDF creation and AI help need a server; classic Firebase Hosting only serves static files.
+
+- Config: `apphosting.yaml` (2 vCPU, 2 GiB for Chromium, max 4 instances, env vars).
+- PDF: `@sparticuz/chromium` (no system Chrome on App Hosting). Kept out of the bundle via `serverExternalPackages`; its binary is traced into the standalone output. Verified: production server with system Chrome hidden returns a 1-page PDF with embedded TrueType fonts.
+- Secret: `GEMINI_API_KEY` comes from Cloud Secret Manager secret `gemini-api-key` (`firebase apphosting:secrets:set gemini-api-key`, then grant the backend access). Without it AI help is off; everything else works.
+- Rollouts: the backend is connected to GitHub `nisar87/AI_CV_Studio_Redesign`, branch `main`; every push to `main` deploys.
+- Domain: `aicvstudio.app` moves from the old Hosting site to the App Hosting backend (Firebase console → App Hosting → backend → Settings → Domains); DNS records shown there must be set at the domain registrar.
