@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Container } from '@/components/ui/misc';
+import { AiPreferenceToggle } from '@/features/ai/preference-toggle';
 
 export const metadata: Metadata = { title: 'Privacy' };
 
@@ -23,9 +24,10 @@ export default function PrivacyPage() {
         <h2>When information leaves your device</h2>
         <p>
           When you download a PDF, your CV is sent to our server to create the file and is not kept
-          afterwards. When you use writing help, only the part you asked about is sent to our AI
-          provider to create a suggestion; we do not store it, and it is not used to train AI
-          models.
+          afterwards. When you use AI help, only the part you asked about (for example one job’s
+          bullet points) is sent to Google’s Gemini service to create a suggestion. We do not store
+          it. We use Gemini’s paid service, under which Google does not use it to improve its
+          products; Google keeps it for a limited time only to detect misuse.
         </p>
         <h2>What we measure</h2>
         <p>
@@ -33,7 +35,8 @@ export default function PrivacyPage() {
           you write, so we can make the product easier to use.
         </p>
         <h2>Your choices</h2>
-        <p>You can delete any CV at any time, and you can turn writing help off.</p>
+        <p>You can delete any CV at any time, and you can turn AI help off:</p>
+        <AiPreferenceToggle />
       </div>
     </Container>
   );

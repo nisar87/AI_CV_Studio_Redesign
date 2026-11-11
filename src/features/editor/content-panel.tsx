@@ -7,6 +7,8 @@ import { cn } from '@/lib/cn';
 import { getPreset } from '@/modules/resume/presets';
 import { ops } from '@/modules/resume/ops';
 import { SECTION_KINDS, type SectionKind } from '@/modules/resume/schema';
+import { SummaryAssist } from '@/features/ai/assist';
+import { NeedsInputHint } from '@/features/ai/suggestion';
 import { BasicsForm } from './basics-form';
 import { KIND_INFO } from './item-fields';
 import { SectionCard } from './section-card';
@@ -115,6 +117,18 @@ export const ContentPanel = forwardRef<ContentPanelHandle, { editor: DocumentEdi
               update((d) => ops.updateBasics(d, { summary: e.target.value }), 'basics.summary')
             }
           />
+          <div className="mt-2 flex flex-col gap-2">
+            <NeedsInputHint texts={[doc.basics.summary]} />
+            <SummaryAssist
+              summary={doc.basics.summary}
+              onApply={(text) =>
+                update(
+                  (d) => ops.updateBasics(d, { summary: text }),
+                  `basics.summary.ai.${Date.now()}`,
+                )
+              }
+            />
+          </div>
         </Collapsible>
         {doc.sections.map((s, i) => (
           <SectionCard

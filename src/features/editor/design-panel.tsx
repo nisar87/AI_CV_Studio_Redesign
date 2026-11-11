@@ -3,6 +3,7 @@
 import { Check } from 'lucide-react';
 import { useId } from 'react';
 import { SelectableCard } from '@/components/ui/card';
+import { StyleAssist } from '@/features/ai/style-assist';
 import { CheckboxField } from './fields';
 import { Segmented } from '@/components/ui/segmented';
 import { cn } from '@/lib/cn';
@@ -54,6 +55,17 @@ export function DesignPanel({ editor }: { editor: DocumentEditor }) {
 
   return (
     <div className="flex flex-col gap-8">
+      <StyleAssist
+        doc={doc}
+        onApply={(c) =>
+          set({
+            templateId: c.templateId,
+            accent: c.accent,
+            fontPair: c.fontPair,
+            density: c.density,
+          })
+        }
+      />
       <Group title="Look" hint="Your words stay the same — only the design changes.">
         <div role="radiogroup" aria-label="Design" className="grid grid-cols-2 gap-3">
           {TEMPLATE_LIST.map((t) => {

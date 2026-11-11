@@ -1,13 +1,17 @@
 'use client';
 
 import { TextField } from '@/components/ui/field';
-import { cn } from '@/lib/cn';
 import type { Preset } from '@/modules/resume/presets';
 import type { Section, SectionKind } from '@/modules/resume/schema';
+import { BulletsAssist, SkillsAssist } from '@/features/ai/assist';
+import { NeedsInputHint } from '@/features/ai/suggestion';
 import { CheckboxField, DateField, LinesField, TagsField } from './fields';
 import { KIND_INFO } from './item-fields';
 
 type Item = Section['items'][number];
+
+/** Sections whose bullet points AI can help write. */
+const AI_BULLET_KINDS = new Set<SectionKind>(['experience', 'volunteering', 'projects', 'custom']);
 
 type Props = {
   kind: SectionKind;
@@ -59,21 +63,33 @@ export function ItemForm({ kind, item, preset, onChange }: Props) {
                 />
               </div>
             );
-          case 'lines':
+          case 'lines': {
+            const lines = (values[f.key] as string[]) ?? [];
             return (
-              <div key={f.key} className="col-span-2">
+              <div key={f.key} className="col-span-2 flex flex-col gap-1.5">
                 <LinesField
                   label={f.label}
                   hint={f.hint}
                   placeholder={f.placeholder?.(preset)}
-                  value={(values[f.key] as string[]) ?? []}
+                  value={lines}
                   onChange={(v) => onChange({ [f.key]: v }, key)}
                 />
+                <NeedsInputHint texts={lines} />
+                {AI_BULLET_KINDS.has(kind) && (
+                  <BulletsAssist
+                    presetId={preset.id}
+                    role={String(values.role ?? values.name ?? values.title ?? '')}
+                    organization={String(values.organization ?? values.subtitle ?? '')}
+                    bullets={lines}
+                    onApply={(v) => onChange({ [f.key]: v }, `${key}.ai.${Date.now()}`)}
+                  />
+                )}
               </div>
             );
+          }
           case 'tags':
             return (
-              <div key={f.key} className={cn('col-span-2')}>
+              <div key={f.key} className="col-span-2 flex flex-col gap-2">
                 <TagsField
                   label={f.label}
                   hint={f.hint}
@@ -81,6 +97,17 @@ export function ItemForm({ kind, item, preset, onChange }: Props) {
                   suggestions={preset.suggestedSkills}
                   onChange={(v) => onChange({ [f.key]: v }, key)}
                 />
+                {kind === 'skills' && (
+                  <SkillsAssist
+                    existing={(values[f.key] as string[]) ?? []}
+                    onAdd={(add) =>
+                      onChange(
+                        { [f.key]: [...((values[f.key] as string[]) ?? []), ...add] },
+                        `${key}.ai.${Date.now()}`,
+                      )
+                    }
+                  />
+                )}
               </div>
             );
         }

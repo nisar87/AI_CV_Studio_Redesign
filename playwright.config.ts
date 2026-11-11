@@ -25,7 +25,14 @@ export default defineConfig({
   ],
   webServer: {
     command: `npm run start -- -p ${PORT}`,
-    env: { RATE_LIMIT_PDF_PER_MINUTE: '1000' },
+    env: {
+      RATE_LIMIT_PDF_PER_MINUTE: '1000',
+      // AI e2e runs use the deterministic mock provider; generous limits for parallel workers.
+      AI_PROVIDER: 'mock',
+      AI_REQUESTS_PER_10_MIN: '1000',
+      AI_REQUESTS_PER_DAY: '100000',
+      AI_DAILY_BUDGET: '1000000',
+    },
     port: PORT,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

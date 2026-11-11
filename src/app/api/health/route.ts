@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { aiMode } from '@/modules/ai/config';
 import { chromiumAvailable } from '@/modules/export/pdf';
 
 export const runtime = 'nodejs';
@@ -6,7 +7,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const chromium = (await chromiumAvailable()) ? 'ok' : 'unavailable';
-  const ai = process.env.ANTHROPIC_API_KEY ? 'configured' : 'mock';
+  const mode = aiMode();
+  const ai = mode === 'gemini' ? 'configured' : mode;
   return NextResponse.json(
     {
       status: 'ok',

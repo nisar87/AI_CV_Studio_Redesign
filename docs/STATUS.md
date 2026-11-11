@@ -1,6 +1,6 @@
 # Project Status (checkpoint)
 
-_Last updated: 2026-11-11 (template design sprint)_
+_Last updated: 2026-11-12 (Phase 4 — AI assistance, Gemini)_
 
 ## Current state
 
@@ -14,7 +14,7 @@ _Last updated: 2026-11-11 (template design sprint)_
 | 3c External template review fixes | `phase-3c/template-review-fixes` | ✅ Complete, merged to `main` |
 | 3d Pagination & edge-case polish (2nd review) | `phase-3d/pagination-polish` | ✅ Complete, merged to `main` |
 | 3e Final template polish (3rd review) | `phase-3e/final-polish` | ✅ Complete, merged — templates frozen for now |
-| 4 AI assistance | `phase-4/ai-assist` | ⏳ Next — not started |
+| 4 AI assistance (Gemini) | `phase-4/ai-assist` | 🟡 Built and verified with the mock provider, merged to `main`. Live acceptance (criteria 3–4 with real Gemini) waits for the owner's `npm run ai:eval` run |
 
 ## Phase 0 report
 
@@ -23,7 +23,7 @@ _Last updated: 2026-11-11 (template design sprint)_
 **Key decisions:**
 - Next.js 16 + React 19 + TypeScript + Tailwind v4; modular monolith (ADR-0001).
 - One render path: HTML/CSS templates paginated in-document and printed by Chromium (ADR-0002).
-- AI as narrow, schema-validated tasks with a truth guard; Anthropic first, provider-agnostic (ADR-0003).
+- AI as narrow, schema-validated tasks with a truth guard; Gemini first (ADR-0006), provider-agnostic (ADR-0003).
 - Vercel first, Docker-portable (ADR-0004).
 - Local-first MVP, accounts in Phase 6 (ADR-0005).
 - Launch templates: Clarity, Meridian, Heritage.
@@ -143,14 +143,77 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
 
 **Templates are considered final for now.** Lessons from all audits and reviews are captured in `engineering/template-authoring-guide.md` (budgets, engine guarantees, coding rules, release checklist) — read it before creating any new template.
 
+## Phase 4 report — AI assistance (Gemini)
+
+**Provider decision:** the owner has a Gemini key, so Gemini replaced Anthropic as the first live adapter (ADR-0006). The provider interface, tasks and guard are unchanged in design; Anthropic stays a later one-file addition.
+
+**Completed:**
+- `src/modules/ai/`:
+  - `schemas.ts`: input/output contracts for the six tasks.
+  - `tasks.ts`: versioned prompts, model tier, finalize/guard per task.
+  - `guard.ts`: truth guard. Numbers, number words, years, names and credentials absent from the person's text become `{{?…}}`. Years of experience derived from the person's dates are allowed.
+  - `run.ts`:
+    - Validates input.
+    - One retry on 429/5xx, 20 s timeout.
+    - Validates output with Zod and makes one repair attempt.
+    - Applies the guard.
+    - Never throws.
+  - `providers/gemini.ts`:
+    - REST `generateContent` with `responseJsonSchema`, falling back to plain JSON mode if the schema field is rejected.
+    - Key sent in the `x-goog-api-key` header.
+    - Thought parts ignored; safety blocks mapped.
+  - `providers/mock.ts`: deterministic, labelled "Demo AI".
+  - `config.ts`: the provider is never mock in production unless explicitly set; AI is off without a key.
+  - `limits.ts`: 30 per 10 min and 150 per day per IP+device, plus a global daily budget kill switch.
+- API:
+  - `POST /api/ai/:task`: error envelope; logs contain no user text.
+  - `GET /api/ai/status`.
+  - Health check reports the AI mode.
+- UI:
+  - "Describe what you need" on Start: creates the CV with the chosen profession, title and design.
+  - "Help me write" on the profile (write / improve / shorter) and on job, project and volunteering points (clearer / shorter / professional / turn text or notes into points).
+  - "Suggest skills for me": the person picks; nothing is added automatically.
+  - "Describe a style" on the Design tab: three choices from the catalogue, applied with undo.
+  - Suggestion card with Use this · Try again (max 5) · Dismiss. Nothing changes until "Use this", and every use is one undo step.
+  - `{{?…}}` markers highlighted in the editor hint, the suggestion card, the preview and the PDF, and flagged by the download checklist.
+  - Per-device AI on/off switch: "Turn off AI help" in every AI menu, and a toggle on the Privacy page.
+- Privacy page and Help updated to describe Gemini accurately.
+- Scripts:
+  - `npm run ai:eval`: live evaluation, 48 samples over 6 fixtures, messy notes and the brief's two examples. Writes a review log and runs an independent residual-fact check.
+  - `npm run check:secrets`: fails if the key, the key's name, the Gemini host or prompt text appears in client files.
+
+**Bug found and fixed (pre-existing):**
+- **Symptom:** after an undo back to the exact previous document, the preview stayed on the newer version.
+- **Cause:** the hidden frame already held that identical HTML, so it never reloaded or reported ready.
+- **Fix:** the preview re-activates a ready frame that holds the same document.
+- **Regression test:** `builder.spec` "undo back to an earlier design…". Confirmed failing on the old code.
+
+**Verification:**
+- `npm run verify`: lint, types, format, 97 unit tests (37 new AI tests: guard, runner, Gemini adapter with fetch mocks, mock provider, config, limits, marker rendering) and build.
+- `npm run test:e2e`: 173 passed, 0 failed.
+  - New `e2e/ai.spec.ts` covers Start describe (both brief examples), profile write/use/undo/redo with the marker in the preview and the checklist, bullets improve/try again/dismiss, notes→points, skills picking, describe a style with axe, and AI on/off.
+  - Failure paths: unavailable, timeout, invalid output, rate limit and network failure. Each shows a friendly message and the field stays editable.
+- `GEMINI_API_KEY=<sentinel> npm run build && npm run check:secrets`: no key or server AI code in 31 client files.
+- `npm run ai:eval -- --mock`: 48/48 samples, pipeline OK. This is a dry run and says nothing about Gemini quality.
+- Visual review of Start, the suggestion cards, describe a style, the preview markers and mobile.
+
+**Acceptance status (roadmap Phase 4):**
+1. Mock e2e including failure paths — ✅
+2. Truth-guard unit tests — ✅
+3. ≥ 30 live samples with 0 invented facts — ⏳ **not yet run.** This workspace cannot reach Google's API (blocked by its network allowlist), so the Gemini adapter is tested only against recorded API shapes. Run `GEMINI_API_KEY=… npm run ai:eval`, review `artifacts/ai-eval/*.md`, and record the result here.
+4. Brief's two examples give sensible, valid specs — ✅ with the mock (teacher → blue + elegant font; driver → driver preset, "Delivery Driver", Clarity). ⏳ to confirm with Gemini in the same eval run.
+5. No key in the client bundle — ✅
+
+**Open launch items:**
+- The Gemini key must belong to a Cloud project **with billing enabled** (paid-service data terms). Otherwise the privacy page is wrong (ADR-0006).
+- Gemini terms require users to be 18+; decide how to handle the student / school-leaver audience before launch.
+- Rate limits are in memory per instance; move to a shared store when running more than one instance.
+
 ## Next action (exact)
 
-Start **Phase 4 — AI assistance** per `delivery/roadmap.md`:
-1. `git switch -c phase-4/ai-assist main`
-2. Create `src/modules/ai/` with `provider.ts` (`AiProvider` interface), `providers/mock.ts`, `providers/anthropic.ts` (model names from `AI_MODEL_FAST` / `AI_MODEL_SMART`), `tasks/*` (prompt version + Zod output schema), `guard.ts` (truth guard: numbers, years, organisations, credentials not present in input → `{{?…}}` or reject), `limits.ts` (per-device/IP buckets + daily budget switch).
-3. Route `src/app/api/ai/[task]/route.ts` using `src/lib/http.ts` envelope.
-4. UI: "Help me write" menu on summary and bullets (suggestion card: Use this · Try again · Dismiss), "Describe a style" on Design tab, describe box on Start; render `{{?…}}` markers in preview and feed the Download checklist (already checks them).
-5. Tests: truth-guard unit tests first; e2e with mock provider incl. timeout/invalid-output/rate-limit fallbacks.
+1. Owner: put the key in `.env.local` as `GEMINI_API_KEY=…` (never commit it), then run `npm run ai:eval`. Send the summary line and the log file. If the model id is not available to the key, set `AI_MODEL_FAST` / `AI_MODEL_SMART` to an id listed in Google AI Studio.
+2. Review the log. Adjust prompts (bump the task `version`) or guard rules for any problem found, then mark Phase 4 criteria 3–4 complete.
+3. Then start **Phase 5 — Import and job tailoring** (`phase-5/import-tailoring`) per `delivery/roadmap.md`.
 
 ## Known blockers
 

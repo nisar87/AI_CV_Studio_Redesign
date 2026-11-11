@@ -1,5 +1,6 @@
 'use client';
 
+import { AiDocProvider } from '@/features/ai/context';
 import { useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Download, Eye, Palette, PenLine } from 'lucide-react';
@@ -77,101 +78,103 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
   );
 
   return (
-    <div className="bg-paper flex h-dvh flex-col">
-      <StudioBar editor={editor} backHref="/cv" backLabel="Back to My CVs" action={download} />
-      <div className="flex min-h-0 flex-1">
-        <main
-          id="main"
-          className={cn(
-            'border-line min-h-0 w-full overflow-y-auto pb-24 lg:w-[460px] lg:shrink-0 lg:border-r lg:pb-8',
-            view === 'preview' && 'hidden lg:block',
-          )}
-        >
-          <div className="bg-paper/95 sticky top-0 z-10 hidden px-5 pt-3 backdrop-blur lg:block">
-            <Tabs
-              label="Edit your CV"
-              idBase="editor"
-              value={panelTab}
-              onChange={(v) => setView(v)}
-              tabs={[
-                { value: 'content', label: 'Content', icon: <PenLine aria-hidden size={18} /> },
-                { value: 'design', label: 'Design', icon: <Palette aria-hidden size={18} /> },
-              ]}
-            />
-          </div>
-          <div
-            role="tabpanel"
-            id={tabPanelId('editor', panelTab)}
-            aria-labelledby={tabId('editor', panelTab)}
-            className="px-4 pt-4 sm:px-5"
-          >
-            {welcome && (
-              <Banner
-                tone="success"
-                title="Your CV is ready"
-                onDismiss={() => setWelcome(false)}
-                className="mb-4"
-              >
-                Check the preview, change anything you like, then download it. Everything saves
-                automatically.
-              </Banner>
-            )}
-            {panelTab === 'content' ? (
-              <ContentPanel ref={content} editor={editor} />
-            ) : (
-              <DesignPanel editor={editor} />
-            )}
-          </div>
-        </main>
-
-        <section
-          aria-label="Preview"
-          className={cn(
-            'bg-sunken min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-24 lg:block lg:px-10 lg:pt-6 lg:pb-10',
-            view === 'preview' ? 'block' : 'hidden',
-          )}
-        >
-          <div className="mx-auto flex w-full max-w-[820px] flex-col gap-3">
-            <PreviewStatusLine
-              status={status}
-              onCompact={doc.design.density !== 'compact' ? compact : undefined}
-            />
-            <DocumentPreview
-              doc={doc}
-              onStatus={setStatus}
-              onSelect={onSelect}
-              title="Preview of your CV. Click any part to edit it."
-            />
-          </div>
-        </section>
-      </div>
-
-      <nav
-        aria-label="Editor views"
-        className="border-line bg-surface fixed inset-x-0 bottom-0 z-20 grid grid-cols-3 border-t pb-[env(safe-area-inset-bottom)] lg:hidden"
-      >
-        {(
-          [
-            ['content', 'Edit', PenLine],
-            ['design', 'Design', Palette],
-            ['preview', 'Preview', Eye],
-          ] as const
-        ).map(([v, label, Icon]) => (
-          <button
-            key={v}
-            type="button"
-            aria-current={view === v ? 'page' : undefined}
-            onClick={() => setView(v)}
+    <AiDocProvider value={doc}>
+      <div className="bg-paper flex h-dvh flex-col">
+        <StudioBar editor={editor} backHref="/cv" backLabel="Back to My CVs" action={download} />
+        <div className="flex min-h-0 flex-1">
+          <main
+            id="main"
             className={cn(
-              'flex h-16 flex-col items-center justify-center gap-0.5 text-xs font-semibold',
-              view === v ? 'text-primary' : 'text-ink-muted',
+              'border-line min-h-0 w-full overflow-y-auto pb-24 lg:w-[460px] lg:shrink-0 lg:border-r lg:pb-8',
+              view === 'preview' && 'hidden lg:block',
             )}
           >
-            <Icon aria-hidden size={22} />
-            {label}
-          </button>
-        ))}
-      </nav>
-    </div>
+            <div className="bg-paper/95 sticky top-0 z-10 hidden px-5 pt-3 backdrop-blur lg:block">
+              <Tabs
+                label="Edit your CV"
+                idBase="editor"
+                value={panelTab}
+                onChange={(v) => setView(v)}
+                tabs={[
+                  { value: 'content', label: 'Content', icon: <PenLine aria-hidden size={18} /> },
+                  { value: 'design', label: 'Design', icon: <Palette aria-hidden size={18} /> },
+                ]}
+              />
+            </div>
+            <div
+              role="tabpanel"
+              id={tabPanelId('editor', panelTab)}
+              aria-labelledby={tabId('editor', panelTab)}
+              className="px-4 pt-4 sm:px-5"
+            >
+              {welcome && (
+                <Banner
+                  tone="success"
+                  title="Your CV is ready"
+                  onDismiss={() => setWelcome(false)}
+                  className="mb-4"
+                >
+                  Check the preview, change anything you like, then download it. Everything saves
+                  automatically.
+                </Banner>
+              )}
+              {panelTab === 'content' ? (
+                <ContentPanel ref={content} editor={editor} />
+              ) : (
+                <DesignPanel editor={editor} />
+              )}
+            </div>
+          </main>
+
+          <section
+            aria-label="Preview"
+            className={cn(
+              'bg-sunken min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-24 lg:block lg:px-10 lg:pt-6 lg:pb-10',
+              view === 'preview' ? 'block' : 'hidden',
+            )}
+          >
+            <div className="mx-auto flex w-full max-w-[820px] flex-col gap-3">
+              <PreviewStatusLine
+                status={status}
+                onCompact={doc.design.density !== 'compact' ? compact : undefined}
+              />
+              <DocumentPreview
+                doc={doc}
+                onStatus={setStatus}
+                onSelect={onSelect}
+                title="Preview of your CV. Click any part to edit it."
+              />
+            </div>
+          </section>
+        </div>
+
+        <nav
+          aria-label="Editor views"
+          className="border-line bg-surface fixed inset-x-0 bottom-0 z-20 grid grid-cols-3 border-t pb-[env(safe-area-inset-bottom)] lg:hidden"
+        >
+          {(
+            [
+              ['content', 'Edit', PenLine],
+              ['design', 'Design', Palette],
+              ['preview', 'Preview', Eye],
+            ] as const
+          ).map(([v, label, Icon]) => (
+            <button
+              key={v}
+              type="button"
+              aria-current={view === v ? 'page' : undefined}
+              onClick={() => setView(v)}
+              className={cn(
+                'flex h-16 flex-col items-center justify-center gap-0.5 text-xs font-semibold',
+                view === v ? 'text-primary' : 'text-ink-muted',
+              )}
+            >
+              <Icon aria-hidden size={22} />
+              {label}
+            </button>
+          ))}
+        </nav>
+      </div>
+    </AiDocProvider>
   );
 }

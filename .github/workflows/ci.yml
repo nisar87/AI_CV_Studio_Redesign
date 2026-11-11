@@ -27,6 +27,12 @@ jobs:
       - run: npm run format:check
       - run: npm test
       - run: npm run build
+        env:
+          GEMINI_API_KEY: ci-sentinel-not-a-real-key-123
+      - name: No AI key or server AI code in client files
+        run: npm run check:secrets
+        env:
+          GEMINI_API_KEY: ci-sentinel-not-a-real-key-123
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
         env:

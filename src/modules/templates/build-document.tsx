@@ -62,32 +62,34 @@ export function buildDocumentHtml(doc: ResumeDocument, opts: BuildOptions): stri
     .flatMap((s) => sectionBlocks(s, template.hooks, design));
   const { Header, Running, Decor } = template;
 
-  const body = renderToStaticMarkup(
-    <>
-      <div data-cv-source="">
-        <div data-slot="header">
-          <Header model={model} design={design} />
+  const body = markPlaceholders(
+    renderToStaticMarkup(
+      <>
+        <div data-cv-source="">
+          <div data-slot="header">
+            <Header model={model} design={design} />
+          </div>
+          {Running && (
+            <div data-slot="running">
+              <Running model={model} design={design} />
+            </div>
+          )}
+          <div data-flow="main">{mainBlocks}</div>
+          {asideContact.length + asideBlocks.length > 0 && (
+            <div data-flow="aside">
+              {asideContact}
+              {asideBlocks}
+            </div>
+          )}
+          {Decor && (
+            <div data-slot="decor">
+              <Decor model={model} design={design} />
+            </div>
+          )}
         </div>
-        {Running && (
-          <div data-slot="running">
-            <Running model={model} design={design} />
-          </div>
-        )}
-        <div data-flow="main">{mainBlocks}</div>
-        {asideContact.length + asideBlocks.length > 0 && (
-          <div data-flow="aside">
-            {asideContact}
-            {asideBlocks}
-          </div>
-        )}
-        {Decor && (
-          <div data-slot="decor">
-            <Decor model={model} design={design} />
-          </div>
-        )}
-      </div>
-      <div data-cv-pages="" />
-    </>,
+        <div data-cv-pages="" />
+      </>,
+    ),
   );
 
   const fontSrc =
@@ -114,4 +116,16 @@ export function buildDocumentHtml(doc: ResumeDocument, opts: BuildOptions): stri
 </head>
 <body>${body}<script>${RUNTIME_JS}</script>${opts.autoPrint ? `<script>${AUTO_PRINT_JS}</script>` : ''}</body>
 </html>`;
+}
+
+/**
+ * Text still waiting for the person's input (`{{?…}}`, from AI suggestions) is highlighted in
+ * the preview and the PDF, and the download checklist warns about it. Only text nodes change.
+ */
+export function markPlaceholders(html: string): string {
+  return html.replace(
+    />([^<]+)</g,
+    (_m, text: string) =>
+      `>${text.replace(/\{\{\?([^{}]{1,160})\}\}/g, '<mark class="cv-ask">[$1]</mark>')}<`,
+  );
 }

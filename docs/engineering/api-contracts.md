@@ -37,12 +37,18 @@ Request: `{ "input": <task input schema>, "attempt": 1 }` — header `x-device-i
 Response `200`:
 
 ```json
-{ "task": "write.summary", "version": "summary@1", "result": { "text": "…", "needsInput": ["…"] }, "usage": { "remainingToday": 142 } }
+{ "task": "write.summary", "version": "summary@1", "provider": "gemini", "result": { "text": "…" }, "needsInput": ["…"], "usage": { "remainingToday": 142 } }
 ```
+
+Errors: `INVALID_INPUT` (unknown task or bad input), `RATE_LIMITED` (`details.reason` = `burst` | `daily` | `budget`, `Retry-After` header), `AI_UNAVAILABLE` (`details.reason` = `off` | `timeout` | `unavailable` | `rate_limited` | `auth` | `blocked` | `bad_request`), `AI_INVALID_OUTPUT`. Input and output schemas: `src/modules/ai/schemas.ts`. Body limit 48 KB; `attempt` 0–5 ("Try again" count).
+
+## `GET /api/ai/status` (Phase 4)
+
+`200 { "enabled": true, "provider": "gemini" | "mock" | "off" }` — the client hides AI actions when disabled and labels mock answers "Demo AI".
 
 ## `GET /api/health`
 
-`200 { "status": "ok", "version": "<git sha>", "checks": { "chromium": "ok|unavailable", "ai": "configured|mock|missing" } }` — used by uptime checks and the Download page to decide whether to show Print as the primary option.
+`200 { "status": "ok", "version": "<git sha>", "checks": { "chromium": "ok|unavailable", "ai": "configured|mock|off" } }` — used by uptime checks and the Download page to decide whether to show Print as the primary option.
 
 ## Phase 6 additions (sketch; finalized in that phase)
 

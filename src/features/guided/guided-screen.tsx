@@ -1,5 +1,8 @@
 'use client';
 
+import { AiDocProvider } from '@/features/ai/context';
+import { SummaryAssist } from '@/features/ai/assist';
+import { NeedsInputHint } from '@/features/ai/suggestion';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Eye, Plus, Trash2, X } from 'lucide-react';
@@ -158,115 +161,132 @@ export function GuidedScreen({ initial }: { initial: ResumeDocument }) {
   };
 
   return (
-    <div className="bg-paper flex min-h-dvh flex-col">
-      <StudioBar editor={editor} backHref="/cv" backLabel="Save and go to My CVs" />
-      <div className="flex flex-1">
-        <main
-          id="main"
-          className="mx-auto w-full max-w-[640px] px-4 pt-6 pb-32 sm:px-6 lg:mx-0 lg:max-w-none lg:flex-1 lg:px-12 xl:px-20"
-        >
-          <div className="mx-auto flex max-w-[600px] flex-col gap-6">
-            <Stepper current={index + 1} total={steps.length} label={label} />
-            <div className="flex flex-col gap-2">
-              <h1
-                ref={heading}
-                tabIndex={-1}
-                className="font-display text-[28px] leading-tight font-semibold tracking-tight focus:outline-none sm:text-[32px]"
-              >
-                {title}
-              </h1>
-              <p className="text-ink-muted">{intro}</p>
-            </div>
-
-            {step.kind === 'about' && (
+    <AiDocProvider value={doc}>
+      <div className="bg-paper flex min-h-dvh flex-col">
+        <StudioBar editor={editor} backHref="/cv" backLabel="Save and go to My CVs" />
+        <div className="flex flex-1">
+          <main
+            id="main"
+            className="mx-auto w-full max-w-[640px] px-4 pt-6 pb-32 sm:px-6 lg:mx-0 lg:max-w-none lg:flex-1 lg:px-12 xl:px-20"
+          >
+            <div className="mx-auto flex max-w-[600px] flex-col gap-6">
+              <Stepper current={index + 1} total={steps.length} label={label} />
               <div className="flex flex-col gap-2">
-                <BasicsForm
-                  editor={editor}
-                  showLinks={
-                    preset.id === 'tech' || preset.id === 'student' || preset.id === 'executive'
-                  }
-                />
-                {nameError && (
-                  <p role="alert" className="text-danger text-sm font-semibold">
-                    Please add your name so we can put it at the top of your CV.
-                  </p>
-                )}
+                <h1
+                  ref={heading}
+                  tabIndex={-1}
+                  className="font-display text-[28px] leading-tight font-semibold tracking-tight focus:outline-none sm:text-[32px]"
+                >
+                  {title}
+                </h1>
+                <p className="text-ink-muted">{intro}</p>
               </div>
-            )}
-            {section && <SectionStep editor={editor} section={section} />}
-            {step.kind === 'summary' && (
-              <TextArea
-                label="Your introduction"
-                rows={5}
-                placeholder={preset.hints.summary}
-                hint="Say what you do, how long you have done it, and what you are looking for."
-                value={doc.basics.summary}
-                onChange={(e) =>
-                  update((d) => ops.updateBasics(d, { summary: e.target.value }), 'basics.summary')
-                }
+
+              {step.kind === 'about' && (
+                <div className="flex flex-col gap-2">
+                  <BasicsForm
+                    editor={editor}
+                    showLinks={
+                      preset.id === 'tech' || preset.id === 'student' || preset.id === 'executive'
+                    }
+                  />
+                  {nameError && (
+                    <p role="alert" className="text-danger text-sm font-semibold">
+                      Please add your name so we can put it at the top of your CV.
+                    </p>
+                  )}
+                </div>
+              )}
+              {section && <SectionStep editor={editor} section={section} />}
+              {step.kind === 'summary' && (
+                <div className="flex flex-col gap-2">
+                  <TextArea
+                    label="Your introduction"
+                    rows={5}
+                    placeholder={preset.hints.summary}
+                    hint="Say what you do, how long you have done it, and what you are looking for."
+                    value={doc.basics.summary}
+                    onChange={(e) =>
+                      update(
+                        (d) => ops.updateBasics(d, { summary: e.target.value }),
+                        'basics.summary',
+                      )
+                    }
+                  />
+                  <NeedsInputHint texts={[doc.basics.summary]} />
+                  <SummaryAssist
+                    summary={doc.basics.summary}
+                    onApply={(text) =>
+                      update(
+                        (d) => ops.updateBasics(d, { summary: text }),
+                        `basics.summary.ai.${Date.now()}`,
+                      )
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          </main>
+          <aside
+            aria-label="Preview"
+            className="border-line bg-sunken hidden w-[min(44vw,620px)] shrink-0 border-l p-8 lg:block"
+          >
+            <div className="sticky top-8">
+              <DocumentPreview doc={doc} title="Preview of your CV" />
+            </div>
+          </aside>
+        </div>
+
+        <div className="border-line bg-surface/95 fixed inset-x-0 bottom-0 z-20 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur lg:right-[min(44vw,620px)]">
+          <div className="mx-auto flex max-w-[600px] items-center gap-3 px-4 py-3">
+            <Button
+              variant="ghost"
+              icon={<ArrowLeft aria-hidden size={18} />}
+              onClick={() => setIndex(Math.max(0, index - 1))}
+              disabled={index === 0}
+            >
+              Back
+            </Button>
+            <Button
+              variant="secondary"
+              className="lg:hidden"
+              icon={<Eye aria-hidden size={18} />}
+              onClick={() => setPeek(true)}
+            >
+              Peek
+            </Button>
+            <Button
+              className="ml-auto"
+              onClick={next}
+              iconAfter={<ArrowRight aria-hidden size={18} />}
+            >
+              {index >= steps.length - 1 ? 'Finish' : 'Continue'}
+            </Button>
+          </div>
+        </div>
+
+        {peek && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Preview of your CV"
+            className="bg-sunken fixed inset-0 z-40 flex flex-col lg:hidden"
+          >
+            <div className="border-line bg-surface flex h-14 items-center justify-between border-b px-4">
+              <p className="font-semibold">Your CV so far</p>
+              <IconButton
+                autoFocus
+                label="Close preview"
+                icon={<X aria-hidden size={20} />}
+                onClick={() => setPeek(false)}
               />
-            )}
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <DocumentPreview doc={doc} title="Preview of your CV" />
+            </div>
           </div>
-        </main>
-        <aside
-          aria-label="Preview"
-          className="border-line bg-sunken hidden w-[min(44vw,620px)] shrink-0 border-l p-8 lg:block"
-        >
-          <div className="sticky top-8">
-            <DocumentPreview doc={doc} title="Preview of your CV" />
-          </div>
-        </aside>
+        )}
       </div>
-
-      <div className="border-line bg-surface/95 fixed inset-x-0 bottom-0 z-20 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur lg:right-[min(44vw,620px)]">
-        <div className="mx-auto flex max-w-[600px] items-center gap-3 px-4 py-3">
-          <Button
-            variant="ghost"
-            icon={<ArrowLeft aria-hidden size={18} />}
-            onClick={() => setIndex(Math.max(0, index - 1))}
-            disabled={index === 0}
-          >
-            Back
-          </Button>
-          <Button
-            variant="secondary"
-            className="lg:hidden"
-            icon={<Eye aria-hidden size={18} />}
-            onClick={() => setPeek(true)}
-          >
-            Peek
-          </Button>
-          <Button
-            className="ml-auto"
-            onClick={next}
-            iconAfter={<ArrowRight aria-hidden size={18} />}
-          >
-            {index >= steps.length - 1 ? 'Finish' : 'Continue'}
-          </Button>
-        </div>
-      </div>
-
-      {peek && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Preview of your CV"
-          className="bg-sunken fixed inset-0 z-40 flex flex-col lg:hidden"
-        >
-          <div className="border-line bg-surface flex h-14 items-center justify-between border-b px-4">
-            <p className="font-semibold">Your CV so far</p>
-            <IconButton
-              autoFocus
-              label="Close preview"
-              icon={<X aria-hidden size={20} />}
-              onClick={() => setPeek(false)}
-            />
-          </div>
-          <div className="flex-1 overflow-y-auto p-4">
-            <DocumentPreview doc={doc} title="Preview of your CV" />
-          </div>
-        </div>
-      )}
-    </div>
+    </AiDocProvider>
   );
 }
