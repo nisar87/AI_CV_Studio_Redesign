@@ -23,6 +23,7 @@ export default defineConfig({
   ],
   webServer: {
     command: `npm run start -- -p ${PORT}`,
+    env: { RATE_LIMIT_PDF_PER_MINUTE: '1000' },
     port: PORT,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
