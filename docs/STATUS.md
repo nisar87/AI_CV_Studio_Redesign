@@ -211,11 +211,9 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
 
 ## Next action (exact)
 
-1. **Owner:** answer the decisions in `product/business-model-plan.md` §8 (prices, free allowances, payment accounts, old users, old data).
-2. Then start **Phase 4b — Accounts and plans** on branch `phase-4b/accounts-plans`, per the plan's §4 and §6.
-3. Run the live AI evaluation (`npm run ai:eval`) during 4b, before AI is switched back on for Premium users.
-
-AI help is **paused in production** (owner decision, 2026-11-12) and the "free / no sign-up" claims are removed, until 4b lands.
+1. **Owner:** approve `product/studio-master-plan.md` and answer its §9 decisions (prices and passes, free limits, payment accounts, old users and old CVs, staging).
+2. Then start **Release 1 · R1.1 Identity and cloud documents** on branch `r1/identity-cloud-docs`.
+3. AI help stays **paused in production** until R1.2 (entitlement gate) and the R1.6 AI evaluation are done.
 
 ## Deployment (2026-11-12)
 
