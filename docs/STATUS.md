@@ -209,11 +209,21 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
 - Gemini terms require users to be 18+; decide how to handle the student / school-leaver audience before launch.
 - Rate limits are in memory per instance; move to a shared store when running more than one instance.
 
+## Release 1 progress
+
+- **R1.1 Identity and cloud documents: built and verified locally (2026-11-12).** Includes:
+  - Email/password sign-in (password rules, 18+ confirmation, verification, reset) and Google sign-in.
+  - httpOnly server sessions and the account page.
+  - Cloud documents with sync and version history.
+  - Device CVs move into the account on sign-in; signing out removes them from the device.
+  - Verification: 104 unit tests (store and sync, including the two-devices conflict case) and 182 e2e tests, all passing. The new `account.spec` covers the visitor→account move, a second and a third device, edit sync, sign-out cleanup, deletion sync, sign-in for accounts that existed before the redesign, and refused APIs.
+  - The live Firestore check follows the deploy.
+- Next: **R1.2 Entitlement gate and config**.
+
 ## Next action (exact)
 
-1. **Owner:** approve `product/studio-master-plan.md` and answer its §9 decisions (prices and passes, free limits, payment accounts, old users and old CVs, staging).
-2. Then start **Release 1 · R1.1 Identity and cloud documents** on branch `r1/identity-cloud-docs`.
-3. AI help stays **paused in production** until R1.2 (entitlement gate) and the R1.6 AI evaluation are done.
+1. Verify R1.1 on aicvstudio.app against production Firestore (sign up, sync between two browsers).
+2. Start **R1.2 Entitlement gate and config** on branch `r1/entitlements-config`.
 
 ## Deployment (2026-11-12)
 

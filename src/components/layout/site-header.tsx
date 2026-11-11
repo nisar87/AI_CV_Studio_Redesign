@@ -8,6 +8,8 @@ import { ButtonLink } from '@/components/ui/button';
 import { Container } from '@/components/ui/misc';
 import { cn } from '@/lib/cn';
 import { Logo } from './logo';
+import { useAccount } from '@/features/account/account-context';
+import { CircleUserRound } from 'lucide-react';
 
 const NAV = [
   { href: '/cv', label: 'My CVs' },
@@ -25,6 +27,10 @@ export function SiteHeader() {
     setOpenOn(next ? pathname : null);
   };
   const menuButton = useRef<HTMLButtonElement>(null);
+  const account = useAccount();
+  const signedIn = account.status === 'signedIn';
+  const accountHref = signedIn ? '/account' : '/signin';
+  const accountLabel = signedIn ? 'Account' : 'Sign in';
 
   useEffect(() => {
     if (!open) return;
@@ -69,6 +75,16 @@ export function SiteHeader() {
           })}
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          {account.status !== 'loading' && (
+            <Link
+              href={accountHref}
+              aria-current={pathname === accountHref ? 'page' : undefined}
+              className="text-ink-muted hover:bg-sunken hover:text-ink hidden items-center gap-1.5 rounded-md px-3 py-2 text-[15px] font-semibold md:inline-flex"
+            >
+              {signedIn && <CircleUserRound aria-hidden size={18} />}
+              {accountLabel}
+            </Link>
+          )}
           <ButtonLink href="/start" size="sm" className="sm:h-11 sm:px-4 sm:text-[15px]">
             Create a CV
           </ButtonLink>
@@ -101,6 +117,12 @@ export function SiteHeader() {
                 {item.label}
               </Link>
             ))}
+            <Link
+              href={accountHref}
+              className="text-ink hover:bg-sunken rounded-md px-3 py-3 text-base font-semibold"
+            >
+              {accountLabel}
+            </Link>
           </Container>
         </nav>
       )}
