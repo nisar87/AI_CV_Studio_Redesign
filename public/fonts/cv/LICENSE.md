@@ -1,0 +1,1 @@
+Fonts in this folder are licensed under the SIL Open Font License 1.1 (Inter, Inter Tight, Source Serif 4, Source Sans 3, Lora, Cormorant Garamond, IBM Plex Sans, Lato). Copied from @fontsource packages.

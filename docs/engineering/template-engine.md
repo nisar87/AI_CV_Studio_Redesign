@@ -60,7 +60,7 @@ A single scale factor feeds type size (9.5 / 10 / 10.5 pt body), line-height, se
 | Template | Layout | For | ATS notes |
 |---|---|---|---|
 | **Clarity** | Single column; name and contact in a clean header; accent rule under section titles | Everyone; default for drivers, retail, trades, office | Linear reading order; perfect parsing |
-| **Meridian** | Header band + main column (experience, education) + tinted sidebar (contact, skills, languages, licences) | Teachers, nurses, technical roles, graduates | Sidebar comes after the main column in DOM order (see "Reading order") |
+| **Meridian** | Header band (name, headline, contacts) + main column (profile, experience, education, projects) + tinted side column (skills, languages, certifications, licences, awards) | Teachers, nurses, technical roles, graduates | Sidebar comes after the main column in DOM order (see "Reading order") |
 | **Heritage** | Single column, centred serif name, small-caps section titles, generous whitespace | Executives, managers, senior professionals | Linear |
 
 **Reading order:** In two-column templates the DOM order is: header → main column → sidebar. Text extraction and screen readers therefore read the most important content first; visually the sidebar is placed by CSS grid. Contact details are duplicated nowhere — they live in the header for all templates.
@@ -75,6 +75,12 @@ Templates emit flat lists of blocks per flow (`main`, `aside`). Granularity:
 - Entry head (title, organization, dates) + first two bullets — `data-keep="together"`.
 - Each further bullet — its own block (entries may split between bullets, never mid-line).
 - Short sections (≤ ~6 lines, e.g. a summary) — one block.
+
+### Implementation notes
+- The runtime and `planPages` live in `src/modules/templates/paginate/runtime-source.ts` as **plain JavaScript source text**. An earlier version serialized TypeScript functions with `.toString()`; dev tooling (esbuild `keepNames`) injected helper calls that do not exist inside the document, so the source is now authored as JS. `plan.ts` evaluates the same string for unit tests — the tested algorithm is byte-for-byte the shipped one.
+- Templates render with `renderToStaticMarkup` from `react-dom/server.edge` (Next.js forbids the plain `react-dom/server` entry in route handlers); the same builder runs in the browser for the preview and on the server for PDF.
+- The preview uses two sandboxed iframes and swaps them when the new document reports `cv:ready`, so edits never flash a blank page.
+- Short lists (skills, languages, licences…) of up to four items are kept together; longer lists never strand a single item (`listKeep`).
 
 ### Algorithm (`planPages`, pure and unit-tested)
 1. Wait for `document.fonts.ready`.
