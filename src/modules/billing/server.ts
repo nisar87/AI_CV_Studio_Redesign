@@ -51,6 +51,33 @@ export async function planFor(
   return { plan: 'free', passExpiresAt: pass?.expiresAt ?? null };
 }
 
+/**
+ * Grant or extend Premium. An active pass is extended from its end, so buying again early never
+ * loses days; otherwise the pass starts now. Returns the new expiry.
+ */
+export async function grantPass(
+  uid: string,
+  days: number,
+  by: string,
+  source: 'manual' | 'admin',
+  note?: string,
+): Promise<string> {
+  const store = getUserStore();
+  const cur = await store.getPass(uid);
+  const now = new Date();
+  const from = cur && cur.expiresAt > now.toISOString() ? new Date(cur.expiresAt) : now;
+  const expiresAt = new Date(from.getTime() + days * 86_400_000).toISOString();
+  await store.setPass(uid, {
+    plan: 'premium',
+    expiresAt,
+    source,
+    grantedBy: by,
+    grantedAt: now.toISOString(),
+    ...(note ? { note: note.slice(0, 200) } : {}),
+  });
+  return expiresAt;
+}
+
 /** Reserve one use of a metered capability. Call release() if the work then fails. */
 export async function reserve(
   user: SessionUser | null,

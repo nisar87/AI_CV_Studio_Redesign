@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Banner } from '@/components/ui/banner';
+import { ButtonLink } from '@/components/ui/button';
 import { AdminHeading } from './admin-shell';
 import { adminGet } from './api';
 
@@ -13,6 +14,7 @@ type Overview = {
   };
   usage: Record<'pdf.download' | 'import.cv' | 'ai.action', number>;
   premium: { active: number; total: number };
+  payments: { pending: number };
   config: { version: number; sales: boolean; ai: boolean; maintenance: boolean };
   aiProvider: string;
 };
@@ -34,6 +36,17 @@ export function AdminOverview() {
       {!data && !error && <div className="skeleton h-40 rounded-lg" aria-busy="true" />}
       {data && (
         <div className="flex flex-col gap-6">
+          {data.payments.pending > 0 && (
+            <Banner
+              tone="warning"
+              title={`${data.payments.pending} payment${data.payments.pending === 1 ? '' : 's'} waiting for a check`}
+              action={
+                <ButtonLink href="/admin/payments" size="sm">
+                  Review payments
+                </ButtonLink>
+              }
+            />
+          )}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="admin-stats">
             <Stat label="Accounts" value={data.users.total} />
             <Stat label="Premium active" value={data.premium.active} />

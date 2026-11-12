@@ -11,11 +11,12 @@ export function GET() {
     const store = getUserStore();
     const now = new Date().toISOString();
     const month = monthKey();
-    const [users, usage, passes, cfg] = await Promise.all([
+    const [users, usage, passes, cfg, pending] = await Promise.all([
       store.userStats(),
       store.usageTotals(month),
       store.listPasses(),
       getBusinessConfig(true),
+      store.listPaymentRequests({ status: 'pending', limit: 200 }),
     ]);
     return json({
       month,
@@ -25,6 +26,7 @@ export function GET() {
         'import.cv': usage['import.cv'] ?? 0,
         'ai.action': usage['ai.action'] ?? 0,
       },
+      payments: { pending: pending.length },
       premium: { active: passes.filter((p) => p.expiresAt > now).length, total: passes.length },
       config: {
         version: cfg.version,

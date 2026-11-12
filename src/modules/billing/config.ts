@@ -56,6 +56,23 @@ export const businessConfig = z.object({
     maintenance: z.boolean(),
   }),
   announcement: z.object({ enabled: z.boolean(), text: z.string().max(240) }),
+  /** How to pay for a pass (manual payments, R1.4). Shown on /premium when sales are on. */
+  payments: z
+    .object({
+      methods: z
+        .array(
+          z.object({
+            id: z.string().regex(/^[a-z0-9-]{2,30}$/),
+            label: z.string().min(1).max(40),
+            /** Account title / number / IBAN etc., shown with copy buttons line by line. */
+            details: z.string().max(400),
+            active: z.boolean(),
+          }),
+        )
+        .max(6),
+      instructions: z.string().max(600),
+    })
+    .default({ methods: [], instructions: '' }),
 });
 export type BusinessConfig = z.infer<typeof businessConfig>;
 
@@ -79,6 +96,11 @@ export const DEFAULT_CONFIG: BusinessConfig = {
   ],
   features: { ai: true, import: true, sales: false, signups: true, maintenance: false },
   announcement: { enabled: false, text: '' },
+  payments: {
+    methods: [],
+    instructions:
+      'Pay the exact amount, then enter the transaction ID from your banking app. We check payments by hand, usually within 24 hours, and Premium starts as soon as it is approved.',
+  },
 };
 
 /** Design tiers recommended for launch (applied by the owner in the Admin Console). */

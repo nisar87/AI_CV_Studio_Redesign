@@ -10,6 +10,8 @@ import {
   type Pass,
   type ConfigVersion,
   type AuditEntry,
+  type PaymentRequest,
+  type PaymentStatus,
 } from './types';
 
 /**
@@ -19,6 +21,7 @@ import {
  *   users/{uid}/documents/{id}/versions/{v}  { savedAt, doc }   (last 10)
  *   passes/{uid}                             Pass (Premium access until expiresAt) + uid, email
  *   usage/{uid}_{yyyy-mm}                    { uid, month, 'pdf.download': n, ... }
+ *   paymentRequests/{auto}                   PaymentRequest (Premium purchase, manual payment)
  *   adminAudit/{auto}                        { at, by, action, target, detail }
  *   config/{area}                            { version, value, savedAt, savedBy }
  *   config/{area}/versions/{version}         history for restore
@@ -217,6 +220,42 @@ export class FirestoreUserStore implements UserStore {
       for (const [k, v] of Object.entries(d.data()))
         if (typeof v === 'number') out[k] = (out[k] ?? 0) + v;
     return out;
+  }
+  async createPaymentRequest(r: Omit<PaymentRequest, 'id'>) {
+    const ref = await this.db.collection('paymentRequests').add(r);
+    return { id: ref.id, ...r };
+  }
+  async listPaymentRequests(q: { uid?: string; status?: PaymentStatus; limit: number }) {
+    // Equality filters without orderBy need no composite index; sort here (small sets).
+    let query: FirebaseFirestore.Query = this.db.collection('paymentRequests');
+    if (q.uid) query = query.where('uid', '==', q.uid);
+    if (q.status) query = query.where('status', '==', q.status);
+    const snap =
+      q.uid || q.status
+        ? await query.limit(500).get()
+        : await query.orderBy('createdAt', 'desc').limit(q.limit).get();
+    return snap.docs
+      .map((d) => ({ id: d.id, ...(d.data() as Omit<PaymentRequest, 'id'>) }))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, q.limit);
+  }
+  async decidePaymentRequest(
+    id: string,
+    d: { status: 'approved' | 'rejected'; by: string; reason?: string },
+  ) {
+    const ref = this.db.collection('paymentRequests').doc(id);
+    return this.db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists || snap.get('status') !== 'pending') return null;
+      const patch = {
+        status: d.status,
+        decidedBy: d.by,
+        decidedAt: new Date().toISOString(),
+        ...(d.reason ? { reason: d.reason } : {}),
+      };
+      tx.update(ref, patch);
+      return { id, ...(snap.data() as Omit<PaymentRequest, 'id'>), ...patch };
+    });
   }
   async userStats() {
     const users = this.db.collection('users');

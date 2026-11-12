@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Button } from '@/components/ui/button';
-import { TextField } from '@/components/ui/field';
+import { TextArea, TextField } from '@/components/ui/field';
 import { useToast } from '@/components/ui/toast';
 import { CheckboxField } from '@/features/editor/fields';
 import { METERED, PLAN_IDS, type BusinessConfig, type Metered } from '@/modules/billing/config';
@@ -62,6 +62,12 @@ export function AdminSettings() {
       if (p) fn(p);
     });
 
+  const editMethod = (i: number, fn: (m: BusinessConfig['payments']['methods'][number]) => void) =>
+    edit((c) => {
+      const m = c.payments.methods[i];
+      if (m) fn(m);
+    });
+
   const save = async () => {
     if (!base || !draft) return;
     setSaving(true);
@@ -102,6 +108,9 @@ export function AdminSettings() {
     );
 
   const freeEnabled = draft.designs.some((d) => d.enabled && d.tier === 'free');
+  const salesProblem =
+    draft.features.sales &&
+    (!draft.passes.some((p) => p.active) || !draft.payments.methods.some((m) => m.active));
 
   return (
     <>
@@ -278,12 +287,88 @@ export function AdminSettings() {
           )}
         </Section>
 
+        <Section
+          title="How to pay"
+          hint="Shown on the Premium page while sales are open. Put each account detail on its own line; buyers get a copy button for every line."
+        >
+          <ul className="flex flex-col gap-4">
+            {draft.payments.methods.map((m, i) => (
+              <li key={i} className="border-line flex flex-col gap-2 rounded-md border p-3">
+                <div className="flex flex-wrap items-end gap-3">
+                  <TextField
+                    label="Method"
+                    value={m.label}
+                    placeholder="Bank transfer"
+                    onChange={(e) => editMethod(i, (x) => void (x.label = e.target.value))}
+                    containerClassName="w-56"
+                  />
+                  <CheckboxField
+                    label="Shown"
+                    checked={m.active}
+                    onChange={(v) => editMethod(i, (x) => void (x.active = v))}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label={`Remove ${m.label}`}
+                    icon={<Trash2 aria-hidden size={16} />}
+                    onClick={() => edit((c) => void c.payments.methods.splice(i, 1))}
+                  />
+                </div>
+                <TextArea
+                  label="Account details"
+                  rows={3}
+                  value={m.details}
+                  placeholder={'Account title: …\nIBAN: …'}
+                  onChange={(e) => editMethod(i, (x) => void (x.details = e.target.value))}
+                />
+              </li>
+            ))}
+          </ul>
+          {draft.payments.methods.length < 6 && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="mt-3"
+              icon={<Plus aria-hidden size={16} />}
+              onClick={() =>
+                edit(
+                  (c) =>
+                    void c.payments.methods.push({
+                      id: `pay-${Date.now().toString(36)}`,
+                      label: 'Bank transfer',
+                      details: '',
+                      active: true,
+                    }),
+                )
+              }
+            >
+              Add a payment method
+            </Button>
+          )}
+          <TextArea
+            label="Instructions for buyers"
+            rows={3}
+            maxLength={600}
+            containerClassName="mt-4"
+            value={draft.payments.instructions}
+            onChange={(e) => edit((c) => void (c.payments.instructions = e.target.value))}
+          />
+        </Section>
+
         <Section title="Switches">
           <CheckboxField
             label="Premium sales are open (shows prices and “Get Premium”)"
             checked={draft.features.sales}
             onChange={(v) => edit((c) => void (c.features.sales = v))}
           />
+          {salesProblem && (
+            <Banner
+              tone="warning"
+              className="my-2"
+              title="To open sales, keep at least one pass on sale and one payment method shown."
+            />
+          )}
           <CheckboxField
             label="AI help is available"
             checked={draft.features.ai}
@@ -338,7 +423,11 @@ export function AdminSettings() {
           >
             Discard
           </Button>
-          <Button disabled={!dirty || saving || !freeEnabled} loading={saving} onClick={save}>
+          <Button
+            disabled={!dirty || saving || !freeEnabled || salesProblem}
+            loading={saving}
+            onClick={save}
+          >
             Save changes
           </Button>
         </div>

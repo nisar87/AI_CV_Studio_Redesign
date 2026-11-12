@@ -31,6 +31,8 @@ const ACTION_LABEL: Record<string, string> = {
   'usage.reset': 'Reset usage',
   'user.disable': 'Blocked sign-in',
   'user.enable': 'Allowed sign-in',
+  'payment.approve': 'Approved payment',
+  'payment.reject': 'Rejected payment',
 };
 
 export function AdminHistory() {
@@ -126,11 +128,13 @@ export function AdminHistory() {
                   <p className="text-ink-muted">
                     {when(e.at)} · {e.by}
                   </p>
-                  {Array.isArray(e.detail) && e.detail.length > 0 && (
+                  {detailLines(e.detail).length > 0 && (
                     <ul className="text-ink-muted mt-1 list-disc pl-5 font-mono text-xs">
-                      {(e.detail as string[]).slice(0, 8).map((d, i) => (
-                        <li key={i}>{d}</li>
-                      ))}
+                      {detailLines(e.detail)
+                        .slice(0, 8)
+                        .map((d, i) => (
+                          <li key={i}>{d}</li>
+                        ))}
                     </ul>
                   )}
                 </li>
@@ -141,4 +145,13 @@ export function AdminHistory() {
       </div>
     </>
   );
+}
+
+function detailLines(detail: unknown): string[] {
+  if (Array.isArray(detail)) return detail.map(String);
+  if (detail && typeof detail === 'object')
+    return Object.entries(detail)
+      .filter(([, v]) => v !== null && v !== undefined)
+      .map(([k, v]) => `${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`);
+  return [];
 }

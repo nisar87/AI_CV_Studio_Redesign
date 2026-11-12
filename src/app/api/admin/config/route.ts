@@ -40,6 +40,16 @@ export function PUT(req: Request) {
       });
     if (!parsed.data.designs.some((d) => d.enabled && d.tier === 'free'))
       return apiError('INVALID_INPUT', 'At least one design must be enabled and free.', rid);
+    if (
+      parsed.data.features.sales &&
+      (!parsed.data.passes.some((p) => p.active) ||
+        !parsed.data.payments.methods.some((m) => m.active))
+    )
+      return apiError(
+        'INVALID_INPUT',
+        'To open sales, keep at least one pass on sale and one payment method shown.',
+        rid,
+      );
     const current = await getBusinessConfig(true);
     if (baseVersion !== current.version)
       return json(

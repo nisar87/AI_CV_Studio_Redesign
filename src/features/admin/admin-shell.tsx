@@ -3,13 +3,21 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { History, LayoutDashboard, ShieldAlert, SlidersHorizontal, Users } from 'lucide-react';
+import {
+  Banknote,
+  History,
+  LayoutDashboard,
+  ShieldAlert,
+  SlidersHorizontal,
+  Users,
+} from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 import { useAccount } from '@/features/account/account-context';
 
 const NAV = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard },
+  { href: '/admin/payments', label: 'Payments', icon: Banknote },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/settings', label: 'Settings', icon: SlidersHorizontal },
   { href: '/admin/history', label: 'History & audit', icon: History },
