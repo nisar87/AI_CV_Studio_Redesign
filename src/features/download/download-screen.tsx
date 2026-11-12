@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { ArrowLeft, Crown, Download, FileJson, LogIn, Printer } from 'lucide-react';
+import { ArrowLeft, Crown, Download, FileJson, FileText, LogIn, Printer } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { useAccount } from '@/features/account/account-context';
@@ -31,6 +31,7 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
   const [doc, setDoc] = useState(initialDoc);
   const [status, setStatus] = useState<PreviewStatus | null>(null);
   const [busy, setBusy] = useState(false);
+  const [busyWord, setBusyWord] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<Blocked | null>(null);
   const editHref = `/cv/${doc.id}`;
@@ -55,11 +56,13 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
     });
   }
 
-  async function downloadPdf() {
-    setBusy(true);
+  const downloadPdf = () => download('pdf');
+  async function download(kind: 'pdf' | 'docx') {
+    const setB = kind === 'pdf' ? setBusy : setBusyWord;
+    setB(true);
     setFailed(null);
     try {
-      const res = await fetch('/api/pdf', {
+      const res = await fetch(kind === 'pdf' ? '/api/pdf' : '/api/docx', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ document: doc }),
@@ -79,10 +82,14 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
           refresh();
           return;
         }
-        throw new Error(body?.error?.message ?? 'We couldn’t create the PDF just now.');
+        throw new Error(body?.error?.message ?? 'We couldn’t create the file just now.');
       }
-      saveBlob(await res.blob(), pdfFilename(doc.basics.name));
-      toast.show({ message: 'Your PDF is downloading', tone: 'success' });
+      const name = pdfFilename(doc.basics.name);
+      saveBlob(await res.blob(), kind === 'pdf' ? name : name.replace(/\.pdf$/, '.docx'));
+      toast.show({
+        message: kind === 'pdf' ? 'Your PDF is downloading' : 'Your Word file is downloading',
+        tone: 'success',
+      });
       refresh();
     } catch (e) {
       setFailed(
@@ -91,7 +98,7 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
           : 'You seem to be offline, or our PDF service is busy.',
       );
     } finally {
-      setBusy(false);
+      setB(false);
     }
   }
 
@@ -248,6 +255,16 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
                   onClick={downloadPdf}
                 >
                   Download PDF
+                </Button>
+                <Button
+                  variant="secondary"
+                  icon={<FileText aria-hidden size={18} />}
+                  loading={busyWord}
+                  loadingText="Preparing your Word file…"
+                  disabled={account.status === 'loading' || busy}
+                  onClick={() => download('docx')}
+                >
+                  Download Word (.docx)
                 </Button>
                 {left !== null && Number.isFinite(left) && (
                   <p className="text-ink-muted text-sm" data-testid="downloads-left">

@@ -103,17 +103,33 @@ test.describe('free account', () => {
     await expect(page.getByTestId('downloads-left')).toHaveText(
       '2 of 2 downloads left this month.',
     );
-    for (let i = 0; i < 2; i++) {
-      const dl = page.waitForEvent('download');
-      await page.getByRole('button', { name: 'Download PDF' }).click();
-      await dl;
-    }
+    // A Word download and a PDF download share the same allowance.
+    const word = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download Word (.docx)' }).click();
+    const w = await word;
+    expect(w.suggestedFilename()).toMatch(/\.docx$/);
+    const fs = await import('node:fs');
+    expect(
+      fs
+        .readFileSync(await w.path())
+        .subarray(0, 2)
+        .toString(),
+    ).toBe('PK');
+    await expect(page.getByTestId('downloads-left')).toHaveText(
+      '1 of 2 downloads left this month.',
+    );
+    const dl = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download PDF' }).click();
+    await dl;
     await expect(page.getByTestId('downloads-left')).toHaveText(
       '0 of 2 downloads left this month.',
     );
     await page.getByRole('button', { name: 'Download PDF' }).click();
     await expect(page.getByText('Monthly download limit reached')).toBeVisible();
     await expect(page.getByRole('link', { name: 'See Premium' })).toBeVisible();
+    expect(
+      (await page.context().request.post('/api/docx', { data: { document: d } })).status(),
+    ).toBe(402);
     // A crafted request is refused too.
     const r = await pdf(page.context().request);
     expect(r.status()).toBe(402);
