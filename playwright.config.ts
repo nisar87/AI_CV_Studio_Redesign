@@ -44,6 +44,7 @@ export default defineConfig({
       command: `npm run start -- -p ${PORT}`,
       env: {
         RATE_LIMIT_PDF_PER_MINUTE: '1000',
+        RATE_LIMIT_IMPORT_PER_MINUTE: '1000',
         // AI e2e runs use the deterministic mock provider; generous limits for parallel workers.
         AI_PROVIDER: 'mock',
         AI_REQUESTS_PER_10_MIN: '1000',

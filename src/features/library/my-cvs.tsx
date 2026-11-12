@@ -174,7 +174,12 @@ export function MyCvs() {
           <p className="text-ink-muted max-w-md">
             When you create a CV, it is saved here so you can come back to it.
           </p>
-          <ButtonLink href="/start">Create a CV</ButtonLink>
+          <div className="flex flex-wrap justify-center gap-3">
+            <ButtonLink href="/start">Create a CV</ButtonLink>
+            <ButtonLink href="/cv/import" variant="secondary">
+              Import a CV
+            </ButtonLink>
+          </div>
         </div>
       ) : (
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
