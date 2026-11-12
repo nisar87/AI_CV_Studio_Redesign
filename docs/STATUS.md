@@ -19,7 +19,7 @@ _Last updated: 2026-11-13 (live on Firebase App Hosting at aicvstudio.app)_
 | R2 Job-ready | `r2/job-ready` | ✅ Live on aicvstudio.app (2026-11-12) |
 | R3 Professional presence | `r3/presence` | ✅ Live on aicvstudio.app (2026-11-12) |
 | R4 Growth | `r4/growth` | ✅ Live on aicvstudio.app (2026-11-12); card gateway and Urdu deferred |
-| R5 Instant Makeover | `r5/makeover` | ✅ Built and tested (2026-11-13); see the R5 section for production verification |
+| R5 Instant Makeover | `r5/makeover` | ✅ Live on aicvstudio.app (2026-11-13), verified with real Gemini |
 
 ## Phase 0 report
 
@@ -517,6 +517,12 @@ Spec: `docs/product/complete-studio-spec.md` §6 and §16 (R5). Owner decisions 
   - Synthetic corpus in `src/modules/import/__fixtures__`: Word `.docx` and `.doc`, text PDF, two-column PDF, scanned PDF, JPG and PNG photos, and a CV with wording problems.
   - e2e `makeover.spec.ts`: home page drop → reveal with 6 designs and 3 layout families; before/after slider; design switch; a visitor's makeover survives sign-up and appears on another device in the chosen design; scans and photos; allowance and watermark; free wording polish; the invented fact is never shown; Premium-only bullets; crafted requests refused. Buyer email checked in `premium.spec.ts`.
   - Full e2e: 284 passed, 0 failed.
+- **Verified on production (2026-11-13, real Gemini):**
+  - Home page shows the drop zone; `/makeover` loads; `/cv/import` redirects.
+  - A photographed CV (image only, no text layer) sent as a visitor: read by Gemini vision in 18 s; name, email and phone correct; 3 sections; coverage 100%; profession healthcare; 6 designs ranked (Meridian first); visitor preview mode.
+  - "Fix wording" with real Gemini: fixed "i", "recieved", "Responsable" and kept every fact; a second free call was refused (sign-in needed).
+  - Internal AI tasks are refused on the public AI route; the Admin overview funnel counts the makeover; email shows "off" until the mailbox password is set.
+  - CI green on the branch, `develop` and `main`, including the Firestore rules emulator test.
 - **Left for the owner (spec §6.6 human parts):** the 40 real CVs (10 Word, 10 builder PDFs, 10 two-column, 5 scans, 5 phone photos) and the timing measurements on production.
 
 ## Owner to-do (when you have time)
