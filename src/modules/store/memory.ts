@@ -8,6 +8,8 @@ import {
   type Pass,
   type ConfigVersion,
   type AuditEntry,
+  type PaymentRequest,
+  type PaymentStatus,
 } from './types';
 
 /** In-memory store for development and tests (one per server process). */
@@ -144,6 +146,33 @@ export class MemoryUserStore implements UserStore {
       if (k.endsWith(`/${month}`))
         for (const [c, n] of Object.entries(v)) out[c] = (out[c] ?? 0) + n;
     return out;
+  }
+  private payments: PaymentRequest[] = [];
+  async createPaymentRequest(r: Omit<PaymentRequest, 'id'>) {
+    const saved = { id: `pr${this.payments.length + 1}`, ...structuredClone(r) };
+    this.payments.unshift(saved);
+    return structuredClone(saved);
+  }
+  async listPaymentRequests(q: { uid?: string; status?: PaymentStatus; limit: number }) {
+    return structuredClone(
+      this.payments
+        .filter((p) => (!q.uid || p.uid === q.uid) && (!q.status || p.status === q.status))
+        .slice(0, q.limit),
+    );
+  }
+  async decidePaymentRequest(
+    id: string,
+    d: { status: 'approved' | 'rejected'; by: string; reason?: string },
+  ) {
+    const p = this.payments.find((x) => x.id === id);
+    if (!p || p.status !== 'pending') return null;
+    Object.assign(p, {
+      status: d.status,
+      decidedBy: d.by,
+      decidedAt: new Date().toISOString(),
+      ...(d.reason ? { reason: d.reason } : {}),
+    });
+    return structuredClone(p);
   }
   async userStats() {
     const recent = [...this.users.entries()].map(([uid, u]) => ({

@@ -45,3 +45,37 @@ describe('user document store (memory)', () => {
     );
   });
 });
+
+describe('payment requests', () => {
+  const base = {
+    uid: 'u1',
+    email: 'a@example.com',
+    passId: 'month',
+    passLabel: '1 month',
+    days: 30,
+    pricePkr: 499,
+    methodId: 'bank',
+    methodLabel: 'Bank transfer',
+    reference: 'TID1',
+    status: 'pending' as const,
+    createdAt: '2026-11-12T10:00:00.000Z',
+  };
+
+  it('lists newest first and filters by owner and status', async () => {
+    const s = new MemoryUserStore();
+    await s.createPaymentRequest(base);
+    await s.createPaymentRequest({ ...base, uid: 'u2', createdAt: '2026-11-12T11:00:00.000Z' });
+    expect((await s.listPaymentRequests({ limit: 10 })).map((r) => r.uid)).toEqual(['u2', 'u1']);
+    expect(await s.listPaymentRequests({ uid: 'u1', limit: 10 })).toHaveLength(1);
+    expect(await s.listPaymentRequests({ status: 'approved', limit: 10 })).toHaveLength(0);
+  });
+
+  it('decides a request only once', async () => {
+    const s = new MemoryUserStore();
+    const r = await s.createPaymentRequest(base);
+    const first = await s.decidePaymentRequest(r.id, { status: 'approved', by: 'admin' });
+    expect(first).toMatchObject({ status: 'approved', decidedBy: 'admin' });
+    expect(await s.decidePaymentRequest(r.id, { status: 'rejected', by: 'other' })).toBeNull();
+    expect(await s.decidePaymentRequest('missing', { status: 'approved', by: 'x' })).toBeNull();
+  });
+});

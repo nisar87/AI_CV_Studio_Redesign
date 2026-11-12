@@ -1,6 +1,7 @@
 import { adminAuth } from '@/lib/firebase-admin';
 import { apiError, readJson } from '@/lib/http';
 import { monthKey } from '@/modules/billing/gate';
+import { grantPass } from '@/modules/billing/server';
 import { actor, json, withAdmin } from '@/modules/admin/server';
 import { getUserStore } from '@/modules/store';
 
@@ -30,19 +31,13 @@ export function POST(req: Request, ctx: { params: Promise<{ uid: string }> }) {
       const days = Math.floor(Number(b.days));
       if (!(days >= 1 && days <= 3660))
         return apiError('INVALID_INPUT', 'Days must be between 1 and 3660.', rid);
-      const cur = await store.getPass(uid);
-      // Extending an active pass adds to its end; otherwise it starts now.
-      const from =
-        cur && cur.expiresAt > new Date().toISOString() ? new Date(cur.expiresAt) : new Date();
-      const expiresAt = new Date(from.getTime() + days * 86_400_000).toISOString();
-      await store.setPass(uid, {
-        plan: 'premium',
-        expiresAt,
-        source: 'admin',
-        grantedBy: by,
-        grantedAt: new Date().toISOString(),
-        ...(b.note ? { note: String(b.note).slice(0, 200) } : {}),
-      });
+      const expiresAt = await grantPass(
+        uid,
+        days,
+        by,
+        'admin',
+        b.note ? String(b.note) : undefined,
+      );
       await audit('pass.grant', { days, expiresAt, note: b.note ?? null });
       return json({ ok: true, expiresAt });
     }

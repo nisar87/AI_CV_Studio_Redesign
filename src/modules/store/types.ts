@@ -48,6 +48,19 @@ export interface UserStore {
   listAudit(limit: number): Promise<AuditEntry[]>;
   listPasses(): Promise<(Pass & { uid: string })[]>;
   usageTotals(month: string): Promise<Record<string, number>>;
+  // Premium purchase requests (manual payments, R1.4)
+  createPaymentRequest(r: Omit<PaymentRequest, 'id'>): Promise<PaymentRequest>;
+  /** Newest first. Filter by owner or status; `limit` caps the result. */
+  listPaymentRequests(q: {
+    uid?: string;
+    status?: PaymentStatus;
+    limit: number;
+  }): Promise<PaymentRequest[]>;
+  /** Moves a pending request to approved/rejected; null if it is not pending (already decided). */
+  decidePaymentRequest(
+    id: string,
+    d: { status: 'approved' | 'rejected'; by: string; reason?: string },
+  ): Promise<PaymentRequest | null>;
   userStats(): Promise<{
     total: number;
     recent: { uid: string; email: string | null; lastSeenAt: string | null }[];
@@ -71,6 +84,27 @@ export type Pass = {
   grantedBy: string;
   grantedAt: string;
   note?: string;
+};
+
+export type PaymentStatus = 'pending' | 'approved' | 'rejected';
+export type PaymentRequest = {
+  id: string;
+  uid: string;
+  email: string | null;
+  passId: string;
+  passLabel: string;
+  days: number;
+  pricePkr: number;
+  methodId: string;
+  methodLabel: string;
+  /** Transaction id / reference the buyer copied from their banking app. */
+  reference: string;
+  note?: string;
+  status: PaymentStatus;
+  createdAt: string;
+  decidedAt?: string;
+  decidedBy?: string;
+  reason?: string;
 };
 
 export type ConfigVersion = { version: number; savedAt: string; savedBy: string; value: unknown };
