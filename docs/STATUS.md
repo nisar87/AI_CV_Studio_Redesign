@@ -117,7 +117,7 @@ An independent review of the 10 sample PDFs scored the set 7.1–8.5 (average 7.
 - *"Continued" labels on page 2:* uncommon in CVs; the running header already names the candidate.
 - *Robustness "unproven":* the reviewer saw 10 PDFs; the QA harness renders 170 combinations, including a 60-character name, very long emails/URLs, a name-only CV, 3-page careers, Letter paper and photos. Stress PDFs are now delivered with the samples.
 
-**Still open (valid, not yet done):** PDF tagging is Chrome's default ("NonStruct"); accessible tagging needs a dedicated pass (Phase 11). Real-photo cropping has only been tested with illustrations.
+**Still open (valid, not yet done):** Real-photo cropping has only been tested with illustrations. *(PDF tagging was re-checked on 2026-11-12: current Chrome produces a tagged PDF with the CV's language, the name as title, H1/H2 headings, lists and links; the remaining "NonStruct" nodes are layout wrappers. The parity tests now assert this for every design.)*
 
 **Revised self-assessment:** our earlier 9.5 scores were too generous; the reviewer's average (7.8) was closer to the truth for those exports. After these fixes our estimate is **8.3–9.0** depending on the design (Chronicle, Clarity, Heritage, Ledger highest). The next step to justify 9+ is another independent review of the new PDFs, ideally with real job seekers.
 
@@ -466,9 +466,24 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
     - The invite link redirected to App Hosting's internal host; it now uses a relative redirect.
     - Quoted questions in tips were flagged as names.
 
+## After R4 (2026-11-12)
+
+- **Order-number checkout (owner request):**
+  - The buyer gives their mobile number and places an order. They get an order number (`CV-XXXXXX`) and a WhatsApp button, prefilled with the order and amount, to send the payment screenshot to the owner's number (Settings → How to pay).
+  - The transaction ID is optional.
+  - Admin → Payments shows the order number, mobile number and a WhatsApp link.
+  - The support email now appears on the Premium page.
+- **Cancel an unpaid order:**
+  - Buyers can cancel their own waiting order and place a new one; before this, an unpaid order blocked them until the owner rejected it.
+  - Cancelled orders show as "Cancelled by buyer" and don't count towards discount-code limits or invite rewards.
+- **Shared daily AI budget:** the site-wide budget is now checked against the shared daily counters (20 s cache), so it holds with up to 4 production instances. Burst limits stay per instance, and monthly allowances were already shared.
+- **Accessible PDFs:** confirmed and now tested in the parity tests (see Phase 3c note).
+- **Tests:** 172 unit tests; full e2e 271 passed, 0 failed.
+- **Production:** sales are open (EasyPaisa, support email and WhatsApp number set by the owner on 2026-11-12).
+
 ## Owner to-do (when you have time)
 
-1. **Payments:** Admin → Settings → How to pay: add your JazzCash / EasyPaisa / bank details and the support email, then switch on **Sales**.
+1. ~~Payments and sales~~: done on 2026-11-12.
 2. **Launch designs:** set Clarity, Chronicle and Heritage as free and the rest as Premium, if you want the recommended split.
 3. **Optional growth:** add a launch code (for example `LAUNCH20`) and switch on **Invite friends**.
 4. **Alerts:** Cloud Monitoring → Alerting → add an email notification channel to the "AI CV Studio production" policy.

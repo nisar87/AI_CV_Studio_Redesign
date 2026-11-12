@@ -77,6 +77,14 @@ test.describe('template engine parity (desktop only)', () => {
         const fonts = pdfTool('pdffonts', pdf);
         expect(fonts).not.toMatch(/\bno\s+(yes|no)\s+(yes|no)\s+\d+/); // every font embedded ("emb" = yes)
         expect(fonts, 'fonts embed as TrueType, not Type 3').not.toContain('Type 3');
+        // Accessible PDF basics: tagged, a language, the person's name as title, real headings.
+        expect(info).toMatch(/Tagged:\s+yes/);
+        if (doc.basics.name) expect(info).toContain(`Title:           ${doc.basics.name}`);
+        expect(pdf.includes('/Lang (')).toBe(true);
+        const struct = pdfTool('pdfinfo', pdf, ['-struct']);
+        if (doc.basics.name) expect(struct, 'name is a heading').toMatch(/\bH1\b/);
+        if (doc.sections.some((s) => !s.hidden && s.items.length))
+          expect(struct, 'section titles are headings').toMatch(/\bH2\b/);
         const text = pdfTool('pdftotext', pdf, ['-layout']).replace(/\s+/g, ' ');
         if (doc.basics.name) expect(text).toContain(doc.basics.name.split(' ')[0]!);
         const firstRole = doc.sections.find((s) => s.kind === 'experience')?.items[0] as
