@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, 'phase-*/**']
+    branches: [main, develop, 'phase-*/**', 'r[0-9]*/**']
   pull_request:
 
 concurrency:
