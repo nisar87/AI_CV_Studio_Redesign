@@ -5,11 +5,20 @@ import { canUse, canUseDesign } from './gate';
 const cfg: BusinessConfig = {
   ...DEFAULT_CONFIG,
   plans: {
-    visitor: { label: 'Visitor', limits: { 'pdf.download': 0, 'import.cv': 0, 'ai.action': 0 } },
-    free: { label: 'Free', limits: { 'pdf.download': 3, 'import.cv': 2, 'ai.action': 0 } },
+    visitor: {
+      label: 'Visitor',
+      limits: { 'pdf.download': 0, 'import.cv': 0, 'ai.action': 0 },
+      maxJobs: 0,
+    },
+    free: {
+      label: 'Free',
+      limits: { 'pdf.download': 3, 'import.cv': 2, 'ai.action': 0 },
+      maxJobs: 3,
+    },
     premium: {
       label: 'Premium',
       limits: { 'pdf.download': -1, 'import.cv': 30, 'ai.action': 300 },
+      maxJobs: -1,
     },
   },
   designs: DEFAULT_CONFIG.designs.map((d) => ({

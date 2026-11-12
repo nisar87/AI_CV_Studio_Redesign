@@ -124,7 +124,7 @@ export function AdminSettings() {
           hint="Use −1 for unlimited and 0 for not included."
         >
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] text-sm">
+            <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="text-ink-muted text-left">
                   <th className="py-2 pr-3 font-semibold">Plan</th>
@@ -133,6 +133,7 @@ export function AdminSettings() {
                       {METER_LABEL[m]}
                     </th>
                   ))}
+                  <th className="py-2 pr-3 font-semibold">Jobs tracked</th>
                 </tr>
               </thead>
               <tbody>
@@ -160,6 +161,23 @@ export function AdminSettings() {
                         />
                       </td>
                     ))}
+                    <td className="py-2 pr-3">
+                      <input
+                        type="number"
+                        min={-1}
+                        aria-label={`${draft.plans[p].label}: jobs tracked at once`}
+                        className="border-line-strong bg-surface h-10 w-28 rounded-sm border px-2"
+                        value={draft.plans[p].maxJobs}
+                        onChange={(e) =>
+                          edit((c) => {
+                            c.plans[p].maxJobs = Math.max(
+                              -1,
+                              Math.floor(Number(e.target.value) || 0),
+                            );
+                          })
+                        }
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>

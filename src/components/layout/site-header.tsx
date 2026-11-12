@@ -13,6 +13,7 @@ import { CircleUserRound } from 'lucide-react';
 
 const NAV = [
   { href: '/cv', label: 'My CVs' },
+  { href: '/jobs', label: 'Jobs' },
   { href: '/templates', label: 'Designs' },
   { href: '/help', label: 'Help' },
 ];

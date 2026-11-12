@@ -19,9 +19,22 @@ const limits = z.object({ 'pdf.download': limit, 'import.cv': limit, 'ai.action'
 
 export const businessConfig = z.object({
   plans: z.object({
-    visitor: z.object({ label: z.string().max(40), limits }),
-    free: z.object({ label: z.string().max(40), limits }),
-    premium: z.object({ label: z.string().max(40), limits }),
+    // maxJobs: how many jobs the tracker keeps at once (-1 = no limit). Optional for older saves.
+    visitor: z.object({
+      label: z.string().max(40),
+      limits,
+      maxJobs: z.number().int().min(-1).max(10_000).default(0),
+    }),
+    free: z.object({
+      label: z.string().max(40),
+      limits,
+      maxJobs: z.number().int().min(-1).max(10_000).default(3),
+    }),
+    premium: z.object({
+      label: z.string().max(40),
+      limits,
+      maxJobs: z.number().int().min(-1).max(10_000).default(-1),
+    }),
   }),
   /** Design catalogue: availability and tier per design. */
   designs: z
@@ -84,11 +97,20 @@ export type BusinessConfig = z.infer<typeof businessConfig>;
  */
 export const DEFAULT_CONFIG: BusinessConfig = {
   plans: {
-    visitor: { label: 'Visitor', limits: { 'pdf.download': 0, 'import.cv': 0, 'ai.action': 0 } },
-    free: { label: 'Free', limits: { 'pdf.download': 30, 'import.cv': 2, 'ai.action': 0 } },
+    visitor: {
+      label: 'Visitor',
+      limits: { 'pdf.download': 0, 'import.cv': 0, 'ai.action': 0 },
+      maxJobs: 0,
+    },
+    free: {
+      label: 'Free',
+      limits: { 'pdf.download': 30, 'import.cv': 2, 'ai.action': 0 },
+      maxJobs: 3,
+    },
     premium: {
       label: 'Premium',
       limits: { 'pdf.download': 100, 'import.cv': 30, 'ai.action': 300 },
+      maxJobs: -1,
     },
   },
   designs: TEMPLATE_IDS.map((id) => ({ id, enabled: true, tier: 'free' as const, isNew: false })),
