@@ -235,7 +235,10 @@ function outputTexts(result: unknown): string[] {
   const r = result as Record<string, unknown>;
   if (typeof r.text === 'string') return [r.text];
   if (Array.isArray(r.bullets)) return r.bullets as string[];
-  if (Array.isArray(r.paragraphs)) return r.paragraphs as string[];
+  if (Array.isArray(r.paragraphs)) {
+    const email = r.email as { subject?: string; body?: string } | undefined;
+    return [...(r.paragraphs as string[]), email?.subject ?? '', email?.body ?? ''];
+  }
   if (typeof r.summary === 'string' && 'order' in r) return [String(r.headline ?? ''), r.summary];
   return [];
 }

@@ -179,6 +179,10 @@ function answer(task: TaskId, input: unknown, attempt: number): unknown {
           'I would welcome the chance to talk about the role. Thank you for your time.',
         ],
         closing: i.tone === 'formal' ? 'Yours sincerely,' : 'Kind regards,',
+        email: {
+          subject: `Application: ${i.jobTitle} — ${i.name}`,
+          body: `Dear Hiring Manager,\n\nPlease find attached my CV and cover letter for the ${i.jobTitle} role${i.company ? ` at ${i.company}` : ''}.${best[0] ? ` In my current work I ${best[0].charAt(0).toLowerCase()}${best[0].slice(1)}.` : ''}\n\nThank you for your time.\n\n${i.name}`,
+        },
       };
     }
     case 'import.structure': {

@@ -7,9 +7,11 @@ import {
   CircleCheck,
   CircleDashed,
   CircleX,
+  Copy,
   Download,
   FileText,
   Lock,
+  Mail,
   Sparkles,
   Wand2,
 } from 'lucide-react';
@@ -251,6 +253,74 @@ function ScaledPage({
   );
 }
 
+/** Order-independent identity of the editable parts of a letter (for "unsaved changes"). */
+const letterKey = (l: Letter | null) =>
+  l
+    ? JSON.stringify([
+        l.greeting,
+        l.paragraphs,
+        l.closing,
+        l.tone,
+        l.email?.subject ?? '',
+        l.email?.body ?? '',
+      ])
+    : '';
+
+/** The short covering email: edit, copy, or open in the person's mail app. */
+function ApplicationEmail({
+  email,
+  onChange,
+}: {
+  email: Letter['email'];
+  onChange: (e: Letter['email']) => void;
+}) {
+  const toast = useToast();
+  const text = `${email.subject}\n\n${email.body}`;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.show({ tone: 'success', message: 'Email copied' });
+    } catch {
+      toast.show({ tone: 'error', message: 'Couldn’t copy. Select the text and copy it instead.' });
+    }
+  };
+  const mailto = `mailto:?subject=${encodeURIComponent(email.subject)}&body=${encodeURIComponent(email.body)}`;
+  return (
+    <div className="bg-sunken flex flex-col gap-3 rounded-md p-4" data-testid="application-email">
+      <h4 className="flex items-center gap-2 text-sm font-semibold">
+        <Mail aria-hidden size={16} /> Application email
+      </h4>
+      <p className="text-ink-muted -mt-2 text-xs">
+        To send with your CV and letter attached. Add the employer’s address in your email app.
+      </p>
+      <TextField
+        label="Subject"
+        value={email.subject}
+        maxLength={160}
+        onChange={(e) => onChange({ ...email, subject: e.target.value })}
+      />
+      <TextArea
+        label="Email"
+        rows={7}
+        value={email.body}
+        maxLength={1500}
+        onChange={(e) => onChange({ ...email, body: e.target.value })}
+      />
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant="secondary" icon={<Copy aria-hidden size={16} />} onClick={copy}>
+          Copy email
+        </Button>
+        <a
+          href={mailto}
+          className="text-primary inline-flex min-h-9 items-center gap-1.5 px-2 text-sm font-semibold"
+        >
+          Open in my email app
+        </a>
+      </div>
+    </div>
+  );
+}
+
 const STATUS = {
   met: { label: 'You show this', Icon: CircleCheck, cls: 'text-success' },
   partial: { label: 'Partly shown', Icon: CircleDashed, cls: 'text-warning' },
@@ -372,7 +442,7 @@ function LetterEditor({
         : '',
     [draft, design, job],
   );
-  const dirty = JSON.stringify(draft) !== JSON.stringify(job.letter ?? null);
+  const dirty = letterKey(draft) !== letterKey(job.letter ?? null);
   const asks = draft
     ? ([draft.greeting, ...draft.paragraphs, draft.closing].join(' ').match(/\{\{\?/g)?.length ?? 0)
     : 0;
@@ -497,6 +567,12 @@ function LetterEditor({
             maxLength={80}
             onChange={(e) => setDraft({ ...draft, closing: e.target.value })}
           />
+          {(draft.email?.subject || draft.email?.body) && (
+            <ApplicationEmail
+              email={draft.email}
+              onChange={(email) => setDraft({ ...draft, email })}
+            />
+          )}
           <div className="flex flex-wrap gap-2">
             <Button disabled={!dirty || busy !== null} loading={busy === 'save'} onClick={save}>
               Save letter

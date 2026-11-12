@@ -51,6 +51,16 @@ test.describe('premium account', () => {
     await expect(editor.getByLabel('Paragraph 1')).toHaveValue(
       /Delivery Driver role at Fresh Foods/,
     );
+    const mail = editor.getByTestId('application-email');
+    await expect(mail.getByLabel('Subject')).toHaveValue(
+      'Application: Delivery Driver — Imran Qureshi',
+    );
+    await expect(mail.getByLabel('Email')).toHaveValue(/attached my CV and cover letter/);
+    await expect(mail.getByRole('link', { name: 'Open in my email app' })).toHaveAttribute(
+      'href',
+      /^mailto:\?subject=Application%3A%20Delivery%20Driver/,
+    );
+    await mail.getByLabel('Subject').fill('Application: Delivery Driver (ref FF-12)');
     await editor.getByLabel('Paragraph 3').fill('I can start in two weeks. Thank you.');
     await editor.getByRole('button', { name: 'Save letter' }).click();
     await expect(editor.getByRole('button', { name: 'Save letter' })).toBeDisabled();
@@ -72,6 +82,9 @@ test.describe('premium account', () => {
     await page.reload();
     await expect(page.getByTestId('letter-editor').getByLabel('Paragraph 3')).toHaveValue(
       'I can start in two weeks. Thank you.',
+    );
+    await expect(page.getByTestId('application-email').getByLabel('Subject')).toHaveValue(
+      'Application: Delivery Driver (ref FF-12)',
     );
 
     // Tailored CV: a new CV that opens in the editor and is linked to the job.

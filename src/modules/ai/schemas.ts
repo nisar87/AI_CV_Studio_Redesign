@@ -206,6 +206,8 @@ export const taskOutputs = {
     greeting: z.string().max(80),
     paragraphs: z.array(z.string().min(1).max(1200)).min(2).max(5),
     closing: z.string().max(80),
+    /** A short covering email to send the CV and letter with. */
+    email: z.object({ subject: z.string().max(160), body: z.string().max(1500) }),
   }),
 } satisfies Record<TaskId, z.ZodType>;
 
