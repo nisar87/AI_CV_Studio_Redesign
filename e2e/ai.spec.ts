@@ -113,9 +113,7 @@ test.describe('AI help', () => {
     await expect(summary).toHaveValue(/\{\{\?/);
     await page.waitForTimeout(600);
     await page.goto(`/cv/${driver.id}/download`);
-    await expect(
-      page.getByText('Some suggested sentences still need a detail from you'),
-    ).toBeVisible();
+    await expect(page.getByText('Fill in the highlighted details')).toBeVisible();
   });
 
   test('bullets: make shorter, try again, dismiss leaves text unchanged', async ({

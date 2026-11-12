@@ -25,7 +25,7 @@ import { PreviewStatusLine } from '@/features/editor/editor-screen';
 import { pdfFilename } from '@/modules/export/filename';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import { buildDocumentHtml } from '@/modules/templates/build-document';
-import { checklist } from './checklist';
+import { HealthPanel } from '@/features/quality/health-panel';
 
 function saveBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -52,7 +52,6 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<Blocked | null>(null);
-  const items = checklist(doc);
   const editHref = `/cv/${doc.id}`;
   const here = `/cv/${doc.id}/download`;
   const signedOut = account.status === 'signedOut';
@@ -160,37 +159,7 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
             </p>
           </div>
 
-          <section
-            aria-labelledby="checks"
-            className="border-line bg-surface shadow-1 rounded-lg border p-5"
-          >
-            <h2 id="checks" className="mb-3 font-semibold">
-              Quick check
-            </h2>
-            <ul className="flex flex-col gap-2.5">
-              {items.map((c) => (
-                <li key={c.id} className="flex items-start gap-2.5">
-                  {c.ok ? (
-                    <CircleCheck aria-hidden size={20} className="text-success mt-0.5 shrink-0" />
-                  ) : (
-                    <CircleDashed aria-hidden size={20} className="text-warning mt-0.5 shrink-0" />
-                  )}
-                  <span>
-                    <span className="sr-only">{c.ok ? 'Done: ' : 'To check: '}</span>
-                    {c.ok ? c.okText : c.todoText}{' '}
-                    {!c.ok && (
-                      <Link
-                        href={editHref}
-                        className="text-primary font-semibold underline underline-offset-4"
-                      >
-                        Fix
-                      </Link>
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <HealthPanel doc={doc} pages={status?.pages} />
 
           {failed && (
             <Banner

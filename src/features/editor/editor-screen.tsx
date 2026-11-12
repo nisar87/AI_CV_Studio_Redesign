@@ -1,7 +1,7 @@
 'use client';
 
 import { AiDocProvider } from '@/features/ai/context';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Download, Eye, Palette, PenLine } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
@@ -65,6 +65,13 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
     content.current?.reveal(ref);
   };
   const compact = () => update((d) => ops.setDesign(d, { density: 'compact' }));
+  // Links from the CV check open the editor at a field: /cv/:id?focus=<sectionId>/<itemId>.
+  const focus = params.get('focus');
+  useEffect(() => {
+    if (!focus) return;
+    const t = window.setTimeout(() => content.current?.reveal(focus), 300);
+    return () => window.clearTimeout(t);
+  }, [focus]);
 
   const download = (
     <ButtonLink

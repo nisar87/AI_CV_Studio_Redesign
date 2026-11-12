@@ -113,7 +113,7 @@ test('J1: a delivery driver creates, edits and downloads a CV', async ({ page, i
   // Download.
   await page.getByRole('link', { name: 'Download' }).click();
   await expect(page.getByRole('heading', { name: 'Ready to send' })).toBeVisible();
-  await expect(page.getByText('Employers can contact you')).toBeVisible();
+  await expect(page.getByTestId('health')).toBeVisible();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download PDF' }).click();
   expect((await download).suggestedFilename()).toBe('Imran-Qureshi-CV.pdf');
