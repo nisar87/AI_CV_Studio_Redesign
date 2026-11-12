@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   ShieldAlert,
   SlidersHorizontal,
+  Sparkles,
   Users,
 } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
@@ -20,6 +21,7 @@ const NAV = [
   { href: '/admin/payments', label: 'Payments', icon: Banknote },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/settings', label: 'Settings', icon: SlidersHorizontal },
+  { href: '/admin/ai', label: 'AI', icon: Sparkles },
   { href: '/admin/history', label: 'History & audit', icon: History },
 ];
 
