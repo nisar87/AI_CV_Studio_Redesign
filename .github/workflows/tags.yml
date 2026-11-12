@@ -5,7 +5,7 @@ name: Release tags
 on:
   push:
     branches: [main]
-    paths: ['.github/release-tags.txt']
+    paths: ['.github/release-tags.txt', '.github/workflows/tags.yml']
   workflow_dispatch:
 
 permissions:
