@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/api/pdf': ['./node_modules/@sparticuz/chromium/bin/**'],
     '/api/health': ['./node_modules/@sparticuz/chromium/bin/**'],
+    // The standalone server only ships traced files; design thumbnails are served from public/
+    // (fonts are traced through the PDF renderer). Without this they were 404 in production.
+    '/templates': ['./public/templates/**'],
   },
   async headers() {
     return [

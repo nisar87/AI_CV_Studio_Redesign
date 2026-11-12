@@ -35,6 +35,8 @@ jobs:
       - run: npm run build
         env:
           GEMINI_API_KEY: ci-sentinel-not-a-real-key-123
+      - name: Public files are in the standalone build (production serves only those)
+        run: node scripts/check-standalone.mjs
       - name: No AI key or server AI code in client files
         run: npm run check:secrets
         env:
