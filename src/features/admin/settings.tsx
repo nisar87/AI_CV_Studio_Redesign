@@ -391,6 +391,18 @@ export function AdminSettings() {
           />
         </Section>
 
+        <Section
+          title="Support contact"
+          hint="Shown on the Help, Terms and Premium pages so people can reach you about payments, privacy and problems."
+        >
+          <TextField
+            label="Support email"
+            type="email"
+            value={draft.support.email}
+            onChange={(e) => edit((c) => void (c.support.email = e.target.value.trim()))}
+          />
+        </Section>
+
         <Section title="Announcement" hint="A short message shown at the top of every page.">
           <CheckboxField
             label="Show the announcement"

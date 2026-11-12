@@ -170,7 +170,9 @@ export function MyCvs() {
           <span className="bg-primary-soft text-primary inline-flex size-14 items-center justify-center rounded-full">
             <FileText aria-hidden size={26} />
           </span>
-          <h2 className="text-xl font-semibold">No CVs on this device yet</h2>
+          <h2 className="text-xl font-semibold">
+            {account.status === 'signedIn' ? 'No CVs yet' : 'No CVs on this device yet'}
+          </h2>
           <p className="text-ink-muted max-w-md">
             When you create a CV, it is saved here so you can come back to it.
           </p>

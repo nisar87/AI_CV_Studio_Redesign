@@ -90,10 +90,18 @@ test.describe('template engine parity (desktop only)', () => {
 test('Designs page renders all three templates with real content', async ({ page }) => {
   await page.goto('/templates');
   const frames = page.locator('iframe[title*="design with an example"][data-active]');
-  await expect(frames).toHaveCount(TEMPLATE_IDS.length);
+  // Previews are built lazily: off-screen cards show their static thumbnail first.
+  const cards = page.locator('main ul > li');
+  await expect(cards).toHaveCount(TEMPLATE_IDS.length);
+  expect(await frames.count()).toBeLessThan(TEMPLATE_IDS.length);
   for (let i = 0; i < TEMPLATE_IDS.length; i++) {
-    await expect(frames.nth(i).contentFrame().locator('html[data-cv-ready]')).toHaveCount(1);
+    await cards.nth(i).scrollIntoViewIfNeeded();
+    await expect(
+      cards.nth(i).locator('iframe[data-active]').contentFrame().locator('html[data-cv-ready]'),
+    ).toHaveCount(1);
   }
+  await expect(frames).toHaveCount(TEMPLATE_IDS.length);
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.getByRole('radio', { name: 'Driver' }).click();
   await expect(frames.first()).toHaveAttribute('title', /example driver CV/);
   await expect(frames.first().contentFrame().locator('.cv-page h1')).toContainText('Imran');

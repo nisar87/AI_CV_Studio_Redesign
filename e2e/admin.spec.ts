@@ -114,6 +114,28 @@ test('admin changes settings; the gate follows; history records and restores', a
   await context.close();
 });
 
+test('the support email set in Settings appears on Help and Terms', async ({ browser, page }) => {
+  const { context, page: admin } = await adminPage(browser);
+  await admin.goto('/admin/settings');
+  await admin.getByLabel('Support email').fill('help@example.com');
+  await admin.getByRole('button', { name: 'Save changes' }).click();
+  await expect(admin.getByText(/Saved as version/)).toBeVisible();
+  await context.close();
+  // Pages read the setting through a 60-second cache; wait for it.
+  await expect
+    .poll(
+      async () => {
+        await page.goto('/help');
+        return page.getByTestId('support-contact').isVisible();
+      },
+      { timeout: 90_000, intervals: [5_000] },
+    )
+    .toBe(true);
+  await expect(page.getByTestId('support-contact')).toContainText('help@example.com');
+  await page.goto('/terms');
+  await expect(page.getByRole('link', { name: 'help@example.com' }).first()).toBeVisible();
+});
+
 test('a stale save is refused instead of overwriting someone else', async ({ browser }) => {
   const { context, page } = await adminPage(browser);
   await page.goto('/admin/settings');

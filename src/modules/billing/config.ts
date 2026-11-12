@@ -73,6 +73,8 @@ export const businessConfig = z.object({
       instructions: z.string().max(600),
     })
     .default({ methods: [], instructions: '' }),
+  /** Public contact for help, payments and privacy requests; shown on Help, Terms and Premium. */
+  support: z.object({ email: z.union([z.literal(''), z.email().max(120)]) }).default({ email: '' }),
 });
 export type BusinessConfig = z.infer<typeof businessConfig>;
 
@@ -96,6 +98,7 @@ export const DEFAULT_CONFIG: BusinessConfig = {
   ],
   features: { ai: true, import: true, sales: false, signups: true, maintenance: false },
   announcement: { enabled: false, text: '' },
+  support: { email: '' },
   payments: {
     methods: [],
     instructions:

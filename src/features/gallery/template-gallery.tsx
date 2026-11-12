@@ -51,16 +51,27 @@ export function TemplateGallery() {
         className="max-w-md"
       />
       <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {TEMPLATE_LIST.map((t) => (
+        {TEMPLATE_LIST.map((t, index) => (
           <li key={t.id} className="flex flex-col gap-4">
-            <div
-              className="bg-surface shadow-page overflow-hidden rounded-[4px] bg-cover bg-top"
-              style={{ backgroundImage: `url(/templates/${t.id}.webp)` }}
-            >
+            <div className="bg-surface shadow-page relative overflow-hidden rounded-[4px]">
+              {/* Static thumbnail shows at once (and is the page's main image); the live
+                  preview renders over it when the card scrolls into view. */}
+              {/* eslint-disable-next-line @next/next/no-img-element -- pre-sized static webp */}
+              <img
+                src={`/templates/${t.id}.webp`}
+                alt=""
+                width={595}
+                height={842}
+                fetchPriority={index < 2 ? 'high' : 'auto'}
+                loading={index < 2 ? 'eager' : 'lazy'}
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover object-top"
+              />
               <DocumentPreview
                 doc={withTemplate(base, t.id, sample)}
                 firstPageOnly
                 decorative
+                lazy
                 debounceMs={0}
                 title={`${t.name} design with an example ${SAMPLES[sample].label.toLowerCase()} CV`}
               />

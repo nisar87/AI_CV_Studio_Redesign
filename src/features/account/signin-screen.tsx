@@ -216,7 +216,7 @@ export function SignInScreen() {
               error={confirm && confirm !== password ? 'The passwords don’t match' : undefined}
             />
             <CheckboxField
-              label="I am 18 or older and agree to the privacy notice"
+              label="I am 18 or older and agree to the terms and privacy notice"
               checked={adult}
               onChange={setAdult}
             />
@@ -262,7 +262,11 @@ export function SignInScreen() {
           </p>
         )}
         <p className="text-sm">
-          By continuing you confirm you are 18 or older. Read our{' '}
+          By continuing you confirm you are 18 or older and agree to our{' '}
+          <Link href="/terms" className="text-primary underline underline-offset-4">
+            terms
+          </Link>
+          . Read our{' '}
           <Link href="/privacy" className="text-primary underline underline-offset-4">
             privacy notice
           </Link>

@@ -125,7 +125,7 @@ export function PhotoField({ editor }: { editor: DocumentEditor }) {
             ? 'This design doesn’t show photos. Pick one marked “Photo” in Design to show it.'
             : photo && hidden
               ? 'Your photo is hidden. You can show it again in Design.'
-              : 'Some countries expect a photo, others prefer none. It stays on your device.'}
+              : 'Some countries expect a photo, others prefer none. It’s saved with this CV.'}
         </p>
       )}
     </div>
