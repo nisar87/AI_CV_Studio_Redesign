@@ -589,6 +589,45 @@ Spec: `docs/product/complete-studio-spec.md` §7 and §16 (R6), Appendix A.
   - Header "in-sidebar" is drawn as a band above both columns (the name stays first in the text stream). Compact grids (`compactColumns`) are not applied to one-line items yet.
   - The level 2 pickers are labelled choice chips, not picture tiles. Picture tiles come with the R7 gallery.
 
+## Look-back before R7 and the owner's real-CV test (2026-11-13)
+
+**Test:** the owner's own CV (PDF) went through the live makeover with real Gemini; nothing was typed in by hand. It was then used to make an AI-tailored CV for each of two jobs (a .NET backend role in Austria, a remote database role). The CVs were looked at in all 10 designs, an AI "Describe a style" design, and Design Studio custom layouts (rails, timeline, ATS-safe).
+
+**Data in the right place:**
+- name, headline and contact details in the header;
+- the summary in Profile;
+- both jobs with dates, "current" and every bullet;
+- education with its detail line;
+- "Core strengths" and "Technical skills" as skill groups;
+- languages with their fluency.
+
+The match check found 8 of 9 requirements met. German was correctly marked "partly shown". The tailored copies kept the same bullets in a new order, with an honest new summary. The AI style suggestion ("technical, navy, skills in a side column") picked Meridian in navy, which fits.
+
+**Bugs found and fixed (with tests):**
+- Import put "Other" first and made a second "Other" holding the phone number. Now "Other" sections are merged, personal lines (nationality, date of birth…) go to a "Personal details" section, lines that only repeat a contact are dropped, and both sections go last.
+- Language fluency was cut at 80 characters and skill keywords at 80. They are now 240 and 160.
+- The makeover's before/after "before" layer was hidden behind the after layer.
+- Non-standard section headings now get a health-check note ("Use the usual section names"); bilingual titles are accepted.
+- A job's "Use this CV" picked the newest CV, even another job's tailored copy. It now prefers the career profile, then the newest untailored CV.
+- **Pagination:** a first job with six long bullets was kept whole, which pushed the whole experience section to page 2 and left half of page 1 empty (seen in side-column and three-column designs). Entries now stay whole only when their bullets are also short (≤ 600 characters); longer ones break between bullets.
+- Seen once live, not reproducible: after a layout change the preview kept a one-page frame for a two-page CV, cutting it off. Reloading fixed it. As a safety net, the preview loads a build again once if it has not reported within 5 seconds.
+
+**Still open (not bugs, recorded for later):**
+- R5:
+  - no photo crop from the original CV;
+  - the progress steps are timed, not real progress;
+  - the "before" view is gone after the sign-in round trip;
+  - unplaced lines use buttons, not drag targets;
+  - no `makeover.profile` AI task (rules first);
+  - only 1 of the 40 real CVs has been tried (owner to-do 9).
+- R6:
+  - compact grids (`compactColumns`) not applied;
+  - level 2 uses chips, not picture tiles;
+  - saved designs are not yet offered for letters and portfolio (spec §7.4) — planned in R7;
+  - personal-details advice is not locale-aware (e.g. a date of birth is normal in Germany/Austria, discouraged in the UK/US).
+- A very narrow rail with long language fluency text reads as a tall thin column; acceptable, but R7's gallery should prefer wider rails for wordy side sections.
+- Test data left in the owner's account: CVs `k7rEckoI5a` (import), `Ht7QLfWwmE` and `abnIDQ_E21` (tailored), two test jobs, the old `verify-r3-…` doc and a "My CV (copy from this device)" duplicate. The owner can delete them from My CVs and Jobs.
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.
