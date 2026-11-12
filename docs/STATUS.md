@@ -17,7 +17,8 @@ _Last updated: 2026-11-12 (live on Firebase App Hosting at aicvstudio.app)_
 | 4 AI assistance (Gemini) | `phase-4/ai-assist` | ✅ Complete. Live acceptance met on production 2026-11-12 (48/48, 0 invented facts) |
 | R1 Paid CV Studio (R1.1–R1.6) | `r1/*` | ✅ Live on aicvstudio.app; sales open when the owner adds payment details |
 | R2 Job-ready | `r2/job-ready` | ✅ Live on aicvstudio.app (2026-11-12) |
-| R3 Professional presence | `r3/presence` | ✅ Merged 2026-11-12 (production verification below) |
+| R3 Professional presence | `r3/presence` | ✅ Live on aicvstudio.app (2026-11-12) |
+| R4 Growth | `r4/growth` | ✅ Merged 2026-11-12 (card gateway and Urdu deferred) |
 
 ## Phase 0 report
 
@@ -430,9 +431,47 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
     - a sentence-opening "A" joined to a flagged name.
 - **Tests:** 164 unit tests; full e2e 265 passed, 0 failed (new: `share`, `portfolio`, `linkedin`, and Word in `entitlements`).
 
+- **Production verification of R3 (2026-11-12):** run on the owner's account with a temporary CV, deleted afterwards and usage reset to 0.
+  - The Word download is a valid .docx.
+  - The share link works when on, gives 404 when off and again after the CV is deleted, and the page is noindex.
+  - A free account is refused the portfolio (402).
+  - Live LinkedIn samples: 3/3, no unmarked facts.
+  - Found and fixed: visit counters (and every `track()` metric) are now awaited before responding, because Cloud Run can drop work left running after the response.
+
+## Release 4 — Growth (2026-11-12)
+
+- **Interview preparation** (Premium AI, on each job):
+  - 8 likely questions for that job, each with what it's testing, answer notes from the CV (linked to the source lines), honest answers for gaps, and tips.
+  - The person's own notes are saved per question.
+  - Covered by the live evaluation (63 samples).
+- **Discount codes** (Admin → Settings → Discount codes):
+  - Each code sets % off and/or extra days, which passes it applies to, a use limit (pending and approved purchases count) and a last day.
+  - Buyers enter the code on the Premium page and see the new price.
+  - The server prices every purchase itself, never trusting the browser.
+  - The admin sees the code and the list price on each payment.
+- **Invite rewards** (Admin → Settings → Invite friends, off by default):
+  - Each account gets a link `/r/{code}` on its Account page (shown while sales are on).
+  - A friend who signs up through it gets extra days on their first pass.
+  - When that pass is approved, the inviter gets Premium days. This is audited (`referral.reward`) and counted.
+  - Self-invites and repeat rewards are prevented. The Terms explain the rules.
+- **Admin overview** now also shows Word downloads, share and portfolio opens, invites, rewards and codes used.
+- **Deferred:**
+  - Card gateway: waits for business registration.
+  - Urdu: waits for demand.
+- **Tests:** 170 unit tests; full e2e 270 passed, 0 failed.
+
+## Owner to-do (when you have time)
+
+1. **Payments:** Admin → Settings → How to pay: add your JazzCash / EasyPaisa / bank details and the support email, then switch on **Sales**.
+2. **Launch designs:** set Clarity, Chronicle and Heritage as free and the rest as Premium, if you want the recommended split.
+3. **Optional growth:** add a launch code (for example `LAUNCH20`) and switch on **Invite friends**.
+4. **Alerts:** Cloud Monitoring → Alerting → add an email notification channel to the "AI CV Studio production" policy.
+5. **Staging Google sign-in:** add the staging domain to Firebase Auth → Authorised domains.
+6. **Git tags:** run `git push origin --tags` from a local clone.
+
 ## Next action (exact)
 
-1. Release 4 — Growth on `r4/growth`: coupons and referral rewards, interview preparation. The card gateway waits for business registration; Urdu waits for demand.
+1. All planned releases (R1–R4) are built. Next: watch real usage in the Admin overview after sales open, then plan the next release from those numbers (master plan §6). Candidates: card gateway (after business registration), Urdu interface, application reminders.
 
 ## Deployment (2026-11-12)
 
