@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import Link from 'next/link';
+import { FileUp } from 'lucide-react';
 import { Container } from '@/components/ui/misc';
 import { StartFlow } from '@/features/start/start-flow';
 
@@ -17,6 +19,18 @@ export default function StartPage() {
           later.
         </p>
       </div>
+      <Link
+        href="/cv/import"
+        className="border-line bg-surface hover:border-primary mt-6 flex items-center gap-3 rounded-lg border p-4 transition-colors"
+      >
+        <FileUp aria-hidden className="text-primary shrink-0" />
+        <span>
+          <span className="font-semibold">Already have a CV?</span>{' '}
+          <span className="text-ink-muted">
+            Import your PDF or Word file and give it a new design.
+          </span>
+        </span>
+      </Link>
       <div className="mt-8">
         <Suspense>
           <StartFlow />

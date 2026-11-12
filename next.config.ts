@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   output: 'standalone',
   // Serverless Chromium ships a compressed binary that must stay on disk, not be bundled.
-  serverExternalPackages: ['@sparticuz/chromium', 'puppeteer-core'],
+  serverExternalPackages: ['@sparticuz/chromium', 'puppeteer-core', 'unpdf', 'mammoth'],
   outputFileTracingIncludes: {
     '/api/pdf': ['./node_modules/@sparticuz/chromium/bin/**'],
     '/api/health': ['./node_modules/@sparticuz/chromium/bin/**'],
