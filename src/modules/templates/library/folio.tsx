@@ -119,7 +119,7 @@ const css = `
 .b-skills{padding-top:3pt}
 .b-compact.b-first,.b-skills.b-first{padding-top:1pt}
 .f-row{display:flex;justify-content:space-between;align-items:baseline;gap:.9em}
-.f-title{font-family:var(--font-heading);font-weight:650;font-size:1.2em;line-height:1.2;color:var(--ink)}
+.f-title{font-family:var(--font-heading);word-spacing:.08em;font-weight:650;font-size:1.2em;line-height:1.2;color:var(--ink)}
 .f-dates{flex:none;font-size:.86em;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
 .f-sub{margin-top:.1em;color:var(--accent);font-style:italic}
 .f-entry-head{padding-bottom:3pt}

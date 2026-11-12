@@ -89,7 +89,7 @@ const css = `
 .b-compact{padding-top:3pt}
 .b-skills{padding-top:3pt}
 .h-row{display:flex;justify-content:space-between;align-items:baseline;gap:1em}
-.h-title{font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:1.3em;line-height:1.2;color:var(--ink)}
+.h-title{font-family:var(--font-heading);word-spacing:.08em;font-weight:var(--heading-weight);font-size:1.3em;line-height:1.2;color:var(--ink)}
 .h-dates{flex:none;font-size:.86em;letter-spacing:.06em;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
 .h-sub{font-style:italic;color:var(--ink-2);margin-top:.05em}
 .h-entry-head{padding-bottom:3pt}
