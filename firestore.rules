@@ -6,10 +6,10 @@ rules_version = '2';
 // subject to these rules. Browsers never talk to Firestore directly, so no client access is
 // allowed to any studio collection — not even to a signed-in person's own documents.
 //
-// IMPORTANT for deployment: this Firebase project is shared with other services (career-os).
-// Merge these `match` blocks into the project's existing rules instead of replacing them; the
-// final catch-all below is only safe if nothing else in the project uses client access.
-// Tested by scripts/rules-test.mjs against the Firestore emulator (CI).
+// Published to the project's (default) database on 2026-11-13 (owner decision: this site is the
+// only product in the project). They replaced the old Flutter app's rules, which allowed browsers
+// to write to `users` and `paymentRequests`. Tested by scripts/rules-test.mjs in the Firestore
+// emulator (CI).
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{path=**} { allow read, write: if false; }
@@ -26,7 +26,7 @@ service cloud.firestore {
     match /portfolios/{path=**} { allow read, write: if false; }
     match /referralCodes/{path=**} { allow read, write: if false; }
 
-    // Catch-all (remove when merging with rules of other services in this project).
+    // Everything else in the project, including the old app's collections.
     match /{path=**} { allow read, write: if false; }
   }
 }
