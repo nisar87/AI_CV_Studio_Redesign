@@ -16,6 +16,7 @@ _Last updated: 2026-11-12 (live on Firebase App Hosting at aicvstudio.app)_
 | 3e Final template polish (3rd review) | `phase-3e/final-polish` | ✅ Complete, merged — templates frozen for now |
 | 4 AI assistance (Gemini) | `phase-4/ai-assist` | ✅ Complete. Live acceptance met on production 2026-11-12 (48/48, 0 invented facts) |
 | R1 Paid CV Studio (R1.1–R1.6) | `r1/*` | ✅ Live on aicvstudio.app; sales open when the owner adds payment details |
+| R2 Job-ready | `r2/job-ready` | ✅ Live on aicvstudio.app (2026-11-12) |
 
 ## Phase 0 report
 
@@ -369,9 +370,36 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
   - **Alerts:** Cloud Monitoring log alert "AI CV Studio production: server errors, 5xx or AI budget at 80%" (matches `jsonPayload.level="error"`, HTTP ≥ 500 or `ai_budget_80`). **No notification channel yet:** the owner adds an email channel in Monitoring → Alerting → Edit notification channels.
 - Next: **Release 2 — Job-ready.**
 
+## Release 2 — Job-ready (2026-11-12, live)
+
+- **CV health check** (download page): specific "fix" and "improve" findings (missing contact details, empty or weak bullets, dates, length, page fit) with **Show me** links that open the editor on the exact field (`?focus=`). Replaces the old checklist.
+- **Job tracker** (`/jobs`): board by stage (saved → applied → interview → offer, plus closed), stage select and drag-free moves, notes, applied date (stamped automatically), link the CVs used. Limits by plan: visitor 0, free 3, Premium unlimited (admin Settings → `maxJobs`).
+- **Career profile** (`/profile`): one master record with everything; CVs are copies of it. Import can create it; the editor marks it.
+- **Job match (Premium AI):** compares the chosen CV with the pasted advert.
+  - Requirements are grouped as *You show this* / *Partly shown* / *Not in your CV*, each with quoted evidence and a **Show me** link.
+  - The AI must cite numbered CV lines (`J1.B2`, `CERT1`…). The app resolves them to the person's own text and drops invented IDs. "Met" without evidence, or with only the headline or summary as evidence, becomes "Partly".
+  - Keyword chips show found and missing terms, re-checked by the app (whole words, plural-tolerant), with a note to add only what's true.
+- **Tailored CV (Premium AI):** a copy titled "Name — Job (Company)" with bullets and skills reordered for the job. Nothing is added or dropped. The headline and summary are rewritten under the truth guard. The copy is linked to the job and opens in the editor.
+- **Cover letter (Premium AI):**
+  - Warm or formal draft, guarded against new facts; anything uncertain is highlighted as `[confirm: …]`.
+  - Editable greeting, paragraphs and sign-off, with a live preview in the CV's design (accent, fonts, paper size).
+  - **PDF download** through the same renderer (counts as a PDF download).
+- **Verification:**
+  - **Unit tests:** 157, including match rules, tailoring that never adds or drops facts, and guard word families.
+  - **Full e2e:** 249 passed, 0 failed, including `apply.spec` (match → letter → PDF → tailored CV, the Premium offer and 402 for free accounts, advert required) on desktop and mobile with axe.
+  - **CI:** green (run for 42ec071).
+  - **Live Gemini evaluation on production:** 57 samples now, 9 of them for the job tasks (driver, nurse and engineer adverts). The 9 job samples: 9/9 ok, **0 unmarked new facts**. Match results were accurate; letters were specific and used only CV facts.
+  - Two guard false alarms found by this evaluation were fixed:
+    - "NMC-registered" when the CV says "NMC registered nurse": hyphenated compounds whose parts are all in the CV now count as known.
+    - "certification" when the CV says "Certified": credential word families now count as known.
+  - Keywords are now limited to skills, tools and qualifications (`match@2`).
+- **CI hardening found on the way:**
+  - GitHub's `ubuntu-latest` moved to 26.04 (Chrome 156, poppler 26.01). There, three designs' job titles extracted without spaces ("CourierDriver"), which an applicant-tracking system could also misread. Fixed with slight word-spacing on heading-font job titles (verified on 26.04, including PDF parity). CI is pinned to `ubuntu-24.04` for reproducibility.
+  - Admin and Premium e2e files now run on one worker, because they share site settings.
+
 ## Next action (exact)
 
-1. Release 2 on branch `r2/job-ready`: career profile, job tracker, tailoring, cover letters, CV health check.
+1. Release 3 — Presence on `r3/presence`: public portfolio page, share links for CVs, LinkedIn profile writer, Word (.docx) export.
 
 ## Deployment (2026-11-12)
 
@@ -401,4 +429,5 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
 ## Known blockers
 
 - **GitHub:** all branches are pushed to `nisar87/AI_CV_Studio_Redesign` (2026-11-12). Tags could not be pushed from this session (proxy refuses tag refs); they are in `ai-cv-studio.bundle` — run `git push origin --tags` from a local clone.
-- **CI:** green on GitHub Actions since 2026-11-12 (run 43150025571).
+- **CI:** green on GitHub Actions (main, 2026-11-12). The runner is pinned to `ubuntu-24.04`.
+- **Workspace network:** the build workspace can no longer reach aicvstudio.app directly (proxy 403). Production checks run through the owner's browser session.
