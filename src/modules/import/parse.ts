@@ -421,8 +421,6 @@ function entries(lines: { text: string; bullet: boolean }[]): Entry[] {
   });
   return out.filter((e) => e.head.length || e.body.length);
 }
-const bulletAt = (lines: { text: string; bullet: boolean }[], text: string) =>
-  lines.some((l) => l.text === text && l.bullet);
 const headerish = (s: string) => /^[A-Z]/.test(s) && s.split(' ').length <= 8;
 
 /** "Role at Company", "Role — Company", "Role | Company" → [role, org]. */

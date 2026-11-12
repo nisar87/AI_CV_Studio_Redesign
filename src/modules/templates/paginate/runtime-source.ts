@@ -163,7 +163,10 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     return h;
   }
 
-  function layout(st) {
+  // reserve: px kept free at the bottom of every column (used when trying a tighter fit, so a
+  // fit that only just works in one browser can't spill onto another page in a different one).
+  function layout(st, reserve) {
+    var R = reserve || 0;
     restore(st);
     var header = st.header;
     var running = st.running;
@@ -181,10 +184,10 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     if (running) p2.top.appendChild(running.cloneNode(true));
     measure.appendChild(p1.page);
     measure.appendChild(p2.page);
-    var capMain1 = p1.main.clientHeight;
-    var capMainN = p2.main.clientHeight;
-    var capAside1 = p1.aside ? p1.aside.clientHeight : 0;
-    var capAsideN = p2.aside ? p2.aside.clientHeight : 0;
+    var capMain1 = p1.main.clientHeight - R;
+    var capMainN = p2.main.clientHeight - R;
+    var capAside1 = p1.aside ? p1.aside.clientHeight - R : 0;
+    var capAsideN = p2.aside ? p2.aside.clientHeight - R : 0;
 
     // Side column first: it decides from which page on the main column can use the full width.
     var asideMeasure = hasAside ? measureFlow(asideBlocks, p2.aside) : [];
@@ -200,7 +203,7 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
       p3.page.className += ' cv-page--wide';
       if (running) p3.top.appendChild(running.cloneNode(true));
       measure.appendChild(p3.page);
-      capMainWide = p3.main.clientHeight;
+      capMainWide = p3.main.clientHeight - R;
       var wide = measureFlow(mainBlocks, p3.main);
       mainMeasure = measureFlow(mainBlocks, p2.main);
       for (var q = 0; q < mainMeasure.length; q++) mainMeasure[q].wide = wide[q].height;
@@ -247,6 +250,8 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     { gap: 0.62, margin: 0.84, lh: 0.06 }
   ];
   var LAST_PAGE_MAX_FILL = 0.3;
+  // A tighter fit is only accepted with about one line to spare on every page (see layout()).
+  var FIT_RESERVE = 14;
   function applyFit(f) {
     var st = document.documentElement.style;
     st.setProperty('--fit-gap', f ? String(f.gap) : '1');
@@ -263,7 +268,7 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     if (r.pages > 1 && r.lastFill < LAST_PAGE_MAX_FILL) {
       for (var i = 0; i < FIT_STEPS.length; i++) {
         applyFit(FIT_STEPS[i]);
-        var t = layout(st);
+        var t = layout(st, FIT_RESERVE);
         if (t.pages < r.pages && t.overflow === 0) {
           r = t;
           fitted = i + 1;

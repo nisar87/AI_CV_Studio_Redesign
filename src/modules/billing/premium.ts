@@ -34,7 +34,13 @@ export async function premiumOffer(user: SessionUser | null) {
       ? {
           plan,
           passExpiresAt,
-          requests: requests.map(({ uid: _u, email: _e, ...r }) => r),
+          // Never echo the uid or email back in the list.
+          requests: requests.map((r) => {
+            const copy: Partial<PaymentRequest> = { ...r };
+            delete copy.uid;
+            delete copy.email;
+            return copy as Omit<PaymentRequest, 'uid' | 'email'>;
+          }),
         }
       : null,
   };
