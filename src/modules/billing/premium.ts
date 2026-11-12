@@ -31,6 +31,7 @@ export async function premiumOffer(user: SessionUser | null) {
     methods: cfg.features.sales ? cfg.payments.methods.filter((m) => m.active) : [],
     instructions: cfg.payments.instructions,
     supportEmail: cfg.support.email,
+    whatsapp: cfg.features.sales ? cfg.payments.whatsapp : '',
     me: user
       ? {
           plan,

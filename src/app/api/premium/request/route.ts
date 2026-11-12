@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { apiError, clientKey, createRateLimiter, readJson, requestId } from '@/lib/http';
@@ -13,15 +14,30 @@ export const dynamic = 'force-dynamic';
 const body = z.object({
   passId: z.string().max(40),
   methodId: z.string().max(40),
+  /** Buyer's mobile number (to match their WhatsApp message). */
+  phone: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/[\s-]/g, ''))
+    .pipe(
+      z.string().regex(/^\+?\d{10,15}$/, 'Please enter your mobile number, e.g. 0300 1234567.'),
+    ),
+  /** Optional now: the screenshot on WhatsApp is the proof. */
   reference: z
     .string()
     .trim()
-    .min(4, 'Please enter the transaction ID.')
     .max(60)
-    .regex(/^[\w\- #/.:]+$/, 'Use only letters, numbers and - / . : #'),
+    .regex(/^[\w\- #/.:]*$/, 'Use only letters, numbers and - / . : #')
+    .optional()
+    .default(''),
   note: z.string().trim().max(300).optional(),
   code: z.string().trim().max(30).optional(),
 });
+
+/** Short, easy-to-read order numbers (no 0/O or 1/I/L): ~10^9 combinations. */
+const ORDER_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const makeOrderNo = () =>
+  `CV-${Array.from({ length: 6 }, () => ORDER_ALPHABET[randomInt(ORDER_ALPHABET.length)]).join('')}`;
 
 const limiter = createRateLimiter({ capacity: 5, refillPerMinute: 1 });
 
@@ -55,9 +71,9 @@ export async function POST(req: Request) {
       'We are still checking your last payment. You will get Premium as soon as it is approved.',
       rid,
     );
-  // The same transaction can't be claimed twice (by anyone).
+  // The same transaction can't be claimed twice (by anyone), when one is given.
   const referenceKey = parsed.data.reference.toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (await store.findPaymentByReference(referenceKey))
+  if (referenceKey && (await store.findPaymentByReference(referenceKey)))
     return apiError(
       'INVALID_INPUT',
       'This transaction ID has already been used. Please check it, or contact us if this is a mistake.',
@@ -76,6 +92,8 @@ export async function POST(req: Request) {
     ...(q.referrerUid ? { referrerUid: q.referrerUid } : {}),
     methodId: method.id,
     methodLabel: method.label,
+    orderNo: makeOrderNo(),
+    phone: parsed.data.phone,
     reference: parsed.data.reference,
     referenceKey,
     ...(parsed.data.note ? { note: parsed.data.note } : {}),
@@ -84,7 +102,7 @@ export async function POST(req: Request) {
   });
   await track('premium_request');
   return NextResponse.json(
-    { ok: true, id: saved.id },
+    { ok: true, id: saved.id, orderNo: saved.orderNo },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }

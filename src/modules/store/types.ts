@@ -170,6 +170,10 @@ export type PaymentRequest = {
   /** Reference lower-cased with spaces and punctuation removed, for the duplicate check. */
   referenceKey?: string;
   note?: string;
+  /** Short order number the buyer quotes with their payment screenshot (e.g. CV-7KQ2M9). */
+  orderNo?: string;
+  /** Buyer's mobile number, to match the WhatsApp message. */
+  phone?: string;
   /** Price before a coupon (R4); `pricePkr` is what the buyer pays. */
   listPricePkr?: number;
   couponCode?: string;

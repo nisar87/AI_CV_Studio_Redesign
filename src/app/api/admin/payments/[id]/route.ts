@@ -46,7 +46,7 @@ export function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
         decided.days,
         by,
         'manual',
-        `${decided.passLabel} · ${decided.methodLabel} ${decided.reference}`,
+        `${decided.passLabel} · ${decided.methodLabel} · order ${decided.orderNo ?? decided.reference}`,
       );
     await store.writeAudit({
       at: new Date().toISOString(),
@@ -59,7 +59,9 @@ export function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
         pricePkr: decided.pricePkr,
         ...(decided.couponCode ? { coupon: decided.couponCode } : {}),
         method: decided.methodLabel,
-        reference: decided.reference,
+        ...(decided.orderNo ? { order: decided.orderNo } : {}),
+        ...(decided.phone ? { mobile: decided.phone } : {}),
+        ...(decided.reference ? { reference: decided.reference } : {}),
         ...(expiresAt ? { expiresAt } : { reason: why }),
       },
     });

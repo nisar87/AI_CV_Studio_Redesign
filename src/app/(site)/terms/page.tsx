@@ -65,8 +65,8 @@ export default async function TermsPage() {
             find your payment, we tell you why so you can check the details.
           </li>
           <li>
-            If you paid and did not receive Premium, contact us at {contact} with your transaction
-            ID. We will either give you the Premium you paid for or refund the payment.
+            If you paid and did not receive Premium, contact us at {contact} with your order number.
+            We will either give you the Premium you paid for or refund the payment.
           </li>
           <li>
             When a pass ends, your CVs stay in your account. CVs in a Premium design can be switched

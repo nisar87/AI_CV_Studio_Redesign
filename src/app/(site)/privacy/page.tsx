@@ -25,8 +25,10 @@ export default function PrivacyPage() {
         <p>
           For your account we keep your email address and name, how you sign in, when you last used
           the studio, your plan, and how many downloads, imports and AI actions you used this month.
-          If you buy Premium, we keep the payment details you send us (pass, amount, payment method
-          and transaction ID) to check the payment.
+          If you buy Premium, we keep the order details (order number, pass, amount, payment method,
+          your mobile number and any transaction ID you give) to check the payment. Payment
+          screenshots you send us on WhatsApp stay in that chat and are only used to check your
+          order.
         </p>
         <h2>When information leaves your device</h2>
         <ul>

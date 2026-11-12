@@ -117,6 +117,11 @@ export function AdminPayments() {
               data-testid="payment"
             >
               <div className="min-w-0 text-sm">
+                {r.orderNo && (
+                  <p className="font-mono text-lg font-bold tracking-wider" data-testid="order-no">
+                    {r.orderNo}
+                  </p>
+                )}
                 <p className="text-base font-semibold">
                   {r.email ?? r.uid}
                   <span
@@ -141,12 +146,27 @@ export function AdminPayments() {
                     {r.welcomeDays ? `Invited by a friend: +${r.welcomeDays} days` : ''}
                   </p>
                 )}
-                <p className="mt-0.5">
-                  Reference: <span className="font-mono">{r.reference}</span>
-                </p>
+                {r.phone && (
+                  <p className="mt-0.5">
+                    Mobile: <span className="font-mono">{r.phone}</span> ·{' '}
+                    <a
+                      href={`https://wa.me/${r.phone.replace(/\D/g, '').replace(/^0/, '92')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary font-semibold"
+                    >
+                      WhatsApp
+                    </a>
+                  </p>
+                )}
+                {r.reference && (
+                  <p className="mt-0.5">
+                    Transaction ID: <span className="font-mono">{r.reference}</span>
+                  </p>
+                )}
                 {r.note && <p className="text-ink-muted mt-0.5">“{r.note}”</p>}
                 <p className="text-ink-muted mt-0.5">
-                  Sent {when(r.createdAt)}
+                  Ordered {when(r.createdAt)}
                   {r.decidedAt && ` · ${r.status} ${when(r.decidedAt)} by ${r.decidedBy}`}
                 </p>
                 {r.reason && <p className="text-ink-muted mt-0.5">Reason: {r.reason}</p>}

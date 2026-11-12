@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Check, Clock, Copy, Minus, ShieldCheck, Sparkles } from 'lucide-react';
+import { Check, Clock, Copy, MessageCircle, Minus, ShieldCheck, Sparkles } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Card, SelectableCard } from '@/components/ui/card';
@@ -28,6 +28,7 @@ export function PremiumScreen() {
   const [passId, setPassId] = useState<string | null>(null);
   const [methodId, setMethodId] = useState<string | null>(null);
   const [reference, setReference] = useState('');
+  const [phone, setPhone] = useState('');
   const [note, setNote] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +94,8 @@ export function PremiumScreen() {
         body: JSON.stringify({
           passId,
           methodId,
-          reference,
+          phone,
+          reference: reference || undefined,
           note: note || undefined,
           code: code || undefined,
         }),
@@ -104,6 +106,7 @@ export function PremiumScreen() {
       }
       toast.show({ tone: 'success', message: 'Thank you! We’re checking your payment.' });
       setReference('');
+      setPhone('');
       setNote('');
       load();
     } catch (err) {
@@ -285,20 +288,7 @@ export function PremiumScreen() {
               <ButtonLink href="/signin?next=/premium">Sign in or create an account</ButtonLink>
             </Card>
           ) : pending ? (
-            <Card className="flex flex-col gap-2 p-6" data-testid="premium-pending" role="status">
-              <h2 className="flex items-center gap-2 text-xl font-semibold">
-                <Clock aria-hidden size={20} className="text-primary" /> We’re checking your payment
-              </h2>
-              <p className="text-ink-muted">
-                {pending.passLabel} · {pkr(pending.pricePkr)} by {pending.methodLabel} · reference{' '}
-                <span className="font-mono">{pending.reference}</span> · sent{' '}
-                {fmtDate(pending.createdAt)}.
-              </p>
-              <p className="text-ink-muted">
-                This usually takes less than a day. Premium starts as soon as it’s approved —
-                there’s nothing else you need to do.
-              </p>
-            </Card>
+            <PendingOrder pending={pending} whatsapp={offer.whatsapp} />
           ) : (
             <>
               <section aria-labelledby="step-pay" className="flex flex-col gap-4">
@@ -412,8 +402,13 @@ export function PremiumScreen() {
 
               <section aria-labelledby="step-confirm" className="flex flex-col gap-4">
                 <h2 id="step-confirm" className="text-2xl font-semibold">
-                  <span className="text-ink-subtle mr-2">3</span>Tell us you’ve paid
+                  <span className="text-ink-subtle mr-2">3</span>Place your order
                 </h2>
+                <p className="text-ink-muted -mt-2 max-w-xl">
+                  You’ll get an order number. Send a screenshot of your payment with it
+                  {offer.whatsapp ? ' on WhatsApp' : ''}, and Premium starts as soon as we’ve
+                  checked it.
+                </p>
                 {latest?.status === 'rejected' && (
                   <Banner tone="error" title="Your last payment wasn’t approved">
                     {latest.reason}
@@ -421,12 +416,23 @@ export function PremiumScreen() {
                 )}
                 <form onSubmit={submit} className="flex max-w-xl flex-col gap-4">
                   <TextField
+                    label="Your mobile number"
+                    hint="So we can match your payment and reach you if needed."
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    maxLength={20}
+                    placeholder="0300 1234567"
+                  />
+                  <TextField
                     label="Transaction ID"
-                    hint="The reference or TID from your bank or wallet app’s receipt."
+                    optional
+                    hint="If it’s easy to copy from your receipt. The screenshot is enough."
                     value={reference}
                     onChange={(e) => setReference(e.target.value)}
-                    required
-                    minLength={4}
                     maxLength={60}
                     autoComplete="off"
                   />
@@ -449,7 +455,7 @@ export function PremiumScreen() {
                     className="self-start"
                     disabled={!pass || !method}
                   >
-                    I’ve paid {pass ? pkr(amount) : ''}
+                    Place order · {pass ? pkr(amount) : ''}
                   </Button>
                 </form>
               </section>
@@ -481,7 +487,7 @@ export function PremiumScreen() {
                 <a href={`mailto:${offer.supportEmail}`} className="text-primary font-semibold">
                   {offer.supportEmail}
                 </a>{' '}
-                with your transaction ID.
+                with your order number.
               </>
             )}
           </Faq>
@@ -520,6 +526,88 @@ function CopyLine({ label, value, shown }: { label?: string; value: string; show
         Copy
       </Button>
     </div>
+  );
+}
+
+/** The waiting state: the order number and how to send the payment screenshot. */
+function PendingOrder({
+  pending,
+  whatsapp,
+}: {
+  pending: NonNullable<PremiumOffer['me']>['requests'][number];
+  whatsapp: string;
+}) {
+  const toast = useToast();
+  const order = pending.orderNo ?? pending.reference;
+  const message = `Order ${order}: ${pending.passLabel}, ${pkr(pending.pricePkr)} by ${pending.methodLabel}. Payment screenshot attached.`;
+  const wa = whatsapp
+    ? `https://wa.me/${whatsapp.replace(/\D/g, '').replace(/^0/, '92')}?text=${encodeURIComponent(message)}`
+    : '';
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(order);
+      toast.show({ tone: 'success', message: 'Order number copied' });
+    } catch {
+      toast.show({ tone: 'error', message: 'Couldn’t copy. Write the order number down.' });
+    }
+  };
+  return (
+    <Card className="flex flex-col gap-4 p-6" data-testid="premium-pending" role="status">
+      <h2 className="flex items-center gap-2 text-xl font-semibold">
+        <Clock aria-hidden size={20} className="text-primary" /> Your order is waiting for payment
+        check
+      </h2>
+      <div className="bg-sunken flex flex-wrap items-center justify-between gap-3 rounded-md p-4">
+        <div>
+          <p className="text-ink-muted text-sm">Order number</p>
+          <p className="font-mono text-2xl font-bold tracking-wider" data-testid="order-no">
+            {order}
+          </p>
+        </div>
+        {pending.orderNo && (
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<Copy aria-hidden size={16} />}
+            onClick={copy}
+          >
+            Copy
+          </Button>
+        )}
+      </div>
+      <p className="text-ink-muted">
+        {pending.passLabel} · {pkr(pending.pricePkr)} by {pending.methodLabel} · placed{' '}
+        {fmtDate(pending.createdAt)}.
+      </p>
+      {pending.orderNo && (
+        <div className="flex flex-col gap-2">
+          <p className="font-semibold">
+            Now send a screenshot of your payment with this order number
+            {whatsapp ? ' on WhatsApp' : ''}.
+          </p>
+          {wa && (
+            <a
+              href={wa}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center gap-2 self-start rounded-md bg-[#1f7a4d] px-4 font-semibold text-white hover:bg-[#186640]"
+            >
+              <MessageCircle aria-hidden size={18} /> Send on WhatsApp
+            </a>
+          )}
+          {whatsapp && (
+            <p className="text-ink-muted text-sm">
+              Or send it to <span className="font-semibold whitespace-nowrap">{whatsapp}</span> with
+              your order number.
+            </p>
+          )}
+        </div>
+      )}
+      <p className="text-ink-muted text-sm">
+        We check payments by hand, usually within a day. Premium starts as soon as it’s approved;
+        this page updates by itself when you come back.
+      </p>
+    </Card>
   );
 }
 

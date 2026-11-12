@@ -84,8 +84,18 @@ export const businessConfig = z.object({
         )
         .max(6),
       instructions: z.string().max(600),
+      /**
+       * WhatsApp number buyers send their payment screenshot to, with their order number.
+       * Shown on the Premium page as a ready-made message link.
+       */
+      whatsapp: z
+        .union([
+          z.literal(''),
+          z.string().regex(/^\+?[\d\s-]{10,20}$/, 'Use a phone number, e.g. +92 300 1234567'),
+        ])
+        .default(''),
     })
-    .default({ methods: [], instructions: '' }),
+    .default({ methods: [], instructions: '', whatsapp: '' }),
   /**
    * Discount codes (R4). A code gives a percentage off and/or extra days on a pass. Codes are
    * matched case-insensitively. Empty `passIds` means every pass.
@@ -161,7 +171,8 @@ export const DEFAULT_CONFIG: BusinessConfig = {
   payments: {
     methods: [],
     instructions:
-      'Pay the exact amount, then enter the transaction ID from your banking app. We check payments by hand, usually within 24 hours, and Premium starts as soon as it is approved.',
+      'Pay the exact amount, then place your order and send a screenshot of the payment with your order number on WhatsApp. We check payments by hand, usually within 24 hours, and Premium starts as soon as it is approved.',
+    whatsapp: '',
   },
 };
 

@@ -560,6 +560,15 @@ export function AdminSettings() {
             value={draft.payments.instructions}
             onChange={(e) => edit((c) => void (c.payments.instructions = e.target.value))}
           />
+          <TextField
+            label="WhatsApp number for payment screenshots"
+            hint="Buyers get a button that opens WhatsApp to this number with their order number and amount already written. Example: +92 300 1234567"
+            type="tel"
+            maxLength={20}
+            containerClassName="mt-4 max-w-md"
+            value={draft.payments.whatsapp}
+            onChange={(e) => edit((c) => void (c.payments.whatsapp = e.target.value))}
+          />
         </Section>
 
         <Section title="Switches">

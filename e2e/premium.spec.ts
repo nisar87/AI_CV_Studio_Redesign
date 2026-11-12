@@ -26,7 +26,8 @@ const SALES: BusinessConfig = {
   ...BASE,
   features: { ...BASE.features, sales: true },
   payments: {
-    instructions: 'Pay the exact amount, then enter the transaction ID.',
+    instructions: 'Pay the exact amount, then place your order.',
+    whatsapp: '+92 300 7654321',
     methods: [
       {
         id: 'bank',
@@ -93,13 +94,33 @@ test('buy → admin approves → Premium starts; the audit log records it', asyn
     [],
   );
 
-  await page.getByLabel('Transaction ID').fill('TID-998877');
-  await page.getByRole('button', { name: 'I’ve paid PKR 499' }).click();
-  await expect(page.getByTestId('premium-pending')).toContainText('TID-998877');
+  // New flow: mobile number → order number → screenshot on WhatsApp. Transaction ID is optional.
+  await page.getByLabel('Your mobile number').fill('0301 2345678');
+  await page.getByRole('button', { name: 'Place order · PKR 499' }).click();
+  const pendingCard = page.getByTestId('premium-pending');
+  const orderNo = (await pendingCard.getByTestId('order-no').textContent())!.trim();
+  expect(orderNo).toMatch(/^CV-[A-Z2-9]{6}$/);
+  const wa = pendingCard.getByRole('link', { name: 'Send on WhatsApp' });
+  await expect(wa).toHaveAttribute(
+    'href',
+    `https://wa.me/923007654321?text=${encodeURIComponent(`Order ${orderNo}: 1 month, PKR 499 by JazzCash. Payment screenshot attached.`)}`,
+  );
+  const pendingAxe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+  expect(
+    pendingAxe.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical'),
+  ).toEqual([]);
+  // A mobile number is required.
+  expect(
+    (
+      await page.request.post('/api/premium/request', {
+        data: { passId: 'month', methodId: 'jazz', phone: 'abc' },
+      })
+    ).status(),
+  ).toBe(400);
 
   // Only one request at a time; and a crafted request for a hidden method is refused.
   const again = await page.request.post('/api/premium/request', {
-    data: { passId: 'month', methodId: 'bank', reference: 'TID-2' },
+    data: { passId: 'month', methodId: 'bank', phone: '03001112222' },
   });
   expect(again.status()).toBe(400);
 
@@ -107,9 +128,14 @@ test('buy → admin approves → Premium starts; the audit log records it', asyn
   await adminPage.goto('/admin');
   await expect(adminPage.getByText(/1 payment waiting/)).toBeVisible();
   await adminPage.getByRole('link', { name: 'Review payments' }).click();
-  const row = adminPage.getByTestId('payment').filter({ hasText: 'TID-998877' });
+  const row = adminPage.getByTestId('payment').filter({ hasText: orderNo });
   await expect(row).toContainText('PKR 499');
   await expect(row).toContainText('JazzCash');
+  await expect(row).toContainText('Mobile: 03012345678');
+  await expect(row.getByRole('link', { name: 'WhatsApp' })).toHaveAttribute(
+    'href',
+    'https://wa.me/923012345678',
+  );
   adminPage.once('dialog', (d) => void d.accept());
   await row.getByRole('button', { name: 'Approve' }).click();
   await expect(adminPage.getByText(/Approved — Premium until/)).toBeVisible();
@@ -122,9 +148,9 @@ test('buy → admin approves → Premium starts; the audit log records it', asyn
   // Approving twice is impossible (already handled).
   const id = (
     (await (await context.request.get('/api/admin/payments?status=all')).json()) as {
-      requests: { id: string; reference: string }[];
+      requests: { id: string; orderNo?: string }[];
     }
-  ).requests.find((r) => r.reference === 'TID-998877')!.id;
+  ).requests.find((r) => r.orderNo === orderNo)!.id;
   const twice = await context.request.post(`/api/admin/payments/${id}`, {
     data: { decision: 'approve' },
   });
@@ -132,7 +158,7 @@ test('buy → admin approves → Premium starts; the audit log records it', asyn
 
   await adminPage.goto('/admin/history');
   await expect(adminPage.getByTestId('audit-log')).toContainText('Approved payment');
-  await expect(adminPage.getByTestId('audit-log')).toContainText('reference: TID-998877');
+  await expect(adminPage.getByTestId('audit-log')).toContainText(`order: ${orderNo}`);
   await context.close();
 });
 
@@ -141,7 +167,12 @@ test('the same transaction ID cannot be claimed twice, even by another account',
   request,
 }) => {
   await setConfig(request, SALES);
-  const data = { passId: 'month', methodId: 'bank', reference: 'DUP-555 777' };
+  const data = {
+    passId: 'month',
+    methodId: 'bank',
+    phone: '03001234567',
+    reference: 'DUP-555 777',
+  };
   expect((await page.request.post('/api/premium/request', { data })).status()).toBe(200);
   const other = await request.post('/api/premium/request', {
     data: { ...data, reference: 'dup555777' },
@@ -159,8 +190,9 @@ test('a rejected payment shows the reason and the buyer can try again', async ({
 }) => {
   await setConfig(request, SALES);
   await page.goto('/premium');
+  await page.getByLabel('Your mobile number').fill('0333 0000001');
   await page.getByLabel('Transaction ID').fill('WRONG-1');
-  await page.getByRole('button', { name: /I’ve paid/ }).click();
+  await page.getByRole('button', { name: /Place order/ }).click();
   await expect(page.getByTestId('premium-pending')).toBeVisible();
 
   const { context, page: adminPage } = await admin(browser);
@@ -173,7 +205,7 @@ test('a rejected payment shows the reason and the buyer can try again', async ({
 
   await page.reload();
   await expect(page.getByText('No payment with this ID arrived.')).toBeVisible();
-  await expect(page.getByLabel('Transaction ID')).toBeVisible();
+  await expect(page.getByLabel('Your mobile number')).toBeVisible();
   const ent = (await (await page.request.get('/api/me/entitlements')).json()) as { plan: string };
   expect(ent.plan).toBe('free');
 });
@@ -253,8 +285,9 @@ test('a discount code lowers the price; the admin sees the code; the server chec
       })
     ).status(),
   ).toBe(400);
+  await page.getByLabel('Your mobile number').fill('0300 9990001');
   await page.getByLabel('Transaction ID').fill('TID-COUPON-1');
-  await page.getByRole('button', { name: 'I’ve paid PKR 399' }).click();
+  await page.getByRole('button', { name: 'Place order · PKR 399' }).click();
   await expect(page.getByTestId('premium-pending')).toContainText('PKR 399');
 
   const { context, page: adminPage } = await admin(browser);
@@ -294,8 +327,9 @@ test('invite link: the friend gets extra days, the inviter gets Premium when it 
   await expect(
     f.getByText('A friend invited you: you get 7 extra days (37 days in total).'),
   ).toBeVisible();
+  await f.getByLabel('Your mobile number').fill('0300 9990002');
   await f.getByLabel('Transaction ID').fill('TID-INVITE-1');
-  await f.getByRole('button', { name: 'I’ve paid PKR 499' }).click();
+  await f.getByRole('button', { name: 'Place order · PKR 499' }).click();
   await expect(f.getByTestId('premium-pending')).toBeVisible();
 
   const { context, page: adminPage } = await admin(browser);
