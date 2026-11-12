@@ -1,6 +1,7 @@
 import 'server-only';
 import { aiModels, getAiProvider } from '@/modules/ai/config';
 import { sharedAiLimiter } from '@/modules/ai/limits';
+import { aiBudgetSpent } from '@/modules/metrics/server';
 import { runTask } from '@/modules/ai/run';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import type { ImportReport } from './parse';
@@ -23,6 +24,7 @@ export async function importWithAi(
   if (mode === 'off' || !provider) return { ok: false, reason: 'off' };
   const limit = sharedAiLimiter()(`import:${key}`);
   if (!limit.ok) return { ok: false, reason: `limit_${limit.reason}` };
+  if (await aiBudgetSpent()) return { ok: false, reason: 'limit_budget' };
   // Keep the request bounded: a CV is rarely over 400 lines.
   const input = lines.slice(0, 400).map((l) => l.slice(0, 600));
   const r = await runTask('import.structure', { lines: input }, 0, {

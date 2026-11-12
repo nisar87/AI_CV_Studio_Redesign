@@ -115,7 +115,8 @@ export class FirestoreUserStore implements UserStore {
   async countCouponUses(code: string) {
     // Equality filter only (no composite index); status is checked here.
     const snap = await this.db.collection('paymentRequests').where('couponCode', '==', code).get();
-    return snap.docs.filter((d) => d.get('status') !== 'rejected').length;
+    return snap.docs.filter((d) => ['pending', 'approved'].includes(d.get('status') as string))
+      .length;
   }
   async referralCodeOf(uid: string, make: () => string) {
     const user = this.db.collection('users').doc(uid);
@@ -427,7 +428,7 @@ export class FirestoreUserStore implements UserStore {
   }
   async decidePaymentRequest(
     id: string,
-    d: { status: 'approved' | 'rejected'; by: string; reason?: string },
+    d: { status: 'approved' | 'rejected' | 'cancelled'; by: string; reason?: string },
   ) {
     const ref = this.db.collection('paymentRequests').doc(id);
     return this.db.runTransaction(async (tx) => {

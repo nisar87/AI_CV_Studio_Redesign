@@ -288,7 +288,7 @@ export function PremiumScreen() {
               <ButtonLink href="/signin?next=/premium">Sign in or create an account</ButtonLink>
             </Card>
           ) : pending ? (
-            <PendingOrder pending={pending} whatsapp={offer.whatsapp} />
+            <PendingOrder pending={pending} whatsapp={offer.whatsapp} onCancelled={load} />
           ) : (
             <>
               <section aria-labelledby="step-pay" className="flex flex-col gap-4">
@@ -533,11 +533,28 @@ function CopyLine({ label, value, shown }: { label?: string; value: string; show
 function PendingOrder({
   pending,
   whatsapp,
+  onCancelled,
 }: {
   pending: NonNullable<PremiumOffer['me']>['requests'][number];
   whatsapp: string;
+  onCancelled: () => void;
 }) {
   const toast = useToast();
+  const [cancelling, setCancelling] = useState(false);
+  const cancel = async () => {
+    if (!confirm('Cancel this order? Only do this if you haven’t paid for it.')) return;
+    setCancelling(true);
+    const r = await fetch('/api/premium/request', {
+      method: 'DELETE',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: pending.id }),
+    }).catch(() => null);
+    setCancelling(false);
+    if (r?.ok) {
+      toast.show({ tone: 'success', message: 'Order cancelled' });
+      onCancelled();
+    } else toast.show({ tone: 'error', message: 'Couldn’t cancel. Please reload and try again.' });
+  };
   const order = pending.orderNo ?? pending.reference;
   const message = `Order ${order}: ${pending.passLabel}, ${pkr(pending.pricePkr)} by ${pending.methodLabel}. Payment screenshot attached.`;
   const wa = whatsapp
@@ -607,6 +624,15 @@ function PendingOrder({
         We check payments by hand, usually within a day. Premium starts as soon as it’s approved;
         this page updates by itself when you come back.
       </p>
+      <Button
+        variant="ghost"
+        size="sm"
+        loading={cancelling}
+        onClick={cancel}
+        className="self-start"
+      >
+        Haven’t paid? Cancel this order
+      </Button>
     </Card>
   );
 }

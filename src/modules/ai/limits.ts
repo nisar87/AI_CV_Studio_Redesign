@@ -1,6 +1,7 @@
 /**
  * Fair-use limits and the daily cost switch (docs/engineering/ai-architecture.md → Errors, limits
- * and cost). In-memory per server instance; move to a shared store (KV) when scaling out.
+ * and cost). Burst and per-person daily limits are per server instance; the site-wide daily budget
+ * is also checked against shared counters (aiBudgetSpent), and monthly allowances are shared.
  */
 export type AiLimits = {
   per10Min: number;

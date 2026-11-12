@@ -29,7 +29,7 @@ export async function quoteFor(
     const by = await store.getReferredBy(user.uid);
     if (by) {
       const before = await store.listPaymentRequests({ uid: user.uid, limit: 50 });
-      if (!before.some((p) => p.status !== 'rejected')) {
+      if (!before.some((p) => p.status === 'pending' || p.status === 'approved')) {
         welcome = cfg.referrals.welcomeDays;
         referrerUid = by;
       }

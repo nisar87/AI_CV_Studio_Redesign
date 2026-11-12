@@ -374,3 +374,39 @@ test('you cannot invite yourself, and invites are hidden when switched off', asy
   await expect(page.getByTestId('plan')).toBeVisible();
   await expect(page.getByTestId('invite')).toHaveCount(0);
 });
+
+test('a buyer who has not paid can cancel the order and place a new one', async ({
+  page,
+  request,
+  browser,
+}) => {
+  await setConfig(request, SALES);
+  await page.goto('/premium');
+  await page.getByLabel('Your mobile number').fill('0300 5550001');
+  await page.getByRole('button', { name: /Place order/ }).click();
+  const first = (await page.getByTestId('order-no').textContent())!.trim();
+  page.once('dialog', (d) => void d.accept());
+  await page.getByRole('button', { name: 'Haven’t paid? Cancel this order' }).click();
+  await expect(page.getByText('Order cancelled')).toBeVisible();
+  await expect(page.getByLabel('Your mobile number')).toBeVisible();
+
+  // A new order gets a new number.
+  await page.getByLabel('Your mobile number').fill('0300 5550001');
+  await page.getByRole('button', { name: /Place order/ }).click();
+  const second = (await page.getByTestId('order-no').textContent())!.trim();
+  expect(second).not.toBe(first);
+
+  // Only the buyer's own waiting order can be cancelled.
+  const other = await request.delete('/api/premium/request', { data: { id: 'nope' } });
+  expect(other.status()).toBe(404);
+
+  const { context, page: adminPage } = await admin(browser);
+  await adminPage.goto('/admin/payments');
+  await expect(adminPage.getByTestId('payment').filter({ hasText: first })).toHaveCount(0);
+  await expect(adminPage.getByTestId('payment').filter({ hasText: second })).toBeVisible();
+  await adminPage.getByRole('radio', { name: 'All recent' }).click();
+  await expect(adminPage.getByTestId('payment').filter({ hasText: first })).toContainText(
+    'Cancelled by buyer',
+  );
+  await context.close();
+});

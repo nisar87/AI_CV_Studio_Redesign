@@ -1,5 +1,6 @@
 import { aiModels, getAiProvider } from '@/modules/ai/config';
 import { sharedAiLimiter } from '@/modules/ai/limits';
+import { aiBudgetSpent } from '@/modules/metrics/server';
 import { runTask } from '@/modules/ai/run';
 import { isTaskId, type AiResponse, type TaskId } from '@/modules/ai/schemas';
 import { apiError, clientKey, readJson, requestId } from '@/lib/http';
@@ -27,6 +28,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ task: string }
     return apiError('AI_UNAVAILABLE', 'AI help is switched off on this site.', rid, {
       reason: 'off',
     });
+
+  // Site-wide daily AI budget, shared by every server instance.
+  if (await aiBudgetSpent())
+    return apiError(
+      'RATE_LIMITED',
+      'AI help is resting for today. You can keep writing yourself, and it will be back tomorrow.',
+      rid,
+      { reason: 'budget' },
+    );
 
   const device = (req.headers.get('x-device-id') ?? '').slice(0, 64);
   const key = `${clientKey(req)}|${device}`;

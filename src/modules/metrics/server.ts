@@ -24,6 +24,7 @@ export const EVENTS = [
   'premium_request',
   'premium_approved',
   'premium_rejected',
+  'premium_cancelled',
   'premium_approval_minutes',
   'referral_joined',
   'referral_reward',
@@ -54,4 +55,33 @@ export async function metricsSummary(days = 30) {
   for (const r of rows) for (const [k, v] of Object.entries(r.counts)) sum[k] = (sum[k] ?? 0) + v;
   const todayRow = rows.find((r) => r.day === to)?.counts ?? {};
   return { from, to, days: rows, total: sum, today: todayRow };
+}
+
+let budgetCache: { at: number; day: string; used: number } | null = null;
+
+/**
+ * AI calls made today across every server instance (from the shared daily counters), cached for
+ * 20 seconds so a busy instance doesn't read the database on every call. The per-instance limiter
+ * still counts calls in between, so the budget can only be overshot by a few calls.
+ */
+export async function aiCallsToday(now = Date.now()): Promise<number> {
+  const day = today(new Date(now));
+  if (budgetCache && budgetCache.day === day && now - budgetCache.at < 20_000)
+    return budgetCache.used;
+  try {
+    const rows = await getUserStore().getMetrics(day, day);
+    const c = rows[0]?.counts ?? {};
+    const used = (c.ai_ok ?? 0) + (c.ai_fail ?? 0) + (c.import_ai ?? 0);
+    budgetCache = { at: now, day, used };
+    return used;
+  } catch {
+    // If the counters can't be read, fall back to the per-instance limit only.
+    return budgetCache?.day === day ? budgetCache.used : 0;
+  }
+}
+
+/** True when today's shared AI budget (AI_DAILY_BUDGET) is used up. */
+export async function aiBudgetSpent(): Promise<boolean> {
+  const budget = Number(process.env.AI_DAILY_BUDGET) || 2000;
+  return (await aiCallsToday()) >= budget;
 }

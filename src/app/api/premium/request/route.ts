@@ -106,3 +106,20 @@ export async function POST(req: Request) {
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }
+
+/** DELETE { id } — the buyer cancels their own order while it is still waiting. */
+export async function DELETE(req: Request) {
+  const rid = requestId();
+  const user = await currentUser();
+  if (!user) return apiError('SIGN_IN_REQUIRED', 'Please sign in.', rid);
+  const raw = await readJson(req, 1024);
+  const id = raw.ok ? String((raw.value as { id?: unknown })?.id ?? '') : '';
+  const store = getUserStore();
+  const mine = (
+    await store.listPaymentRequests({ uid: user.uid, status: 'pending', limit: 5 })
+  ).find((r) => r.id === id);
+  if (!mine) return apiError('NOT_FOUND', 'This order is no longer waiting.', rid);
+  await store.decidePaymentRequest(id, { status: 'cancelled', by: 'buyer' });
+  await track('premium_cancelled');
+  return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
+}

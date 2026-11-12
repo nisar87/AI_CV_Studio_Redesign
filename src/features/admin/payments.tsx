@@ -16,6 +16,7 @@ const STATUS_STYLE: Record<PaymentRequest['status'], string> = {
   pending: 'bg-warning-soft text-ink',
   approved: 'bg-[#e3f1e6] text-[#1f5c2e]',
   rejected: 'bg-sunken text-ink-muted',
+  cancelled: 'bg-sunken text-ink-muted',
 };
 
 export function AdminPayments() {
@@ -131,7 +132,9 @@ export function AdminPayments() {
                       ? 'Waiting'
                       : r.status === 'approved'
                         ? 'Approved'
-                        : 'Rejected'}
+                        : r.status === 'cancelled'
+                          ? 'Cancelled by buyer'
+                          : 'Rejected'}
                   </span>
                 </p>
                 <p className="mt-1">

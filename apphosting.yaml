@@ -4,7 +4,7 @@ runConfig:
   memoryMiB: 2048 # Chromium needs ~1 GB to render PDFs
   concurrency: 20
   minInstances: 0
-  maxInstances: 4 # in-memory rate limits are per instance; keep this small until a shared store exists
+  maxInstances: 4 # daily AI budget is shared (Firestore counters); burst limits are per instance, monthly allowances are shared
 
 env:
   # Google Gemini key from Cloud Secret Manager (secret GEMINI_API_KEY). Access granted with

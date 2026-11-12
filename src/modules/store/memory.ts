@@ -139,7 +139,9 @@ export class MemoryUserStore implements UserStore {
   private referralCodes = new Map<string, string>(); // code → uid
   private referredBy = new Map<string, string>();
   async countCouponUses(code: string) {
-    return this.payments.filter((p) => p.couponCode === code && p.status !== 'rejected').length;
+    return this.payments.filter(
+      (p) => p.couponCode === code && (p.status === 'pending' || p.status === 'approved'),
+    ).length;
   }
   async referralCodeOf(uid: string, make: () => string) {
     for (const [c, u] of this.referralCodes) if (u === uid) return c;
@@ -293,7 +295,7 @@ export class MemoryUserStore implements UserStore {
   }
   async decidePaymentRequest(
     id: string,
-    d: { status: 'approved' | 'rejected'; by: string; reason?: string },
+    d: { status: 'approved' | 'rejected' | 'cancelled'; by: string; reason?: string },
   ) {
     const p = this.payments.find((x) => x.id === id);
     if (!p || p.status !== 'pending') return null;

@@ -2,6 +2,7 @@ import 'server-only';
 import { apiError, readJson, requestId } from '@/lib/http';
 import { aiModels, getAiProvider } from '@/modules/ai/config';
 import { sharedAiLimiter } from '@/modules/ai/limits';
+import { aiBudgetSpent } from '@/modules/metrics/server';
 import { denialCode, reserve } from '@/modules/billing/server';
 import { currentUser, type SessionUser } from '@/modules/identity/session';
 import { track } from '@/modules/metrics/server';
@@ -58,7 +59,7 @@ export async function prepareJobAi(
       }),
     };
   const limit = sharedAiLimiter()(`job:${user.uid}`);
-  if (!limit.ok) {
+  if (!limit.ok || (await aiBudgetSpent())) {
     await gate.release();
     return { error: apiError('RATE_LIMITED', 'Too many AI requests. Please wait a little.', rid) };
   }

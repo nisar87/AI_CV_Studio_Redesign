@@ -103,7 +103,7 @@ export interface UserStore {
   /** Moves a pending request to approved/rejected; null if it is not pending (already decided). */
   decidePaymentRequest(
     id: string,
-    d: { status: 'approved' | 'rejected'; by: string; reason?: string },
+    d: { status: 'approved' | 'rejected' | 'cancelled'; by: string; reason?: string },
   ): Promise<PaymentRequest | null>;
   userStats(): Promise<{
     total: number;
@@ -154,7 +154,8 @@ export type Pass = {
   note?: string;
 };
 
-export type PaymentStatus = 'pending' | 'approved' | 'rejected';
+/** `cancelled`: the buyer withdrew the order before it was checked. */
+export type PaymentStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 export type PaymentRequest = {
   id: string;
   uid: string;
