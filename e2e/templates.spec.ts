@@ -138,7 +138,9 @@ test.describe('PDF text order and links (desktop only)', () => {
       const secondJob = raw.indexOf('Courier Driver');
       const education = raw.indexOf('GCSEs including English');
       expect(firstBullet, 'first bullet present').toBeGreaterThan(-1);
-      expect(firstBullet, 'bullet comes before the next job').toBeLessThan(secondJob);
+      expect(firstBullet, `bullet comes before the next job:\n${raw.slice(0, 1500)}`).toBeLessThan(
+        secondJob,
+      );
       expect(secondJob, 'work history comes before education').toBeLessThan(education);
       const body = pdf.toString('latin1');
       expect(body).toMatch(/\/URI\s*\(mailto:imran\.qureshi@example\.com\)/);
