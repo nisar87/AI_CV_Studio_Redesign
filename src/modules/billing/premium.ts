@@ -1,5 +1,6 @@
 import 'server-only';
 import type { SessionUser } from '@/modules/identity/session';
+import { aiMode } from '@/modules/ai/config';
 import { getUserStore } from '@/modules/store';
 import type { PaymentRequest } from '@/modules/store/types';
 import { getBusinessConfig, planFor } from './server';
@@ -24,7 +25,8 @@ export async function premiumOffer(user: SessionUser | null) {
       total: shown.length,
       free: shown.filter((d) => d.tier === 'free').length,
     },
-    aiAvailable: cfg.features.ai,
+    // Only promise AI when it is both switched on and actually configured on the server.
+    aiAvailable: cfg.features.ai && aiMode() !== 'off',
     passes: cfg.features.sales ? cfg.passes.filter((p) => p.active) : [],
     methods: cfg.features.sales ? cfg.payments.methods.filter((m) => m.active) : [],
     instructions: cfg.payments.instructions,
