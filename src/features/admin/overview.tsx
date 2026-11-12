@@ -21,6 +21,12 @@ type Overview = {
     visitorsAtDownload: number;
     pdfs: number;
     hitDownloadLimit: number;
+    words?: number;
+    shareViews?: number;
+    portfolioViews?: number;
+    invitesJoined?: number;
+    inviteRewards?: number;
+    couponsUsed?: number;
     imports: number;
     importsWithAi: number;
     importFailures: number;
@@ -162,6 +168,17 @@ function Numbers({ n }: { n: Overview['numbers'] }) {
       `${pct(n.imports, n.imports + n.importFailures)} succeeded · ${pct(n.importsWithAi, n.imports)} sorted by AI`,
     ],
     ['AI actions', String(n.aiActions), n.aiFailures ? `${n.aiFailures} failed` : undefined],
+    ['Word downloads', String(n.words ?? 0)],
+    [
+      'Shared CVs and portfolios opened',
+      String((n.shareViews ?? 0) + (n.portfolioViews ?? 0)),
+      `${n.shareViews ?? 0} share links · ${n.portfolioViews ?? 0} portfolio pages`,
+    ],
+    [
+      'Invites',
+      `${n.invitesJoined ?? 0} joined`,
+      `${n.inviteRewards ?? 0} rewards given · ${n.couponsUsed ?? 0} discount codes used`,
+    ],
     [
       'Premium',
       `${n.premiumApproved} approved`,
