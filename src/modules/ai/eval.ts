@@ -2,6 +2,7 @@ import 'server-only';
 import { buildSource, derivedYears, guardText } from './guard';
 import type { AiProvider } from './provider';
 import { runTask } from './run';
+import { digestKinds } from './tasks';
 
 type Models = { fast: string; smart: string };
 import type { TaskId } from './schemas';
@@ -205,7 +206,7 @@ export function evalSamples(): EvalSample[] {
   ];
   for (const [doc, jobTitle, company, advert] of adverts) {
     const profile = profileDigest(doc).text;
-    const src = [profile, company, jobTitle, doc.basics.name];
+    const src = [profile, company, jobTitle, doc.basics.name, digestKinds(profile)];
     samples.push({
       name: `${doc.presetId}: job match`,
       task: 'job.match',

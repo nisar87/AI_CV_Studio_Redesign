@@ -393,3 +393,16 @@ describe('limits', () => {
     expect(take('c')).toMatchObject({ ok: true });
   });
 });
+
+describe('job tasks: section kinds', () => {
+  it('a CV certificate may be called a certification in a letter', async () => {
+    const { digestKinds } = await import('./tasks');
+    const { buildSource, guardText } = await import('./guard');
+    const profile = 'CERT2: Immediate Life Support (ILS) — Resuscitation Council UK (2025)';
+    const src = buildSource([profile, digestKinds(profile)]);
+    expect(guardText('I hold Immediate Life Support certification.', src).findings).toEqual([]);
+    expect(
+      guardText('I hold a PhD.', buildSource([profile, digestKinds(profile)])).findings,
+    ).toHaveLength(1);
+  });
+});

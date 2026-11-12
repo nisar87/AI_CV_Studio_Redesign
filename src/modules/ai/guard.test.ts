@@ -123,3 +123,13 @@ describe('truth guard: word families and compounds (live eval false alarms)', ()
     ]);
   });
 });
+
+describe('truth guard: generic compound endings', () => {
+  it('accepts "AWS-based" when AWS is in the CV, but not an unknown name', () => {
+    const src = buildSource(['AWS Certified Solutions Architect']);
+    expect(guardText('An AWS-based service.', src).findings).toEqual([]);
+    expect(guardText('An Azure-based service.', src).findings.map((f) => f.value)).toEqual([
+      'Azure-based',
+    ]);
+  });
+});

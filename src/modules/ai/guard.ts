@@ -102,9 +102,30 @@ function credentialKnown(w: string, source: Source) {
   return false;
 }
 
+/** Generic second halves of compounds: "AWS-based", "NHS-led", "customer-facing". */
+const GENERIC_PARTS = new Set([
+  'based',
+  'led',
+  'driven',
+  'focused',
+  'facing',
+  'oriented',
+  'related',
+  'wide',
+  'level',
+  'style',
+  'friendly',
+  'ready',
+  'first',
+  'heavy',
+  'specific',
+  'centred',
+  'centered',
+]);
 /** "NMC-registered" is known when "NMC" and "registered" both appear in the source. */
 const partsKnown = (w: string, source: Source) =>
-  /[-/]/.test(w) && w.split(/[-/]+/).every((p) => !p || source.words.has(p));
+  /[-/]/.test(w) &&
+  w.split(/[-/]+/).every((p, i) => !p || source.words.has(p) || (i > 0 && GENERIC_PARTS.has(p)));
 
 /** Sentence openers never joined into a flagged name ("A GMC-registered…" flags only the name). */
 const OPENERS = new Set(['a', 'an', 'the', 'my', 'our', 'this', 'as', 'in', 'at', 'with', 'for']);
