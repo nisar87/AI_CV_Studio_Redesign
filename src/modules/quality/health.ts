@@ -30,6 +30,30 @@ const PERSONAL_DETAILS =
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PLACEHOLDER = /\{\{\?[^}]*\}\}/;
 
+/** Words screening software expects in each section heading (any language variant we see). */
+const STANDARD_HEADING: Partial<Record<string, RegExp>> = {
+  experience: /experience|employment|work|career|professional|berufserfahrung|positions?/i,
+  education: /education|qualification|academic|studies|training|ausbildung|schooling/i,
+  skills: /skill|competenc|strength|expertise|technolog|abilities|fähigkeit|kenntnisse|tools/i,
+  languages: /language|sprach/i,
+  certifications: /certif|qualification|course|training|accreditation|zertifi/i,
+  licences: /licen[cs]e|permit|driving/i,
+  projects: /project/i,
+  volunteering: /volunt|community|charity|ehrenamt/i,
+  awards: /award|honou?r|achievement|recognition|auszeichnung/i,
+};
+const STANDARD_WORD: Record<string, string> = {
+  experience: 'Experience',
+  education: 'Education',
+  skills: 'Skills',
+  languages: 'Languages',
+  certifications: 'Certifications',
+  licences: 'Licences',
+  projects: 'Projects',
+  volunteering: 'Volunteering',
+  awards: 'Awards',
+};
+
 /** "2021-03" → months since year 0 (for ordering and gaps). */
 function monthIndex(d: string): number | null {
   const m = d.match(/^(\d{4})(?:-(\d{2}))?$/);
@@ -335,6 +359,21 @@ export function healthCheck(
       title: 'Fill in the highlighted details',
       detail:
         'Some suggested sentences are waiting for a detail only you know. Fill them in or remove them before sending.',
+    });
+
+  // Screening software finds sections by their usual names (complete-studio-spec §7.6).
+  const unusual = sections.filter((s) => {
+    const re = STANDARD_HEADING[s.kind];
+    return re && s.title.trim() && !re.test(s.title);
+  });
+  if (unusual.length)
+    f.push({
+      id: 'heading-names',
+      severity: 'improve',
+      title: 'Use the usual section names',
+      detail: `Screening software looks for headings like “${STANDARD_WORD[unusual[0]!.kind]}”. A creative name such as “${unusual[0]!.title}” may not be recognised — rename it in the section’s menu.`,
+      ref: unusual[0]!.id,
+      examples: unusual.map((s) => s.title),
     });
 
   const personal = allText.match(PERSONAL_DETAILS);

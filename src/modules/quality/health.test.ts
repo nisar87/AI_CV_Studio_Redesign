@@ -108,3 +108,16 @@ describe('healthCheck', () => {
     expect(sev.indexOf('improve')).toBeGreaterThan(sev.lastIndexOf('fix'));
   });
 });
+
+describe('section headings', () => {
+  it('flags a creative heading and accepts usual or bilingual ones', () => {
+    const doc = structuredClone(F.FIXTURES.driver);
+    const exp = doc.sections.find((s) => s.kind === 'experience')!;
+    exp.title = 'PROFESSIONAL EXPERIENCE / BERUFSERFAHRUNG';
+    expect(healthCheck(doc).findings.map((f) => f.id)).not.toContain('heading-names');
+    exp.title = 'My Journey';
+    const f = healthCheck(doc).findings.find((x) => x.id === 'heading-names');
+    expect(f?.detail).toContain('Experience');
+    expect(f?.ref).toBe(exp.id);
+  });
+});
