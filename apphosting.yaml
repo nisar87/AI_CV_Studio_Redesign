@@ -36,15 +36,12 @@ env:
     availability:
       - RUNTIME
   # Buyer emails (payment approved/rejected) through Namecheap Private Email — R5 notify/.
-  # Owner steps: 1) firebase apphosting:secrets:set SMTP_PASSWORD  (the mailbox password)
-  #              2) firebase apphosting:secrets:grantaccess SMTP_PASSWORD --backend aicvstudio
-  #              3) uncomment the two entries below (SMTP_USER = the mailbox address) and push.
-  # Until then emails are skipped and the console says "Buyer emails are off".
-  # - variable: SMTP_USER
-  #   value: 'support@aicvstudio.app'
-  #   availability:
-  #     - RUNTIME
-  # - variable: SMTP_PASSWORD
-  #   secret: SMTP_PASSWORD
-  #   availability:
-  #     - RUNTIME
+  # The mailbox password is the Secret Manager secret SMTP_PASSWORD (set by the owner 2026-11-13).
+  - variable: SMTP_USER
+    value: 'support@aicvstudio.app'
+    availability:
+      - RUNTIME
+  - variable: SMTP_PASSWORD
+    secret: SMTP_PASSWORD
+    availability:
+      - RUNTIME
