@@ -210,8 +210,10 @@ test.describe('AI help', () => {
       });
     await list.getByRole('button').first().click();
     await expect(previewFrame(page).locator('html[data-template="halo"]')).toHaveCount(1);
-    const d = await storedDoc(page, driver.id);
-    expect(d.design).toMatchObject({ templateId: 'halo', accent: '#2d6a3e', fontPair: 'humanist' });
+    // Saving is debounced: wait for it rather than reading too early.
+    await expect
+      .poll(async () => (await storedDoc(page, driver.id)).design)
+      .toMatchObject({ templateId: 'halo', accent: '#2d6a3e', fontPair: 'humanist' });
     await page.keyboard.press('Control+z');
     await expect(
       previewFrame(page).locator(`html[data-template="${driver.design.templateId}"]`),
