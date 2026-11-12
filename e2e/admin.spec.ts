@@ -37,6 +37,7 @@ test('non-admins are refused by the API and the UI', async ({ page, request }) =
     '/api/admin/config',
     '/api/admin/users',
     '/api/admin/audit',
+    '/api/admin/ai/eval',
   ])
     expect((await request.get(path)).status(), path).toBe(403);
   expect((await request.put('/api/admin/config', { data: {} })).status()).toBe(403);
@@ -159,9 +160,23 @@ test('maintenance mode pauses downloads and shows a notice', async ({ page, requ
   await expect(page.getByRole('status').filter({ hasText: 'being updated' })).toBeVisible();
 });
 
+test('the AI page runs the live evaluation in batches and reports the pass mark', async ({
+  browser,
+}) => {
+  const { context, page } = await adminPage(browser);
+  await page.goto('/admin/ai');
+  await page.getByRole('button', { name: /Run evaluation \(48 samples\)/ }).click();
+  await expect(page.getByText('Passed: no invented facts reached the text.')).toBeVisible({
+    timeout: 60_000,
+  });
+  await expect(page.getByTestId('eval-summary')).toContainText('48 / 48');
+  expect((await context.request.post('/api/admin/ai/eval', { data: {} })).ok()).toBe(true);
+  await context.close();
+});
+
 test('console pages have no serious accessibility problems', async ({ browser }) => {
   const { context, page } = await adminPage(browser);
-  for (const path of ['/admin', '/admin/users', '/admin/settings', '/admin/history']) {
+  for (const path of ['/admin', '/admin/users', '/admin/settings', '/admin/ai', '/admin/history']) {
     await page.goto(path);
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
     const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();

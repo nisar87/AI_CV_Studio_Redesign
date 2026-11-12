@@ -43,7 +43,10 @@ async function main() {
       for (const k of Object.keys(want) as (keyof typeof want)[]) {
         checks++;
         if (String(want[k]) === String(got[k])) passed++;
-        else fails.push(`${t}-${fx} ${k}: want ${JSON.stringify(want[k])} got ${JSON.stringify(got[k])}`);
+        else
+          fails.push(
+            `${t}-${fx} ${k}: want ${JSON.stringify(want[k])} got ${JSON.stringify(got[k])}`,
+          );
       }
     }
   console.log(fails.join('\n'));
