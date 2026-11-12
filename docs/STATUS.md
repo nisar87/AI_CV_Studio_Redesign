@@ -17,6 +17,7 @@ _Last updated: 2026-11-12 (live on Firebase App Hosting at aicvstudio.app)_
 | 4 AI assistance (Gemini) | `phase-4/ai-assist` | ✅ Complete. Live acceptance met on production 2026-11-12 (48/48, 0 invented facts) |
 | R1 Paid CV Studio (R1.1–R1.6) | `r1/*` | ✅ Live on aicvstudio.app; sales open when the owner adds payment details |
 | R2 Job-ready | `r2/job-ready` | ✅ Live on aicvstudio.app (2026-11-12) |
+| R3 Professional presence | `r3/presence` | ✅ Merged 2026-11-12 (production verification below) |
 
 ## Phase 0 report
 
@@ -397,9 +398,41 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
   - GitHub's `ubuntu-latest` moved to 26.04 (Chrome 156, poppler 26.01). There, three designs' job titles extracted without spaces ("CourierDriver"), which an applicant-tracking system could also misread. Fixed with slight word-spacing on heading-font job titles (verified on 26.04, including PDF parity). CI is pinned to `ubuntu-24.04` for reproducibility.
   - Admin and Premium e2e files now run on one worker, because they share site settings.
 
+## Release 3 — Professional presence (2026-11-12)
+
+- **Application email (completes R2):** the cover-letter draft now includes a short covering email (subject and body, guarded) with **Copy email** and **Open in my email app**.
+- **Word (.docx) export** (download page, every signed-in plan):
+  - One clean column with real Word headings, bullets and clickable links, so it reads well in Word, Google Docs and applicant-tracking systems.
+  - Follows the CV's accent, paper size and heading style (serif → Georgia, otherwise Calibri).
+  - Shares the monthly download allowance with PDFs; any design may be exported.
+- **Share links:**
+  - A private, unguessable (128-bit) read-only link to the latest version of a CV, created from the download page.
+  - Shows how often it was opened; can be switched off and on, or deleted.
+  - The public page `/s/{token}` is hidden from search engines and offers print / save as PDF.
+  - Links are removed with the CV and with the account.
+- **LinkedIn profile writer** (Premium, `/linkedin`):
+  - Headline, About section, a description per job and the top skills, all written from the chosen CV and guarded.
+  - Job IDs and skills are checked against the CV.
+  - Editable, with Copy buttons and LinkedIn's character limits; the result is kept in this browser.
+- **Portfolio page** (Premium):
+  - `/portfolio` sets the address `aicvstudio.app/p/{slug}`. Addresses are checked for format, reserved words, and being taken by someone else (409).
+  - Settings: which CV, whether to show email and phone (both off by default), published.
+  - The page is responsive, uses the CV's accent (forced to readable contrast) and heading style, is indexable with Open Graph tags, and counts visits.
+  - It goes offline if the owner's Premium ends, the CV is deleted, or it is unpublished.
+- **My CVs** links to the portfolio and LinkedIn writer. The **privacy page** now covers Word files, job and LinkedIn AI, share links and portfolios.
+- **Live evaluation:** 60 samples (adds LinkedIn for three professions).
+  - Production run on 2026-11-12, before the LinkedIn samples existed: no failed calls and no unmarked new facts, average 7.7 s.
+  - Guard false alarms found and fixed:
+    - compound words ("NMC-registered", "AWS-based");
+    - credential word families ("Certified" → "certification");
+    - CV sections implying their kind (a listed certificate is a certification);
+    - letter salutations;
+    - a sentence-opening "A" joined to a flagged name.
+- **Tests:** 164 unit tests; full e2e 265 passed, 0 failed (new: `share`, `portfolio`, `linkedin`, and Word in `entitlements`).
+
 ## Next action (exact)
 
-1. Release 3 — Presence on `r3/presence`: public portfolio page, share links for CVs, LinkedIn profile writer, Word (.docx) export.
+1. Release 4 — Growth on `r4/growth`: coupons and referral rewards, interview preparation. The card gateway waits for business registration; Urdu waits for demand.
 
 ## Deployment (2026-11-12)
 
