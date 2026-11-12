@@ -14,7 +14,8 @@ _Last updated: 2026-11-12 (live on Firebase App Hosting at aicvstudio.app)_
 | 3c External template review fixes | `phase-3c/template-review-fixes` | ✅ Complete, merged to `main` |
 | 3d Pagination & edge-case polish (2nd review) | `phase-3d/pagination-polish` | ✅ Complete, merged to `main` |
 | 3e Final template polish (3rd review) | `phase-3e/final-polish` | ✅ Complete, merged — templates frozen for now |
-| 4 AI assistance (Gemini) | `phase-4/ai-assist` | 🟡 Built and verified with the mock provider, merged to `main`. Live acceptance (criteria 3–4 with real Gemini) waits for the owner's `npm run ai:eval` run |
+| 4 AI assistance (Gemini) | `phase-4/ai-assist` | ✅ Complete. Live acceptance met on production 2026-11-12 (48/48, 0 invented facts) |
+| R1 Paid CV Studio (R1.1–R1.6) | `r1/*` | ✅ Live on aicvstudio.app; sales open when the owner adds payment details |
 
 ## Phase 0 report
 
@@ -341,11 +342,36 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
     - **Privacy page rewritten** to match accounts, cloud storage, import and Gemini.
     - **Gemini is on in production** (`AI_PROVIDER: gemini`, owner direction). AI writing help remains Premium-only through the gate.
   - **Tests:** 136 unit tests; full e2e 218 passed, 0 failed (incl. import and account-deletion specs).
-- Next: **R1.6 Launch gate**: live AI eval for AI help (≥30 samples, 0 invented facts), accessibility/performance pass, terms page, staging backend, alerts.
+- **R1.6 Launch gate — done (2026-11-12).**
+  - **Live AI evaluation on production (Gemini, `gemini-flash-latest`):**
+    - 48/48 samples, 0 failed calls, **0 unmarked new facts**. The guard caught 2 additions ("NMC-registered" in a nurse profile; "50" in a tech bullet) and turned them into `{{?…}}` questions.
+    - Average 7.6 s, maximum 24.6 s.
+    - The brief's examples: teacher → teacher preset, Clarity, blue, elegant font; driver → driver preset, "Delivery Driver", Clarity.
+    - Runs from **Console → AI** (admin-only `/api/admin/ai/eval`, batches of 4 on the server); `npm run ai:eval` shares the samples.
+    - Phase 4 acceptance 3–4 are now met.
+  - **Success numbers:**
+    - `metrics/{day}` counters (counts only, no content).
+    - Overview shows last-30-day accounts, download-step sign-ins, PDFs, limit hits, imports (AI/rules/failed), AI actions, Premium requests and approval time, and today's AI calls against the budget (80% warning).
+  - **Duplicate transaction IDs** are refused (normalised, across accounts).
+  - **Terms page; Help and UI copy brought up to date** (accounts, Premium, import, deletion); support email setting.
+  - **Accessibility:** axe (WCAG 2.2 AA tags) on every public page, desktop and mobile, plus all console pages: 0 serious or critical.
+  - **Performance (Lighthouse mobile, simulated slow 4G):** Home 95, Start 94, Designs 89 (was 50), Premium 93, Import 97, Help 98. Accessibility, best practices and SEO are 100 on all.
+    - Fixes: preview reserves its aspect ratio (layout shift 0.39 → 0); lazy gallery previews (TBT 680 → 60 ms); prioritised thumbnails; favicon.
+  - **GitHub CI is green for the first time.** Earlier runs had been failing unnoticed: formatting outside `src`, and a real preview/PDF page-count mismatch.
+    - The paginator now accepts a tightened fit only with 14 px to spare per column.
+    - CI previews in real Chrome and adds a parity run against the production PDF renderer (`PDF_BROWSER=bundled`).
+    - CI runs on `main`, `develop` and release branches.
+  - **Staging:**
+    - Backend `aicvstudio-staging` (europe-west4) deploys from `develop`: https://aicvstudio-staging--ai-cv-studio.europe-west4.hosted.app.
+    - Separate Firestore database `staging` (restrictive rules, nam5); environment `staging` with `apphosting.staging.yaml` (AI budget 200, max 1 instance).
+    - The first rollout succeeded; health is ok.
+    - Google sign-in on the staging domain needs it added to Firebase Auth authorised domains; email sign-in works as is.
+  - **Alerts:** Cloud Monitoring log alert "AI CV Studio production: server errors, 5xx or AI budget at 80%" (matches `jsonPayload.level="error"`, HTTP ≥ 500 or `ai_budget_80`). **No notification channel yet:** the owner adds an email channel in Monitoring → Alerting → Edit notification channels.
+- Next: **Release 2 — Job-ready.**
 
 ## Next action (exact)
 
-1. Start **R1.6 Launch gate** on branch `r1/launch`: run the live AI eval of the writing tasks, accessibility and performance review of all pages, terms page, alerting on errors and AI budget, and a staging backend.
+1. Release 2 on branch `r2/job-ready`: career profile, job tracker, tailoring, cover letters, CV health check.
 
 ## Deployment (2026-11-12)
 
@@ -375,4 +401,4 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
 ## Known blockers
 
 - **GitHub:** all branches are pushed to `nisar87/AI_CV_Studio_Redesign` (2026-11-12). Tags could not be pushed from this session (proxy refuses tag refs); they are in `ai-cv-studio.bundle` — run `git push origin --tags` from a local clone.
-- **CI not yet run on GitHub:** `.github/workflows/ci.yml` is written and every step was run locally, but it has never executed on GitHub Actions.
+- **CI:** green on GitHub Actions since 2026-11-12 (run 43150025571).

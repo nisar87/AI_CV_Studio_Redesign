@@ -64,6 +64,17 @@ export function createAiLimiter(limits: AiLimits, now: () => number = Date.now) 
     burst.set(key, recent);
     daily.set(key, used + 1);
     globalCount++;
+    // Once a day per instance: a log line the "AI budget at 80%" alert policy matches.
+    if (globalCount === Math.ceil(limits.dailyBudget * 0.8))
+      console.warn(
+        JSON.stringify({
+          level: 'warn',
+          area: 'ai',
+          event: 'ai_budget_80',
+          used: globalCount,
+          budget: limits.dailyBudget,
+        }),
+      );
     if (burst.size > 20_000) burst.clear();
     if (daily.size > 50_000) daily.clear();
     return { ok: true, remainingToday: limits.perDay - used - 1 };
