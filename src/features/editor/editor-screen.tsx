@@ -143,7 +143,7 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
               {panelTab === 'content' ? (
                 <ContentPanel ref={content} editor={editor} />
               ) : (
-                <DesignPanel editor={editor} />
+                <DesignPanel editor={editor} status={status} />
               )}
             </div>
           </main>

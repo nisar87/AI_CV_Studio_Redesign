@@ -168,3 +168,26 @@ export function toV1(spec: DesignSpecV2, fallback: DesignSpec): DesignSpec {
     },
   };
 }
+
+/** Apply a change made with the v1 controls (colour, font, spacing, paper…) to a v2 spec. */
+export function applyV1Change(
+  spec: DesignSpecV2,
+  next: DesignSpec,
+  patch: Partial<DesignSpec>,
+): DesignSpecV2 {
+  const out = structuredClone(spec);
+  if (patch.accent) out.color.accent = next.accent;
+  if (patch.fontPair) out.type.pair = next.fontPair;
+  if (patch.pageSize) out.page.size = next.pageSize;
+  if (patch.density) {
+    const d = DENSITY[next.density];
+    out.spacing = { density: next.density, sectionGapPt: d.sectionGapPt, itemGapPt: d.itemGapPt };
+    out.type = { ...out.type, basePt: d.bodyPt, lineHeight: d.lineHeight };
+    out.page.marginMm = d.marginMm;
+  }
+  const o = patch.options;
+  if (o?.headerAlign) out.header.align = o.headerAlign;
+  if (o?.skillStyle) out.lists.skills.style = o.skillStyle;
+  if (o?.showPhoto !== undefined) out.header.photo.show = o.showPhoto;
+  return out;
+}

@@ -1,3 +1,5 @@
+import { applyV1Change, migrateV1, toV1 } from '@/modules/design/catalogue';
+import type { DesignSpecV2 } from '@/modules/design/spec';
 import { newId } from './create';
 import type { Basics, DesignSpec, ResumeDocument, Section, SectionKind } from './schema';
 
@@ -161,13 +163,27 @@ export const ops = {
   },
 
   setDesign(doc: ResumeDocument, patch: Partial<DesignSpec>) {
-    return touch(doc, {
-      design: {
-        ...doc.design,
-        ...patch,
-        options: { ...doc.design.options, ...(patch.options ?? {}) },
-      },
-    });
+    const { v2, ...v1 } = doc.design;
+    const next = { ...v1, ...patch, options: { ...v1.options, ...(patch.options ?? {}) } };
+    if (!v2) return touch(doc, { design: next });
+    // A design with a v2 spec stays in step: picking a catalogue design re-attaches to it.
+    const spec =
+      patch.templateId && patch.templateId !== v1.templateId
+        ? migrateV1(next)
+        : applyV1Change(v2, next, patch);
+    return touch(doc, { design: { ...next, v2: spec } });
+  },
+  /** Set the Design Spec v2 (Design Studio); the v1 fields follow it. */
+  setSpec(doc: ResumeDocument, spec: DesignSpecV2) {
+    const { v2: _old, ...v1 } = doc.design;
+    void _old;
+    return touch(doc, { design: { ...toV1(spec, v1), v2: spec } });
+  },
+  /** Back to the plain catalogue design (drops the v2 spec). */
+  clearSpec(doc: ResumeDocument) {
+    const { v2: _old, ...v1 } = doc.design;
+    void _old;
+    return touch(doc, { design: v1 });
   },
 };
 

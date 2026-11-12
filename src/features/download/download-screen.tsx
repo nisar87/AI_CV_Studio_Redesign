@@ -38,8 +38,10 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
   const editHref = `/cv/${doc.id}`;
   const here = `/cv/${doc.id}/download`;
   const signedOut = account.status === 'signedOut';
+  const v2 = doc.design.v2;
+  const customDesign = !!v2 && !v2.baseId && !v2.atsSafe;
   const lockedDesign = ent
-    ? ent.plan !== 'premium' && isPremiumDesign(ent, doc.design.templateId)
+    ? ent.plan !== 'premium' && (customDesign || isPremiumDesign(ent, doc.design.templateId))
     : false;
   const left = ent && ent.plan !== 'visitor' ? remaining(ent, 'pdf.download') : null;
 
@@ -47,7 +49,7 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
   function switchToFreeDesign() {
     const free = ent?.designs.find((d) => d.enabled && d.tier === 'free');
     if (!free) return;
-    const next = ops.setDesign(doc, { templateId: free.id });
+    const next = ops.setDesign(ops.clearSpec(doc), { templateId: free.id });
     getRepository().save(next);
     setDoc(next);
     setBlocked(null);
@@ -187,7 +189,9 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
             >
               <h2 id="premium-h" className="flex items-center gap-2 text-lg font-semibold">
                 <Crown aria-hidden size={20} className="text-accent-ink" />{' '}
-                {getTemplate(doc.design.templateId).name} is a Premium design
+                {customDesign
+                  ? 'Custom designs are part of Premium'
+                  : `${getTemplate(doc.design.templateId).name} is a Premium design`}
               </h2>
               <p className="text-ink-muted">
                 Premium unlocks every design, AI writing help and more downloads. Or switch to a

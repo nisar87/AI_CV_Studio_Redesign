@@ -13,6 +13,7 @@ import {
   type PaymentStatus,
   type Share,
   type Portfolio,
+  SavedDesign,
 } from './types';
 
 /** In-memory store for development and tests (one per server process). */
@@ -79,6 +80,7 @@ export class MemoryUserStore implements UserStore {
     for (const k of [...this.versions.keys()]) if (k.startsWith(`${uid}/`)) this.versions.delete(k);
     this.passes.delete(uid);
     this.jobs.delete(uid);
+    this.designs.delete(uid);
     for (const [t, sh] of this.shares) if (sh.uid === uid) this.shares.delete(t);
     for (const [k, v] of this.portfolios) if (v.uid === uid) this.portfolios.delete(k);
     for (const [c, u] of this.referralCodes) if (u === uid) this.referralCodes.delete(c);
@@ -187,6 +189,22 @@ export class MemoryUserStore implements UserStore {
     if (p) p.views += 1;
   }
 
+  private designs = new Map<string, SavedDesign[]>();
+  async listDesigns(uid: string) {
+    return structuredClone(this.designs.get(uid) ?? []);
+  }
+  async putDesign(d: SavedDesign) {
+    const list = (this.designs.get(d.uid) ?? []).filter((x) => x.id !== d.id);
+    this.designs.set(d.uid, [structuredClone(d), ...list]);
+  }
+  async deleteDesign(uid: string, id: string) {
+    const list = this.designs.get(uid) ?? [];
+    this.designs.set(
+      uid,
+      list.filter((x) => x.id !== id),
+    );
+    return list.some((x) => x.id === id);
+  }
   private shares = new Map<string, Share>();
   async createShare(share: Share) {
     this.shares.set(share.token, structuredClone(share));

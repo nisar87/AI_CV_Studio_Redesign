@@ -20,6 +20,7 @@ _Last updated: 2026-11-13 (live on Firebase App Hosting at aicvstudio.app)_
 | R3 Professional presence | `r3/presence` | ✅ Live on aicvstudio.app (2026-11-12) |
 | R4 Growth | `r4/growth` | ✅ Live on aicvstudio.app (2026-11-12); card gateway and Urdu deferred |
 | R5 Instant Makeover | `r5/makeover` | ✅ Live on aicvstudio.app (2026-11-13), verified with real Gemini |
+| R6 Design engine | `r6/design-engine` | ✅ Built and tested (2026-11-13); see the R6 section for production |
 
 ## Phase 0 report
 
@@ -525,6 +526,59 @@ Spec: `docs/product/complete-studio-spec.md` §6 and §16 (R5). Owner decisions 
   - CI green on the branch, `develop` and `main`, including the Firestore rules emulator test.
 - **Left for the owner (spec §6.6 human parts):** the 40 real CVs (10 Word, 10 builder PDFs, 10 two-column, 5 scans, 5 phone photos) and the timing measurements on production.
 
+## Release 6 — Design engine (2026-11-13)
+
+Spec: `docs/product/complete-studio-spec.md` §7 and §16 (R6), Appendix A.
+
+- **Design Spec v2** (`src/modules/design/spec.ts`): the whole design vocabulary as a Zod schema. Every field is an enum or a clamped number with a default; unknown values fall back instead of failing, so nothing the AI or a person sends can break the composer.
+- **The 10 designs as specs** (`design/catalogue.ts`): each is a spec *attached* to its hand-crafted signature code (`baseId`). While attached, only the choices the old Design panel offered apply (colour, font, spacing, paper, name position, skills style, photo), and the output is the catalogue design itself. Changing any other choice *detaches* it: the generic composer then renders it from the spec, which describes the same design in the generic vocabulary.
+- **Migration** (`migrateV1` / `toV1`): v1 design settings ↔ v2 spec. The document schema gains an optional `design.v2`; the v1 fields are kept in step, so stored CVs, Word export, letters and portfolio pages keep working without a data migration.
+- **normalise()** (`design/normalise.ts`), the hard rules of §7.6:
+  - long sections out of narrow columns;
+  - column widths (side 24–40%, rails 20–27%);
+  - no skill bars or dots without levels;
+  - at most two colours plus ink;
+  - signature artwork only on its own design;
+  - text at least 9.5 pt;
+  - photo and header options that need a side column;
+  - **ATS-safe version** (one plain column, standard headings, no art or icons, inline contact; the person's other choices are kept and come back when it is switched off).
+- **Composer** (`design/compose.tsx`): spec → the same TemplateDefinition the engine already uses, so pagination, preview, PDF and parity are unchanged. It covers:
+  - 7 layouts, including **rails (three columns)** and keep-columns;
+  - 7 header styles with band variants, name size/case/weight/two-tone/tracking, headline, and 3 contact layouts with icons;
+  - photo shape, size, position and ring;
+  - 9 heading styles, 4 section containers and 5 dividers;
+  - 4 entry layouts, organisation-first, and 3 date formats;
+  - 8 bullet markers;
+  - skills as tags, inline, columns or one per line;
+  - mono, accent and duo colour, 3 ink colours, 3 paper colours;
+  - 6 decorations, section icons, page numbers, running header and footer;
+  - a QR code (to the person's own portfolio or LinkedIn link) and a references line.
+
+  No person text is ever written into CSS.
+- **Paginator:** a third column (`data-flow="third"`) and keep-columns. Existing designs lay out exactly as before (the parity suite is unchanged).
+- **Design Studio** (Design tab, behind the Admin switch **Settings → Switches → Design Studio**, off by default):
+  - **Adjust (level 2):** layout, header, colours, headings, bullets/dates/skills, spacing and lines, extras.
+  - **Fine-tune (level 3):** margins, text size, line spacing, gaps, side width, and where each section goes (main, side or right column).
+  - "Based on X" or "Your own design", with **Back to X**.
+  - **ATS-safe version** toggle.
+  - **Fit to one page:** runs the repair steps and reports what it changed; undo puts it back.
+  - **Save as my design:** up to 30 per account, under `users/{uid}/designs`, deleted with the account, and usable on any CV.
+- **Premium:** downloading a custom (detached) design needs Premium, like the Designer decision. The ATS-safe version and all catalogue choices follow the existing rules. Free users can try everything in the preview, and the download page explains this.
+- **Gates (all green):**
+  - **Identical v1 → v2 migration:** the HTML of every catalogue design × every fixture × options (photo, Letter, densities, accent, fonts, name position, skills style) is byte-for-byte the same with the migrated spec, so it is pixel-identical.
+  - **Property test:** 5,000 random specs × the 8 fixtures (unit). Each composes into a valid document with the text stream ordered header → main → side → third, the name first, nothing broken in the CSS, and the hard rules holding.
+  - **Enum sweep** (one spec per value of every field, 104 specs): renders in unit tests, and lays out with **zero overflow in Chrome × 4 fixtures** (including the extreme and empty CVs).
+  - **300 random specs** lay out in Chrome with zero overflow.
+  - **PDF parity for 12 composed layouts × 2 fixtures:** PDF page count = preview page count, and the name is extracted before the first job.
+  - **Studio e2e:** switch, detach and undo re-attach, ATS-safe, Fit to one page (2 → 1 page), saved designs on another CV, server-side spec cleaning, the Premium gate, and axe.
+- **Deviations from the spec (recorded):**
+  - `templates/library/` is **kept** as the signature code of the attached catalogue designs instead of being deleted. A generic re-implementation could not be pixel-identical, and the spec's gate is the identical migration. New designs (R7) are pure specs.
+  - Schema v2 is **additive** (`design.v2` beside the v1 fields), not a rename with a data migration: no risk to stored CVs.
+  - Fonts stay as the 5 tested pairs (`type.pair`) until the catalogue grows in R7.
+  - Property test sizes: 5,000 random specs in unit tests, 300 random specs plus the full enum sweep in the browser. 40,000 browser renders per CI run would take hours.
+  - Header "in-sidebar" is drawn as a band above both columns (the name stays first in the text stream). Compact grids (`compactColumns`) are not applied to one-line items yet.
+  - The level 2 pickers are labelled choice chips, not picture tiles. Picture tiles come with the R7 gallery.
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.
@@ -540,7 +594,7 @@ Spec: `docs/product/complete-studio-spec.md` §6 and §16 (R5). Owner decisions 
 
 ## Next action (exact)
 
-1. R5 Instant Makeover is built and tested. Next: R6 Design engine (spec §7 and §16): Design Spec v2, normalise, composer and primitives; the 10 designs as specs with a pixel-identical migration test; schema v2; Design Studio levels 2 and 3; Fit to pages; ATS-safe toggle; saved designs; the engine behind a switch.
+1. R6 is built and tested. Next: R7 "Describe your design" (spec §7.4, §8, §16): `design.compose` / `design.refine`, reference image, Design Studio level 1, catalogue to 32 designs in 8 families, the new gallery and gates.
 
 ## Deployment (2026-11-12)
 

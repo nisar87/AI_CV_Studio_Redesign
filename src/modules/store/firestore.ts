@@ -15,6 +15,7 @@ import {
   type PaymentStatus,
   type Share,
   type Portfolio,
+  SavedDesign,
 } from './types';
 
 /**
@@ -190,6 +191,22 @@ export class FirestoreUserStore implements UserStore {
       .update({ views: FieldValue.increment(1) });
   }
 
+  private designs(uid: string) {
+    return this.db.collection('users').doc(uid).collection('designs');
+  }
+  async listDesigns(uid: string) {
+    const snap = await this.designs(uid).orderBy('createdAt', 'desc').limit(100).get();
+    return snap.docs.map((d) => d.data() as SavedDesign);
+  }
+  async putDesign(d: SavedDesign) {
+    await this.designs(d.uid).doc(d.id).set(d);
+  }
+  async deleteDesign(uid: string, id: string) {
+    const ref = this.designs(uid).doc(id);
+    const had = (await ref.get()).exists;
+    await ref.delete();
+    return had;
+  }
   private shares() {
     return this.db.collection('shares');
   }

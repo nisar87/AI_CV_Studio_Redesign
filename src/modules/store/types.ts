@@ -49,6 +49,10 @@ export interface UserStore {
   createShare(share: Share): Promise<void>;
   getShare(token: string): Promise<Share | null>;
   listShares(uid: string): Promise<Share[]>;
+  /** Saved designs ("Save as my design", R6), newest first. Stored under the account. */
+  listDesigns(uid: string): Promise<SavedDesign[]>;
+  putDesign(d: SavedDesign): Promise<void>;
+  deleteDesign(uid: string, id: string): Promise<boolean>;
   updateShare(token: string, patch: Partial<Pick<Share, 'enabled'>>): Promise<void>;
   deleteShare(token: string): Promise<void>;
   /** Counts a visit (best effort). */
@@ -125,6 +129,15 @@ export type Portfolio = {
 };
 
 /** A private, read-only link to the latest version of one CV. */
+export type SavedDesign = {
+  id: string;
+  uid: string;
+  name: string;
+  /** A Design Spec v2 (validated with parseSpec when read and written). */
+  spec: unknown;
+  createdAt: string;
+};
+
 export type Share = {
   token: string;
   uid: string;

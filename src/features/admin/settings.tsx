@@ -604,6 +604,11 @@ export function AdminSettings() {
             checked={draft.features.maintenance}
             onChange={(v) => edit((c) => void (c.features.maintenance = v))}
           />
+          <CheckboxField
+            label="Design Studio (adjust and fine-tune every design detail)"
+            checked={draft.features.designStudio}
+            onChange={(v) => edit((c) => void (c.features.designStudio = v))}
+          />
         </Section>
 
         <Section

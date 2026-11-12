@@ -22,16 +22,20 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop',
-      testIgnore: /(admin|premium)\.spec\.ts/,
+      testIgnore: /(admin|premium|studio)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },
-    { name: 'mobile', testIgnore: /(admin|premium)\.spec\.ts/, use: { ...devices['Pixel 7'] } },
+    {
+      name: 'mobile',
+      testIgnore: /(admin|premium|studio)\.spec\.ts/,
+      use: { ...devices['Pixel 7'] },
+    },
     {
       // Admin and Premium tests change site-wide settings (maintenance, sign-ups, sales), so they
       // run last, one file at a time (two files in parallel would overwrite each other's config).
       name: 'admin',
       workers: 1,
-      testMatch: /(admin|premium)\.spec\.ts/,
+      testMatch: /(admin|premium|studio)\.spec\.ts/,
       dependencies: ['desktop', 'mobile'],
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },

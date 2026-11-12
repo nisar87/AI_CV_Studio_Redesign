@@ -100,8 +100,21 @@ export async function reserve(
   };
 }
 
-export async function checkDesign(user: SessionUser | null, id: TemplateId): Promise<Decision> {
+export async function checkDesign(
+  user: SessionUser | null,
+  id: TemplateId,
+  v2?: { baseId?: string; atsSafe?: boolean },
+): Promise<Decision> {
   const [{ value: cfg }, { plan }] = await Promise.all([getBusinessConfig(), planFor(user)]);
+  // A design customised in the Design Studio (no longer a catalogue design) is a Premium
+  // "Designer" feature; the ATS-safe version stays free.
+  if (v2 && !v2.baseId && !v2.atsSafe && plan !== 'premium')
+    return {
+      ok: false,
+      reason: 'premium',
+      message:
+        'Custom designs are part of Premium. Go back to a catalogue design or the ATS-safe version to download free.',
+    };
   return canUseDesign(plan, cfg, id);
 }
 
@@ -130,6 +143,7 @@ export async function entitlementsFor(user: SessionUser | null) {
       sales: cfg.features.sales,
       signups: cfg.features.signups,
       maintenance: cfg.features.maintenance,
+      designStudio: cfg.features.designStudio,
     },
     announcement: cfg.announcement.enabled ? cfg.announcement.text : null,
   };

@@ -15,6 +15,8 @@ import { ACCENT_PALETTE } from '@/modules/templates/design';
 import { FONT_PAIRS } from '@/modules/templates/fonts';
 import { TEMPLATE_LIST, getTemplate } from '@/modules/templates/registry';
 import type { DocumentEditor } from './use-document-editor';
+import { DesignStudio } from './design-studio';
+import type { PreviewStatus } from '@/features/preview/document-preview';
 
 const FONT_DESCRIPTIONS: Record<(typeof FONT_PAIR_IDS)[number], string> = {
   modern: 'Clean and contemporary',
@@ -47,7 +49,13 @@ function Group({
   );
 }
 
-export function DesignPanel({ editor }: { editor: DocumentEditor }) {
+export function DesignPanel({
+  editor,
+  status = null,
+}: {
+  editor: DocumentEditor;
+  status?: PreviewStatus | null;
+}) {
   const { doc, update } = editor;
   const d = doc.design;
   const set = (patch: Partial<DesignSpec>) => update((x) => ops.setDesign(x, patch));
@@ -259,6 +267,7 @@ export function DesignPanel({ editor }: { editor: DocumentEditor }) {
           />
         )}
       </Group>
+      {ent?.features.designStudio && <DesignStudio editor={editor} status={status} />}
     </div>
   );
 }

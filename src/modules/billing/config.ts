@@ -67,6 +67,8 @@ export const businessConfig = z.object({
     sales: z.boolean().default(false),
     signups: z.boolean(),
     maintenance: z.boolean(),
+    /** R6 Design Studio (adjust and fine-tune every design detail). Off until switched on. */
+    designStudio: z.boolean().default(false),
   }),
   announcement: z.object({ enabled: z.boolean(), text: z.string().max(240) }),
   /** How to pay for a pass (manual payments, R1.4). Shown on /premium when sales are on. */
@@ -163,7 +165,14 @@ export const DEFAULT_CONFIG: BusinessConfig = {
     { id: 'month', label: '1 month', days: 30, pricePkr: 499, active: true },
     { id: 'quarter', label: '3 months', days: 90, pricePkr: 1299, active: true },
   ],
-  features: { ai: true, import: true, sales: false, signups: true, maintenance: false },
+  features: {
+    ai: true,
+    import: true,
+    sales: false,
+    signups: true,
+    maintenance: false,
+    designStudio: false,
+  },
   announcement: { enabled: false, text: '' },
   support: { email: '' },
   coupons: [],
