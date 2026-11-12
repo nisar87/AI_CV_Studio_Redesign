@@ -23,7 +23,8 @@ export default async function SharedCvPage({ params }: Props) {
   const { token } = await params;
   const r = await resolveShare(token);
   if (!r) notFound();
-  void getUserStore()
+  // Awaited: on Cloud Run, work left running after the response may never finish.
+  await getUserStore()
     .bumpShareViews(token, new Date().toISOString())
     .catch(() => {});
   track('share_view');

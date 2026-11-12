@@ -26,7 +26,8 @@ export default async function PortfolioRoute({ params }: Props) {
   const { slug } = await params;
   const r = await resolvePortfolio(slug);
   if (!r) notFound();
-  void getUserStore()
+  // Awaited: on Cloud Run, work left running after the response may never finish.
+  await getUserStore()
     .bumpPortfolioViews(slug)
     .catch(() => {});
   track('portfolio_view');
