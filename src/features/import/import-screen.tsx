@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useRef, useState, type DragEvent } from 'react';
-import { ArrowRight, Check, FileUp, Lock, RotateCcw, TriangleAlert } from 'lucide-react';
+import { ArrowRight, Check, FileUp, Lock, RotateCcw, Sparkles, TriangleAlert } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -15,7 +15,7 @@ import type { ResumeDocument, TemplateId } from '@/modules/resume/schema';
 import { getRepository } from '@/modules/storage/repository';
 import { getTemplate, TEMPLATE_LIST } from '@/modules/templates/registry';
 
-type Result = { document: ResumeDocument; report: ImportReport };
+type Result = { document: ResumeDocument; report: ImportReport; method?: 'ai' | 'rules' };
 const ACCEPT =
   '.pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
@@ -161,6 +161,15 @@ export function ImportScreen() {
             >
               <Check aria-hidden className="text-primary" /> We’ve read your CV
             </h2>
+            {result.method === 'ai' && (
+              <p
+                className="text-primary mt-1 flex items-center gap-1.5 text-sm font-semibold"
+                data-testid="import-method"
+              >
+                <Sparkles aria-hidden size={16} /> Sorted by AI, then checked word by word against
+                your file — nothing was added.
+              </p>
+            )}
             <p className="text-ink-muted mt-1">
               Everything is now in editable fields. Have a quick look — layouts vary, so check each
               section before you send it.

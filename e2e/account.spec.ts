@@ -125,7 +125,10 @@ test('a CV made before signing in moves into the account and appears on another 
   await b.page.goto('/cv');
   await expect(b.page.getByText('No CVs on this device yet')).toBeVisible();
   await signIn(b.page, email);
-  await expect(b.page.getByRole('link', { name: 'Open My CV' })).toHaveCount(1);
+  // First sync on a new device downloads the CVs; allow for a busy machine (full parallel suite).
+  await expect(b.page.getByRole('link', { name: 'Open My CV' })).toHaveCount(1, {
+    timeout: 20_000,
+  });
   await expect.poll(() => localNames(b.page)).toEqual(['Imran Qureshi']);
 
   // Edit on A → after B refreshes, B shows the new name.
@@ -199,4 +202,34 @@ test('an existing account (made before the redesign) can sign in', async ({ page
   await signIn(page, email, '/account');
   await expect(page.locator('dd').filter({ hasText: email })).toBeVisible();
   expect((await (await page.request.get('/api/me')).json()).user.email).toBe(email);
+});
+
+test('deleting the account removes its CVs and the sign-in', async ({ page, browser }) => {
+  const email = uniqueEmail('delete');
+  await signUp(page, email);
+  await makeCv(page, 'Zara Deleteme');
+  await page.goto('/cv');
+  await expect
+    .poll(
+      async () => (await (await page.request.get('/api/documents')).json()).documents?.length ?? 0,
+    )
+    .toBe(1);
+
+  await page.goto('/account');
+  const del = page.getByRole('button', { name: 'Delete my account' });
+  await expect(del).toBeDisabled();
+  await page.getByLabel('Type DELETE to confirm').fill('DELETE');
+  await del.click();
+  await expect(page).toHaveURL(/\/$/);
+  expect(await localNames(page)).toEqual([]);
+  expect((await page.request.get('/api/documents')).status()).toBe(401);
+
+  // The account no longer exists.
+  const { ctx, page: other } = await newDevice(browser);
+  await other.goto('/signin?next=/cv');
+  await other.getByLabel('Email').fill(email);
+  await other.getByLabel('Password', { exact: true }).fill(PASSWORD);
+  await other.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(other.locator('p[role="alert"]')).toBeVisible();
+  await ctx.close();
 });

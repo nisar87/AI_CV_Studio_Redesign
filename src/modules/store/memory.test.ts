@@ -79,3 +79,15 @@ describe('payment requests', () => {
     expect(await s.decidePaymentRequest('missing', { status: 'approved', by: 'x' })).toBeNull();
   });
 });
+
+describe('deleting', () => {
+  it('removes the content and every kept version', async () => {
+    const s = new MemoryUserStore();
+    await s.putDoc('u', at('2026-01-01T00:00:00.000Z'), 10);
+    await s.putDoc('u', at('2026-01-02T00:00:00.000Z'), 10);
+    expect(await s.listVersions('u', driver.id)).toHaveLength(1);
+    await s.deleteDoc('u', driver.id, '2026-01-03T00:00:00.000Z');
+    expect(await s.listVersions('u', driver.id)).toHaveLength(0);
+    expect(await s.getDoc('u', driver.id)).toMatchObject({ deleted: true, doc: null });
+  });
+});

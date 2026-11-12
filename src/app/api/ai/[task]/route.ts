@@ -1,5 +1,5 @@
 import { aiModels, getAiProvider } from '@/modules/ai/config';
-import { createAiLimiter, limitsFromEnv } from '@/modules/ai/limits';
+import { sharedAiLimiter } from '@/modules/ai/limits';
 import { runTask } from '@/modules/ai/run';
 import { isTaskId, type AiResponse, type TaskId } from '@/modules/ai/schemas';
 import { apiError, clientKey, readJson, requestId } from '@/lib/http';
@@ -11,13 +11,15 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const MAX_BODY = 48 * 1024;
-const limiter = createAiLimiter(limitsFromEnv());
+const limiter = sharedAiLimiter();
 
 /** POST /api/ai/:task — docs/engineering/api-contracts.md. Logs never contain user text. */
 export async function POST(req: Request, ctx: { params: Promise<{ task: string }> }) {
   const rid = requestId();
   const { task } = await ctx.params;
-  if (!isTaskId(task)) return apiError('INVALID_INPUT', 'Unknown AI task.', rid);
+  // import.structure is internal (used by /api/import with its own checks), not a public task.
+  if (!isTaskId(task) || task === 'import.structure')
+    return apiError('INVALID_INPUT', 'Unknown AI task.', rid);
 
   const { mode, provider } = getAiProvider();
   if (!provider)

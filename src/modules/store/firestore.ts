@@ -40,6 +40,18 @@ export class FirestoreUserStore implements UserStore {
       .set({ ...info, lastSeenAt: FieldValue.serverTimestamp(), studioV2: true }, { merge: true });
   }
 
+  async deleteUserData(uid: string) {
+    // users/{uid} with every document and version below it.
+    await this.db.recursiveDelete(this.db.collection('users').doc(uid));
+    await this.db.collection('passes').doc(uid).delete();
+    const usage = await this.db.collection('usage').where('uid', '==', uid).get();
+    const payments = await this.db.collection('paymentRequests').where('uid', '==', uid).get();
+    const batch = this.db.batch();
+    usage.docs.forEach((d) => batch.delete(d.ref));
+    payments.docs.forEach((d) => batch.update(d.ref, { email: null }));
+    await batch.commit();
+  }
+
   async knownUser(uid: string) {
     return (await this.db.collection('users').doc(uid).get()).exists;
   }
@@ -120,6 +132,13 @@ export class FirestoreUserStore implements UserStore {
   }
 
   async deleteDoc(uid: string, id: string, at: string) {
+    // Deleting removes the content and every kept version; only a tombstone remains for sync.
+    const versions = await this.col(uid).doc(id).collection('versions').listDocuments();
+    if (versions.length) {
+      const batch = this.db.batch();
+      versions.forEach((v) => batch.delete(v));
+      await batch.commit();
+    }
     await this.col(uid).doc(id).set({
       updatedAt: at,
       deleted: true,

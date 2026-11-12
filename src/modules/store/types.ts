@@ -21,6 +21,11 @@ export type PutResult =
 
 export interface UserStore {
   touchUser(uid: string, info: { email: string | null; name: string | null }): Promise<void>;
+  /**
+   * Account deletion: removes the user record, every CV and version, the pass and usage.
+   * Payment requests are kept for accounting with the email removed.
+   */
+  deleteUserData(uid: string): Promise<void>;
   /** Has this account used the studio before (signed in at least once)? */
   knownUser(uid: string): Promise<boolean>;
   listDocs(uid: string): Promise<DocSummary[]>;

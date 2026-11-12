@@ -13,10 +13,10 @@ env:
     secret: GEMINI_API_KEY
     availability:
       - RUNTIME
-  # AI help is paused in production until accounts and Premium exist (owner decision 2026-11-12).
-  # Remove this entry to switch it back on.
+  # Gemini is on (owner decision 2026-11-12): CV import uses it (copy-only, verified against the
+  # file); AI writing help is Premium-only through the entitlement gate. Set 'off' to pause all AI.
   - variable: AI_PROVIDER
-    value: 'off'
+    value: 'gemini'
     availability:
       - RUNTIME
   - variable: AI_MODEL_FAST
