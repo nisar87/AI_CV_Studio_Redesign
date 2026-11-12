@@ -20,6 +20,7 @@ export const TASK_IDS = [
   'job.tailor',
   'letter.write',
   'linkedin.write',
+  'interview.prep',
 ] as const;
 export type TaskId = (typeof TASK_IDS)[number];
 
@@ -99,6 +100,12 @@ export const taskInputs = {
     name: z.string().max(120),
     profile: z.string().min(20).max(24_000),
     tone: z.enum(['warm', 'formal']).default('warm'),
+  }),
+  'interview.prep': z.object({
+    advert: z.string().min(80).max(12_000),
+    jobTitle: z.string().max(160),
+    company: z.string().max(160),
+    profile: z.string().min(20).max(24_000),
   }),
   'linkedin.write': z.object({
     profile: z.string().min(20).max(24_000),
@@ -214,6 +221,24 @@ export const taskOutputs = {
     closing: z.string().max(80),
     /** A short covering email to send the CV and letter with. */
     email: z.object({ subject: z.string().max(160), body: z.string().max(1500) }),
+  }),
+  'interview.prep': z.object({
+    questions: z
+      .array(
+        z.object({
+          question: z.string().min(1).max(240),
+          kind: z.enum(['experience', 'skills', 'situation', 'motivation', 'gap']),
+          /** What the employer is checking, from the advert. */
+          why: z.string().max(240),
+          /** First-person answer notes from the CV. */
+          points: z.array(z.string().max(260)).max(4),
+          /** CV line ids the notes come from. */
+          evidence: z.array(z.string().max(20)).max(4),
+        }),
+      )
+      .min(3)
+      .max(10),
+    tips: z.array(z.string().max(220)).max(4),
   }),
   'linkedin.write': z.object({
     headline: z.string().max(220),

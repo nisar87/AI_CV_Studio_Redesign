@@ -110,6 +110,36 @@ test.describe('premium account', () => {
     expect(items(saved)[0]!.bullets).not.toEqual(items(driver)[0]!.bullets);
   });
 
+  test('interview preparation: questions with CV notes, my notes are kept', async ({ page }) => {
+    await seedDocument(page, driver);
+    await page.goto('/cv');
+    const id = await addJob(page);
+    await page.goto(`/jobs/${id}`);
+    await page.getByRole('button', { name: 'Prepare for the interview' }).click();
+    const prep = page.getByTestId('interview');
+    await expect(prep.getByRole('listitem').first()).toContainText(
+      'Tell me about your experience that fits this Delivery Driver role.',
+    );
+    await expect(prep).toContainText('In my current job I deliver around 120 parcels a day');
+    await expect(prep.getByRole('link', { name: /Deliver around 120 parcels/ })).toHaveAttribute(
+      'href',
+      new RegExp(`/cv/${driver.id}\\?focus=`),
+    );
+    await expect(prep).toContainText('Why do you want to work at Fresh Foods Ltd?');
+    await expect(prep).toContainText('Tips for this interview');
+    await prep.getByLabel('My answer notes').first().fill('Talk about the Christmas peak.');
+    await prep.getByRole('button', { name: 'Save my notes' }).click();
+    await expect(prep.getByRole('button', { name: 'Save my notes' })).toBeDisabled();
+    const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(axe.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')).toEqual(
+      [],
+    );
+    await page.reload();
+    await expect(page.getByTestId('interview').getByLabel('My answer notes').first()).toHaveValue(
+      'Talk about the Christmas peak.',
+    );
+  });
+
   test('needs an advert first', async ({ page }) => {
     await seedDocument(page, driver);
     await page.goto('/cv');
@@ -136,7 +166,7 @@ test.describe('free account', () => {
     await expect(
       page.getByText('Job match, tailoring and cover letters are part of Premium'),
     ).toBeVisible();
-    for (const p of ['match', 'tailor', 'letter'])
+    for (const p of ['match', 'tailor', 'letter', 'interview'])
       expect(
         (await page.request.post(`/api/jobs/${id}/${p}`, { data: { document: driver } })).status(),
       ).toBe(402);

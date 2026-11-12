@@ -80,6 +80,18 @@ export interface UserStore {
   listAudit(limit: number): Promise<AuditEntry[]>;
   listPasses(): Promise<(Pass & { uid: string })[]>;
   usageTotals(month: string): Promise<Record<string, number>>;
+  // Coupons and referrals (R4)
+  /** Purchases made with a coupon that are pending or approved. */
+  countCouponUses(code: string): Promise<number>;
+  /** The account's own invite code, creating it on first use. */
+  referralCodeOf(uid: string, make: () => string): Promise<string>;
+  /** Who owns an invite code. */
+  referralOwner(code: string): Promise<string | null>;
+  /** Records who invited this account (only once, never yourself). */
+  setReferredBy(uid: string, referrerUid: string): Promise<void>;
+  getReferredBy(uid: string): Promise<string | null>;
+  /** How many accounts joined through this person's link. */
+  countReferred(uid: string): Promise<number>;
   // Premium purchase requests (manual payments, R1.4)
   createPaymentRequest(r: Omit<PaymentRequest, 'id'>): Promise<PaymentRequest>;
   /** Newest first. Filter by owner or status; `limit` caps the result. */
@@ -136,7 +148,7 @@ export type Pass = {
   plan: 'premium';
   /** ISO date-time; access ends after this moment. */
   expiresAt: string;
-  source: 'manual' | 'admin';
+  source: 'manual' | 'admin' | 'referral';
   grantedBy: string;
   grantedAt: string;
   note?: string;
@@ -158,6 +170,13 @@ export type PaymentRequest = {
   /** Reference lower-cased with spaces and punctuation removed, for the duplicate check. */
   referenceKey?: string;
   note?: string;
+  /** Price before a coupon (R4); `pricePkr` is what the buyer pays. */
+  listPricePkr?: number;
+  couponCode?: string;
+  /** Extra days because a friend invited them (first purchase). */
+  welcomeDays?: number;
+  /** Who invited the buyer; rewarded when this, their first purchase, is approved. */
+  referrerUid?: string;
   status: PaymentStatus;
   createdAt: string;
   decidedAt?: string;

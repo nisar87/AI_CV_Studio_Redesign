@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { letter } from '@/modules/letters/schema';
+import type { InterviewPrep } from './interview';
 import type { MatchResult } from './match';
 
 /** Job tracker (Release 2). Jobs live in the account (users/{uid}/jobs/{id}); server-side only. */
@@ -37,6 +38,8 @@ export const jobInput = z.object({
   documentIds: z.array(z.string().max(64)).max(10).default([]),
   /** Cover letter for this job (drafted with AI, edited by the person). */
   letter: letter.optional(),
+  /** The person's own notes for each interview question (same order as `interview.questions`). */
+  interviewNotes: z.array(z.string().max(2000)).max(12).default([]),
 });
 export type JobInput = z.input<typeof jobInput>;
 
@@ -44,6 +47,8 @@ export const job = jobInput.extend({
   id: z.string().max(64),
   /** Last CV-vs-advert check (written by the server only). */
   match: z.custom<MatchResult>().optional(),
+  /** Interview preparation (written by the server only). */
+  interview: z.custom<InterviewPrep>().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

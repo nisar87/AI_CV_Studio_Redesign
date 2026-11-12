@@ -59,7 +59,7 @@ export async function grantPass(
   uid: string,
   days: number,
   by: string,
-  source: 'manual' | 'admin',
+  source: 'manual' | 'admin' | 'referral',
   note?: string,
 ): Promise<string> {
   const store = getUserStore();

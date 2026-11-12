@@ -8,6 +8,7 @@ import { Card, SelectableCard } from '@/components/ui/card';
 import { TextArea, TextField } from '@/components/ui/field';
 import { useToast } from '@/components/ui/toast';
 import { useAccount } from '@/features/account/account-context';
+import type { Quote } from '@/modules/billing/coupons';
 import type { PremiumOffer } from '@/modules/billing/premium';
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { dateStyle: 'long' });
@@ -30,6 +31,11 @@ export function PremiumScreen() {
   const [note, setNote] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Discount code and the server's price for this person (coupon / invite bonus applied).
+  const [codeInput, setCodeInput] = useState('');
+  const [code, setCode] = useState('');
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [quote, setQuote] = useState<Quote | null>(null);
 
   const load = useCallback(() => {
     fetch('/api/premium', { cache: 'no-store' })
@@ -46,6 +52,35 @@ export function PremiumScreen() {
     if (!accountKey.startsWith('loading')) load();
   }, [accountKey, load]);
 
+  const signedIn = !!offer?.me;
+  useEffect(() => {
+    if (!signedIn || !passId) return;
+    let live = true;
+    fetch('/api/premium/quote', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ passId, code: code || undefined }),
+    })
+      .then(async (r) => {
+        const j = (await r.json().catch(() => null)) as {
+          quote?: Quote;
+          error?: { message?: string };
+        } | null;
+        if (!live) return;
+        if (r.ok && j?.quote) {
+          setQuote(j.quote);
+          if (code) setCodeError(null);
+        } else if (code) {
+          setCodeError(j?.error?.message ?? 'That code can’t be used.');
+          setCode('');
+        } else setQuote(null);
+      })
+      .catch(() => live && setQuote(null));
+    return () => {
+      live = false;
+    };
+  }, [signedIn, passId, code]);
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!passId || !methodId) return;
@@ -55,7 +90,13 @@ export function PremiumScreen() {
       const r = await fetch('/api/premium/request', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ passId, methodId, reference, note: note || undefined }),
+        body: JSON.stringify({
+          passId,
+          methodId,
+          reference,
+          note: note || undefined,
+          code: code || undefined,
+        }),
       });
       if (!r.ok) {
         const j = (await r.json().catch(() => null)) as { error?: { message?: string } } | null;
@@ -85,6 +126,8 @@ export function PremiumScreen() {
   const pending = me?.requests.find((r) => r.status === 'pending');
   const pass = offer.passes.find((p) => p.id === passId);
   const method = offer.methods.find((m) => m.id === methodId);
+  const q = quote && quote.passId === passId ? quote : null;
+  const amount = q?.pricePkr ?? pass?.pricePkr ?? 0;
   const best =
     offer.passes.length > 1
       ? offer.passes.reduce((a, b) => (b.pricePkr / b.days < a.pricePkr / a.days ? b : a))
@@ -260,9 +303,62 @@ export function PremiumScreen() {
             <>
               <section aria-labelledby="step-pay" className="flex flex-col gap-4">
                 <h2 id="step-pay" className="text-2xl font-semibold">
-                  <span className="text-ink-subtle mr-2">2</span>Pay{' '}
-                  {pass ? pkr(pass.pricePkr) : ''}
+                  <span className="text-ink-subtle mr-2">2</span>Pay {pass ? pkr(amount) : ''}
                 </h2>
+                <div className="flex max-w-xl flex-col gap-2" data-testid="coupon">
+                  {code && q?.couponCode ? (
+                    <p
+                      className="text-success flex flex-wrap items-center gap-2 font-semibold"
+                      role="status"
+                    >
+                      <Check aria-hidden size={18} /> Code {q.couponCode} applied
+                      {q.pricePkr < q.listPricePkr && ` — ${pkr(q.listPricePkr - q.pricePkr)} off`}
+                      {q.days > (pass?.days ?? 0) + q.welcomeDays &&
+                        ` — ${q.days - (pass?.days ?? 0) - q.welcomeDays} extra days`}
+                      <button
+                        type="button"
+                        className="text-ink-muted text-sm font-normal underline"
+                        onClick={() => {
+                          setCode('');
+                          setCodeInput('');
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </p>
+                  ) : (
+                    <form
+                      className="flex items-end gap-2"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (codeInput.trim()) setCode(codeInput.trim().toUpperCase());
+                      }}
+                    >
+                      <TextField
+                        label="Discount code"
+                        optional
+                        value={codeInput}
+                        maxLength={20}
+                        autoComplete="off"
+                        error={codeError ?? undefined}
+                        onChange={(e) => {
+                          setCodeInput(e.target.value);
+                          setCodeError(null);
+                        }}
+                        containerClassName="flex-1"
+                      />
+                      <Button type="submit" variant="secondary" disabled={!codeInput.trim()}>
+                        Apply
+                      </Button>
+                    </form>
+                  )}
+                  {q && q.welcomeDays > 0 && (
+                    <p className="text-success text-sm font-semibold" role="status">
+                      A friend invited you: you get {q.welcomeDays} extra days ({q.days} days in
+                      total).
+                    </p>
+                  )}
+                </div>
                 {offer.methods.length > 1 && (
                   <div
                     role="radiogroup"
@@ -290,11 +386,7 @@ export function PremiumScreen() {
                 {method && pass && (
                   <Card className="flex flex-col gap-1 p-5" data-testid="payment-details">
                     <p className="text-ink-muted text-sm font-semibold">{method.label}</p>
-                    <CopyLine
-                      label="Amount"
-                      value={String(pass.pricePkr)}
-                      shown={pkr(pass.pricePkr)}
-                    />
+                    <CopyLine label="Amount" value={String(amount)} shown={pkr(amount)} />
                     {method.details
                       .split('\n')
                       .map((l) => l.trim())
@@ -357,7 +449,7 @@ export function PremiumScreen() {
                     className="self-start"
                     disabled={!pass || !method}
                   >
-                    I’ve paid {pass ? pkr(pass.pricePkr) : ''}
+                    I’ve paid {pass ? pkr(amount) : ''}
                   </Button>
                 </form>
               </section>

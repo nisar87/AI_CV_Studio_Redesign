@@ -26,6 +26,7 @@ import {
  *   usage/{uid}_{yyyy-mm}                    { uid, month, 'pdf.download': n, ... }
  *   users/{uid}/jobs/{id}                    Job (tracker; deleted with the account)
  *   portfolios/{slug}                        Portfolio (public page; one per account)
+ *   referralCodes/{code}                     { uid }  (invite link; users/{uid}.referralCode, .referredBy)
  *   shares/{token}                           Share (read-only CV link; deleted with the CV/account)
  *   paymentRequests/{auto}                   PaymentRequest (Premium purchase, manual payment)
  *   adminAudit/{auto}                        { at, by, action, target, detail }
@@ -100,13 +101,58 @@ export class FirestoreUserStore implements UserStore {
     const usage = await this.db.collection('usage').where('uid', '==', uid).get();
     const shares = await this.db.collection('shares').where('uid', '==', uid).get();
     const portfolios = await this.db.collection('portfolios').where('uid', '==', uid).get();
+    const codes = await this.db.collection('referralCodes').where('uid', '==', uid).get();
     const payments = await this.db.collection('paymentRequests').where('uid', '==', uid).get();
     const batch = this.db.batch();
     usage.docs.forEach((d) => batch.delete(d.ref));
     shares.docs.forEach((d) => batch.delete(d.ref));
     portfolios.docs.forEach((d) => batch.delete(d.ref));
+    codes.docs.forEach((d) => batch.delete(d.ref));
     payments.docs.forEach((d) => batch.update(d.ref, { email: null }));
     await batch.commit();
+  }
+
+  async countCouponUses(code: string) {
+    // Equality filter only (no composite index); status is checked here.
+    const snap = await this.db.collection('paymentRequests').where('couponCode', '==', code).get();
+    return snap.docs.filter((d) => d.get('status') !== 'rejected').length;
+  }
+  async referralCodeOf(uid: string, make: () => string) {
+    const user = this.db.collection('users').doc(uid);
+    const existing = (await user.get()).get('referralCode') as string | undefined;
+    if (existing) return existing;
+    for (let i = 0; i < 5; i++) {
+      const code = make();
+      const ok = await this.db.runTransaction(async (tx) => {
+        const ref = this.db.collection('referralCodes').doc(code);
+        if ((await tx.get(ref)).exists) return false;
+        tx.set(ref, { uid });
+        tx.set(user, { referralCode: code }, { merge: true });
+        return true;
+      });
+      if (ok) return code;
+    }
+    throw new Error('Could not create an invite code');
+  }
+  async referralOwner(code: string) {
+    const s = await this.db.collection('referralCodes').doc(code).get();
+    return s.exists ? (s.get('uid') as string) : null;
+  }
+  async setReferredBy(uid: string, referrerUid: string) {
+    if (uid === referrerUid) return;
+    const ref = this.db.collection('users').doc(uid);
+    await this.db.runTransaction(async (tx) => {
+      const cur = await tx.get(ref);
+      if (cur.get('referredBy')) return;
+      tx.set(ref, { referredBy: referrerUid }, { merge: true });
+    });
+  }
+  async getReferredBy(uid: string) {
+    return ((await this.db.collection('users').doc(uid).get()).get('referredBy') as string) ?? null;
+  }
+  async countReferred(uid: string) {
+    const agg = await this.db.collection('users').where('referredBy', '==', uid).count().get();
+    return agg.data().count;
   }
 
   private portfolios() {

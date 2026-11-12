@@ -1,5 +1,5 @@
 import { apiError, readJson } from '@/lib/http';
-import { grantPass } from '@/modules/billing/server';
+import { getBusinessConfig, grantPass } from '@/modules/billing/server';
 import { actor, json, withAdmin } from '@/modules/admin/server';
 import { track } from '@/modules/metrics/server';
 import { getUserStore } from '@/modules/store';
@@ -57,11 +57,44 @@ export function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
         request: id,
         pass: decided.passLabel,
         pricePkr: decided.pricePkr,
+        ...(decided.couponCode ? { coupon: decided.couponCode } : {}),
         method: decided.methodLabel,
         reference: decided.reference,
         ...(expiresAt ? { expiresAt } : { reason: why }),
       },
     });
+    if (decided.status === 'approved' && decided.couponCode) await track('coupon_used');
+    // Invite reward: the inviter gets Premium days when the friend's first purchase is approved.
+    if (decided.status === 'approved' && decided.referrerUid) {
+      const { value: cfg } = await getBusinessConfig();
+      const earlier = await store.listPaymentRequests({
+        uid: decided.uid,
+        status: 'approved',
+        limit: 50,
+      });
+      const first = !earlier.some((p) => p.id !== decided.id);
+      if (cfg.referrals.enabled && cfg.referrals.rewardDays > 0 && first) {
+        const until = await grantPass(
+          decided.referrerUid,
+          cfg.referrals.rewardDays,
+          by,
+          'referral',
+          `Invite reward: ${decided.email ?? 'a friend'} bought ${decided.passLabel}`,
+        );
+        await track('referral_reward');
+        await store.writeAudit({
+          at: new Date().toISOString(),
+          by,
+          action: 'referral.reward',
+          target: decided.referrerUid,
+          detail: {
+            friend: decided.email ?? decided.uid,
+            days: cfg.referrals.rewardDays,
+            expiresAt: until,
+          },
+        });
+      }
+    }
     return json({ ok: true, status: decided.status, expiresAt });
   });
 }
