@@ -279,11 +279,36 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
     - All admin endpoints return 200 and the pages render.
     - Granting 7 days of Premium to the admin account made `/api/me/entitlements` report Premium at once; removing it returned Free.
     - Both actions are in the audit log.
-- Next: **R1.4 Get Premium (manual payments)**.
+- **R1.4 Get Premium (manual payments) — built, deployed and live (2026-11-12); sales still closed.**
+  - **`/premium`** (benchmarked against the pricing pages of leading CV builders, but honest):
+    - Free vs Premium comparison built from live settings.
+    - Pass cards with "Best value" and per-month price.
+    - Payment details with a copy button on every line.
+    - "Tell us you've paid" with the transaction ID.
+    - Waiting and rejected (with reason) states.
+    - FAQ: one-off pass, no auto-renewal, what happens when it ends.
+    - AI is shown as "Coming soon" while the AI server is off.
+    - Visitors are asked to sign in. While sales are off the page says "Premium opens soon".
+  - **Server:**
+    - `POST /api/premium/request`: signed-in users only, while sales are on, one pending request at a time, rate-limited. Only passes and methods shown on the page are accepted.
+    - **Admin Payments:** approve or reject (reject needs a reason the buyer sees). Approval is transactional and can happen only once; it grants the pass or extends it from its current end, and is audited with the reference.
+    - Settings refuse to open sales without an active pass and a shown payment method.
+  - **Firestore:** `paymentRequests/{auto}` (equality queries only, no composite indexes needed).
+  - **Tests:**
+    - 115 unit tests.
+    - `e2e/premium.spec` (5 tests: sales closed, visitor, buy → approve → Premium, reject → retry, sales guard, axe).
+    - Full suite: 206 passed, 0 failed.
+  - **Production:** `/api/premium`, `/api/admin/payments` and the Overview pending count return 200 with production Firestore.
+  - **To open sales (owner):**
+    1. Admin Console → Settings → How to pay: add the real bank, JazzCash or Easypaisa details.
+    2. Check pass prices.
+    3. Optionally set the launch design tiers (Clarity, Chronicle and Heritage free; the rest Premium).
+    4. Tick "Premium sales are open" and save.
+- Next: **R1.5 Import an existing CV** (PDF/DOCX upload → text extraction → structured CV, free allowance).
 
 ## Next action (exact)
 
-1. Start **R1.4 Get Premium** on branch `r1/premium`: `/premium` page, payment instructions from config, request form, Payments page in the Admin Console (approve → pass with expiry), then turn on `features.sales`.
+1. Start **R1.5 Import** on branch `r1/import`: PDF/DOCX upload, server-side text extraction, structuring into the CV schema (deterministic parser first, AI `import.structure` for Premium when AI is on), review screen before saving, monthly import allowance via the gate.
 
 ## Deployment (2026-11-12)
 
