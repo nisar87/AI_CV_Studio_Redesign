@@ -172,7 +172,8 @@ export function buildSource(texts: string[], extraNumbers: number[] = []): Sourc
   return { words, numbers, text };
 }
 
-const SENTENCE_BREAK = /[.!?:;•\n(]\s*$/;
+/** Before a sentence start: punctuation, a line break, or an opening bracket or quote. */
+const SENTENCE_BREAK = /(?:[.!?:;•\n(]\s*|[.!?:;•\n(]?\s*['"‘“])$/;
 
 type Replace = { start: number; end: number; marker: string; finding: Finding };
 

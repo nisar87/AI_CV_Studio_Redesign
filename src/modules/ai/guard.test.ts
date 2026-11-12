@@ -133,3 +133,12 @@ describe('truth guard: generic compound endings', () => {
     ]);
   });
 });
+
+describe('truth guard: quoted sentences', () => {
+  it('a capitalised word opening a quote is a sentence start, not a name', () => {
+    const src = buildSource(['Nurse']);
+    expect(guardText('Ask the panel: ‘What training is offered?’', src).findings).toEqual([]);
+    expect(guardText('Ask them "How is the team organised?"', src).findings).toEqual([]);
+    expect(guardText('Ask about ‘Riverside Trust’ plans', src).findings.length).toBe(1);
+  });
+});
