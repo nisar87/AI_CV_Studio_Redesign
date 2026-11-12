@@ -1,0 +1,16 @@
+# Staging environment overrides (Firebase App Hosting reads apphosting.<environment>.yaml for a
+# backend whose environment name is "staging"). Same code and project, separate data.
+env:
+  # Separate Firestore database, so staging never touches production records.
+  - variable: FIRESTORE_DATABASE_ID
+    value: staging
+    availability:
+      - RUNTIME
+  # Smaller AI budget on staging.
+  - variable: AI_DAILY_BUDGET
+    value: '200'
+    availability:
+      - RUNTIME
+runConfig:
+  minInstances: 0
+  maxInstances: 1

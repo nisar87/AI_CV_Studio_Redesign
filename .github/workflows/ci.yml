@@ -37,6 +37,15 @@ jobs:
       - run: npm run test:e2e
         env:
           CI: 'true'
+          # Preview in real Google Chrome (what users run), not Playwright's headless test shell,
+          # whose text metrics differ slightly and made preview/PDF page counts disagree.
+          PW_BROWSER_PATH: /usr/bin/google-chrome
+      - name: Preview/PDF parity against the production PDF renderer (@sparticuz/chromium)
+        run: npx playwright test e2e/templates.spec.ts --project=desktop -g parity
+        env:
+          CI: 'true'
+          PW_BROWSER_PATH: /usr/bin/google-chrome
+          PDF_BROWSER: bundled
       - name: Template QA (all templates × fixtures → PDF)
         run: npm run qa:templates
         env:

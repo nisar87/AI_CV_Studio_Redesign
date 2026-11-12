@@ -1,7 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = Number(process.env.PORT ?? 3100);
-const chromePath = process.env.CHROME_EXECUTABLE_PATH;
+// PW_BROWSER_PATH lets the test browser differ from the server's PDF Chrome (CHROME_EXECUTABLE_PATH),
+// to check preview/PDF parity across Chromium builds as in production.
+const chromePath = process.env.PW_BROWSER_PATH || process.env.CHROME_EXECUTABLE_PATH;
 
 export default defineConfig({
   testDir: './e2e',

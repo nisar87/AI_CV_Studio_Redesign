@@ -30,8 +30,13 @@ function adminApp(): App {
 
 export const adminAuth = () => getAuth(adminApp());
 let dbReady = false;
+/**
+ * Firestore database: production uses the default database; the staging backend sets
+ * FIRESTORE_DATABASE_ID (e.g. "staging") so its data never mixes with production.
+ */
 export function adminDb() {
-  const db = getFirestore(adminApp());
+  const id = process.env.FIRESTORE_DATABASE_ID?.trim();
+  const db = id ? getFirestore(adminApp(), id) : getFirestore(adminApp());
   if (!dbReady) {
     // CV documents contain optional fields; skip undefined values instead of failing writes.
     db.settings({ ignoreUndefinedProperties: true });

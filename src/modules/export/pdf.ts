@@ -38,7 +38,11 @@ let browserPromise: Promise<Browser> | null = null;
 async function launch(): Promise<Browser> {
   const puppeteer = await import('puppeteer-core');
   const explicit = process.env.CHROME_EXECUTABLE_PATH;
-  const local = explicit || LOCAL_CHROME_CANDIDATES.find((p) => fs.existsSync(p));
+  // PDF_BROWSER=bundled forces the serverless Chromium production uses (for parity testing).
+  const forceBundled = process.env.PDF_BROWSER === 'bundled';
+  const local = forceBundled
+    ? undefined
+    : explicit || LOCAL_CHROME_CANDIDATES.find((p) => fs.existsSync(p));
   if (local) {
     return puppeteer.launch({
       executablePath: local,
