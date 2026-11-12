@@ -30,6 +30,7 @@ export async function premiumOffer(user: SessionUser | null) {
     passes: cfg.features.sales ? cfg.passes.filter((p) => p.active) : [],
     methods: cfg.features.sales ? cfg.payments.methods.filter((m) => m.active) : [],
     instructions: cfg.payments.instructions,
+    supportEmail: cfg.support.email,
     me: user
       ? {
           plan,

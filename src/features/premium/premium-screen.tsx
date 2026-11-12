@@ -474,6 +474,16 @@ export function PremiumScreen() {
           <Faq q="How long does checking take?">
             We check payments by hand, usually within a day. You’ll see Premium on your account as
             soon as it’s approved.
+            {offer.supportEmail && (
+              <>
+                {' '}
+                Questions about a payment? Email{' '}
+                <a href={`mailto:${offer.supportEmail}`} className="text-primary font-semibold">
+                  {offer.supportEmail}
+                </a>{' '}
+                with your transaction ID.
+              </>
+            )}
           </Faq>
           <Faq q="Does the AI make things up?">
             No. It only rewords what you wrote. Where a number or fact is missing, it asks you

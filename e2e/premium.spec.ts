@@ -229,8 +229,13 @@ test('a discount code lowers the price; the admin sees the code; the server chec
   request,
   browser,
 }) => {
-  await setConfig(request, CODES);
+  await setConfig(request, { ...CODES, support: { email: 'help@example.com' } });
   await page.goto('/premium');
+  // Buyers can see who to contact about a payment.
+  await expect(page.getByRole('link', { name: 'help@example.com' })).toHaveAttribute(
+    'href',
+    'mailto:help@example.com',
+  );
   await page.getByRole('radio', { name: /1 month/ }).click();
   const coupon = page.getByTestId('coupon');
   await coupon.getByLabel('Discount code').fill('nope');
