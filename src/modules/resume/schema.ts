@@ -42,10 +42,11 @@ export const educationItem = z.object({
 export const skillGroupItem = z.object({
   id,
   label: text(80),
-  keywords: z.array(z.string().max(80)).max(60).default([]),
+  keywords: z.array(z.string().max(160)).max(60).default([]),
 });
 
-export const languageItem = z.object({ id, language: text(80), fluency: text(80) });
+/** Fluency can be a sentence ("Fluent / professional working proficiency – …"); never cut on import. */
+export const languageItem = z.object({ id, language: text(80), fluency: text(240) });
 
 export const credentialItem = z.object({
   id,

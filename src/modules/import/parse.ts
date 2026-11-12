@@ -509,7 +509,7 @@ function skillItems(lines: { text: string; bullet: boolean }[]): SkillGroupItem[
     s
       .split(/\s*[,;·•|]\s*|\s+\/\s+|\s{2,}/)
       .map((x) => x.trim().replace(/\.$/, ''))
-      .filter((x) => x && x.length <= 80);
+      .filter((x) => x && x.length <= 160);
   let label: string | null = null;
   // Labels ("Platforms") appear first or right after another labelled group, never mid-list.
   let labelled_mode = false;
@@ -573,7 +573,7 @@ function languageItems(lines: { text: string; bullet: boolean }[]): LanguageItem
       out.push({
         id: newId(),
         language: language.trim().slice(0, 80),
-        fluency: fluency.trim().slice(0, 80),
+        fluency: fluency.trim().slice(0, 240),
       });
     }
   return out;

@@ -144,7 +144,7 @@ function toSection(sec: Structure['sections'][number]): Section | null {
         items: E.map((e) => ({
           id: newId(),
           label: cut(e.title, 80),
-          keywords: e.lines.slice(0, 60).map((l) => cut(l, 80)),
+          keywords: e.lines.slice(0, 60).map((l) => cut(l, 160)),
         })),
       };
     case 'languages':
@@ -154,7 +154,7 @@ function toSection(sec: Structure['sections'][number]): Section | null {
         items: E.map((e) => ({
           id: newId(),
           language: cut(e.title, 80),
-          fluency: cut(e.subtitle, 80),
+          fluency: cut(e.subtitle, 240),
         })),
       };
     case 'certifications':

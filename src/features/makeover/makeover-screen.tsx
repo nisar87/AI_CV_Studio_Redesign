@@ -549,7 +549,7 @@ function Compare({
           )}
           {hasBefore && pos < 100 && (
             <div
-              className="absolute inset-x-0 top-0 aspect-[210/297] overflow-hidden shadow-md"
+              className="absolute inset-x-0 top-0 z-10 aspect-[210/297] overflow-hidden shadow-md"
               style={{ clipPath: `inset(0 ${pos}% 0 0)` }}
               data-testid="before-layer"
             >

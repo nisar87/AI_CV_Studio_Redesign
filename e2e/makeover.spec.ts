@@ -77,6 +77,13 @@ test.describe('visitor', () => {
     // Before/after: the original PDF page sits under the new CV, revealed by the slider.
     await expect(page.getByTestId('compare-slider')).toBeVisible();
     await expect(page.getByTestId('before-layer')).toBeVisible();
+    // The original is really on top on the left half (not hidden under the preview frame).
+    const onTop = await page.getByTestId('before-layer').evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      const hit = document.elementFromPoint(r.left + r.width * 0.2, r.top + r.height * 0.3);
+      return !!hit && el.contains(hit);
+    });
+    expect(onTop).toBe(true);
     await page.getByTestId('compare-slider').fill('100');
     await expect(page.getByTestId('before-layer')).toHaveCount(0);
 

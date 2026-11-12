@@ -5,6 +5,7 @@ import { importWithAi } from './ai';
 import { coverage, type Coverage } from './coverage';
 import { extractLines, ImportError, SCAN_UNREADABLE, type ImportKind } from './extract';
 import { parseCv, type ImportReport } from './parse';
+import { tidyImport } from './tidy';
 import { transcribeFile } from './vision';
 
 export type ReadCv = {
@@ -53,7 +54,9 @@ export async function readCv(
     opts.ai && left > 12_000
       ? await importWithAi(lines, opts.key, { locale: opts.locale, timeoutMs: left })
       : ({ ok: false, reason: opts.ai ? 'no_time' : 'switched_off' } as const);
-  const { doc, report } = ai.ok ? ai : parseCv(lines, { locale: opts.locale });
+  const parsed = ai.ok ? ai : parseCv(lines, { locale: opts.locale });
+  const doc = tidyImport(parsed.doc);
+  const report = parsed.report;
   if (/-(US|CA)$/.test(opts.locale)) doc.design.pageSize = 'Letter';
   return {
     doc,
