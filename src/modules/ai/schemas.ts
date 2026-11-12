@@ -15,6 +15,7 @@ export const TASK_IDS = [
   'write.improveBullets',
   'write.fromNotes',
   'suggest.skills',
+  'import.structure',
 ] as const;
 export type TaskId = (typeof TASK_IDS)[number];
 
@@ -73,7 +74,25 @@ export const taskInputs = {
     experience: z.array(short(400)).max(20).default([]),
     existing: z.array(short(80)).max(60).default([]),
   }),
+  'import.structure': z.object({
+    lines: z.array(z.string().max(600)).min(1).max(400),
+  }),
 } satisfies Record<TaskId, z.ZodType>;
+
+export const IMPORT_KINDS = [
+  'experience',
+  'education',
+  'skills',
+  'languages',
+  'certifications',
+  'licences',
+  'projects',
+  'volunteering',
+  'awards',
+  'custom',
+] as const;
+/** "YYYY-MM", "YYYY" or "" — checked again when mapped (no transforms: they can't be sent as JSON Schema). */
+const ymd = z.string().max(10);
 
 /**
  * Output schemas sent to the model as JSON Schema. Kept flat and small: Gemini rejects very
@@ -103,6 +122,37 @@ export const taskOutputs = {
   'write.improveBullets': z.object({ bullets: z.array(z.string().min(1).max(260)).min(1).max(12) }),
   'write.fromNotes': z.object({ bullets: z.array(z.string().min(1).max(260)).min(1).max(8) }),
   'suggest.skills': z.object({ skills: z.array(z.string().min(1).max(60)).min(1).max(12) }),
+  /** One generic entry shape for every kind keeps the schema small (see import/ai.ts mapping). */
+  'import.structure': z.object({
+    name: z.string().max(120),
+    headline: z.string().max(160),
+    email: z.string().max(160),
+    phone: z.string().max(60),
+    location: z.string().max(160),
+    links: z.array(z.object({ label: z.string().max(60), url: z.string().max(300) })).max(10),
+    summary: z.string().max(1500),
+    sections: z
+      .array(
+        z.object({
+          kind: z.enum(IMPORT_KINDS),
+          title: z.string().max(80),
+          entries: z
+            .array(
+              z.object({
+                title: z.string().max(200),
+                subtitle: z.string().max(200),
+                place: z.string().max(160),
+                start: ymd,
+                end: ymd,
+                current: z.boolean(),
+                lines: z.array(z.string().max(600)).max(60),
+              }),
+            )
+            .max(50),
+        }),
+      )
+      .max(30),
+  }),
 } satisfies Record<TaskId, z.ZodType>;
 
 export type TaskInput<T extends TaskId> = z.input<(typeof taskInputs)[T]>;

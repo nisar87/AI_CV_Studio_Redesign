@@ -30,6 +30,16 @@ export class MemoryUserStore implements UserStore {
     this.seen?.set(uid, new Date().toISOString());
   }
 
+  async deleteUserData(uid: string) {
+    this.users.delete(uid);
+    this.seen.delete(uid);
+    this.docs.delete(uid);
+    for (const k of [...this.versions.keys()]) if (k.startsWith(`${uid}/`)) this.versions.delete(k);
+    this.passes.delete(uid);
+    for (const k of [...this.usage.keys()]) if (k.startsWith(`${uid}/`)) this.usage.delete(k);
+    for (const p of this.payments) if (p.uid === uid) p.email = null;
+  }
+
   async knownUser(uid: string) {
     return this.users.has(uid);
   }
@@ -75,6 +85,7 @@ export class MemoryUserStore implements UserStore {
 
   async deleteDoc(uid: string, id: string, at: string) {
     this.bucket(uid).set(id, { id, updatedAt: at, deleted: true, doc: null });
+    this.versions.delete(`${uid}/${id}`);
   }
 
   async listVersions(uid: string, id: string) {

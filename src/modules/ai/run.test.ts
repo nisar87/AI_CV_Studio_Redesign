@@ -179,11 +179,20 @@ describe('mock provider', () => {
       notes: 'drove the van. loaded parcels; checked tyres',
     },
     'suggest.skills': { presetId: 'driver', existing: ['Safe driving'] },
+    'import.structure': {
+      lines: [
+        'Imran Qureshi',
+        'imran@example.com',
+        'Experience',
+        'Van Driver Jan 2016 – Present',
+        'Swift Logistics',
+      ],
+    },
   };
 
   it.each(TASK_IDS)('%s returns valid, guarded output', async (id) => {
     const r = await runTask(id, samples[id], 0, { provider: mock, models });
-    expect(r.ok).toBe(true);
+    expect(r.ok ? 'ok' : JSON.stringify(r)).toBe('ok');
     if (r.ok) expect(r.findings).toEqual([]);
   });
 

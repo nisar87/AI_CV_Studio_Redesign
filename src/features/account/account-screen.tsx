@@ -8,13 +8,20 @@ import { Button, ButtonLink } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 import { useAccount } from './account-context';
 import { useEntitlements } from './entitlements';
-import { authMessage, refreshVerification, resendVerification } from './firebase-client';
+import { TextField } from '@/components/ui/field';
+import {
+  AuthUiError,
+  authMessage,
+  refreshVerification,
+  resendVerification,
+} from './firebase-client';
 
 export function AccountScreen() {
   const account = useAccount();
   const router = useRouter();
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState('');
   const { ent } = useEntitlements();
   // Signing out on purpose goes home, not to the sign-in page.
   const leaving = useRef(false);
@@ -221,6 +228,57 @@ export function AccountScreen() {
       <p className="text-ink-muted text-sm">
         Signing out removes your account’s CVs from this device. They stay safe in your account.
       </p>
+
+      {!u.admin && (
+        <section aria-labelledby="del-h" className="border-line flex flex-col gap-3 border-t pt-6">
+          <h2 id="del-h" className="text-lg font-semibold">
+            Delete your account
+          </h2>
+          <p className="text-ink-muted text-sm">
+            This permanently deletes your account and every CV in it, including earlier versions. It
+            can’t be undone — download any CV you want to keep first.
+          </p>
+          <form
+            className="flex flex-wrap items-end gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void run('delete', async () => {
+                const r = await fetch('/api/me', {
+                  method: 'DELETE',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ confirm }),
+                });
+                if (!r.ok) {
+                  const j = (await r.json().catch(() => null)) as {
+                    error?: { message?: string };
+                  } | null;
+                  throw new AuthUiError(j?.error?.message ?? 'That didn’t work. Please try again.');
+                }
+                leaving.current = true;
+                await account.signOut();
+                toast.show({ tone: 'success', message: 'Your account has been deleted.' });
+                router.replace('/');
+              });
+            }}
+          >
+            <TextField
+              label="Type DELETE to confirm"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              autoComplete="off"
+              containerClassName="w-56"
+            />
+            <Button
+              type="submit"
+              variant="danger"
+              disabled={confirm !== 'DELETE'}
+              loading={busy === 'delete'}
+            >
+              Delete my account
+            </Button>
+          </form>
+        </section>
+      )}
     </div>
   );
 }

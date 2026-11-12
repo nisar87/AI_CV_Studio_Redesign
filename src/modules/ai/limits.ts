@@ -69,3 +69,9 @@ export function createAiLimiter(limits: AiLimits, now: () => number = Date.now) 
     return { ok: true, remainingToday: limits.perDay - used - 1 };
   };
 }
+
+/** One limiter per server instance, shared by every route that calls the model (one budget). */
+export function sharedAiLimiter(): ReturnType<typeof createAiLimiter> {
+  const g = globalThis as { __aiLimiter?: ReturnType<typeof createAiLimiter> };
+  return (g.__aiLimiter ??= createAiLimiter(limitsFromEnv()));
+}

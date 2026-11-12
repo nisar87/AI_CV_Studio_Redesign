@@ -45,6 +45,8 @@ test.describe('free account', () => {
 
     await page.getByTestId('cv-file').setInputFiles(join(FIX, 'word-sales.docx'));
     await expect(page.getByTestId('import-done')).toBeVisible();
+    // e2e runs the AI path with the demo provider; the result passed the copy-only check.
+    await expect(page.getByTestId('import-method')).toContainText('nothing was added');
     const report = page.getByTestId('import-report');
     await expect(report).toContainText('Your name, contact details and a profile');
     await expect(report).toContainText('Work experience: 2 jobs');

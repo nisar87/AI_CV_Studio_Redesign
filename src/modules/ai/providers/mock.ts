@@ -1,3 +1,5 @@
+import { parseCv } from '@/modules/import/parse';
+import { docToStructure } from '@/modules/import/structure';
 import { PRESETS } from '@/modules/resume/presets';
 import { TEMPLATE_CATALOG } from '../catalog';
 import { guessDesign, guessPreset, guessTitle } from '../heuristics';
@@ -111,6 +113,11 @@ function answer(task: TaskId, input: unknown, attempt: number): unknown {
         'Attention to detail',
       ].filter((s) => !have.has(s.toLowerCase()));
       return { skills: variant(pool, attempt).slice(0, 8) };
+    }
+    case 'import.structure': {
+      // The demo "model" is the rules-based parser, returned in the AI's shape.
+      const i = input as ParsedInput<'import.structure'>;
+      return docToStructure(parseCv(i.lines).doc);
     }
   }
 }

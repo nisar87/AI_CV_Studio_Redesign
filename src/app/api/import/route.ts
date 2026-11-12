@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { apiError, clientKey, createRateLimiter, requestId } from '@/lib/http';
-import { denialCode, reserve } from '@/modules/billing/server';
+import { denialCode, getBusinessConfig, reserve } from '@/modules/billing/server';
+import { importWithAi } from '@/modules/import/ai';
 import { currentUser } from '@/modules/identity/session';
 import { extractLines, ImportError, MAX_IMPORT_BYTES } from '@/modules/import/extract';
 import { parseCv } from '@/modules/import/parse';
@@ -47,7 +48,13 @@ export async function POST(req: Request) {
     const locale = /^[a-z]{2}-[A-Z]{2}$/.test(localeRaw) ? localeRaw : 'en-GB';
     const bytes = new Uint8Array(await file.arrayBuffer());
     const { kind, lines } = await extractLines(bytes, file.name);
-    const { doc, report } = parseCv(lines, { locale });
+    // Gemini sorts the CV when available (verified copy-only); the rules are the fallback.
+    const features = (await getBusinessConfig()).value.features;
+    const ai = features.ai
+      ? await importWithAi(lines, user?.uid ?? clientKey(req), { locale })
+      : ({ ok: false, reason: 'switched_off' } as const);
+    const { doc, report } = ai.ok ? ai : parseCv(lines, { locale });
+    const method = ai.ok ? 'ai' : 'rules';
     if (/-(US|CA)$/.test(locale)) doc.design.pageSize = 'Letter';
     console.log(
       JSON.stringify({
@@ -56,12 +63,14 @@ export async function POST(req: Request) {
         rid,
         kind,
         lines: lines.length,
+        method,
+        aiFallback: ai.ok ? undefined : ai.reason,
         sections: report.sections.length,
         unplaced: report.unplaced,
       }),
     );
     return NextResponse.json(
-      { document: doc, report },
+      { document: doc, report, method },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (e) {
