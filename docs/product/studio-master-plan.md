@@ -248,9 +248,9 @@ Each later release is planned in detail only when the previous one is live, usin
 | Risk | Mitigation |
 |---|---|
 | AI costs exceed revenue | Per-user monthly limits, global daily budget, cost on the dashboard, Flash-tier models, Premium-only AI except one cheap import call |
-| Manual payment fraud or duplicates | Duplicate-reference check, the owner confirms funds before approving, audit log, pass expiry |
+| Manual payment fraud or duplicates | The owner confirms funds (WhatsApp screenshot + EasyPaisa) before approving the order number; duplicate transaction IDs refused when given; audit log; pass expiry |
 | Owner review becomes a bottleneck | Staging plus automated gates; the owner approves releases, not individual fixes |
-| Old users confused by the new app | Same login; their Premium is honoured until expiry; a one-time "Welcome to the new AI CV Studio" message |
+| Old users confused by the new app | Same login still works. *(Fresh start decided, §9: the old app had no real users, so no Premium carry-over or welcome message was needed.)* |
 | Gemini terms (age 18+, paid tier for privacy) | Billing-enabled project (done); a 18+ statement at sign-up; privacy text matches reality |
 | Scope creep returns | §7 rules; each release scope fixed at the start; new ideas go to the next release's list |
 
