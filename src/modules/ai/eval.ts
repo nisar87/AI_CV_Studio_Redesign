@@ -6,6 +6,7 @@ import { runTask } from './run';
 type Models = { fast: string; smart: string };
 import type { TaskId } from './schemas';
 import * as F from '@/modules/resume/fixtures';
+import { profileDigest } from '@/modules/jobs/digest';
 import type { ResumeDocument } from '@/modules/resume/schema';
 
 /**
@@ -181,7 +182,73 @@ export function evalSamples(): EvalSample[] {
     sourceTexts: [],
   });
 
+  // R2: job match, tailoring and cover letters against realistic adverts.
+  const adverts: [ResumeDocument, string, string, string][] = [
+    [
+      F.driver,
+      'Multi-drop Delivery Driver',
+      'Fresh Foods Ltd',
+      'Fresh Foods Ltd is hiring a Multi-drop Delivery Driver in Leicester. You will deliver chilled groceries to homes on a planned route, complete vehicle checks each morning and give friendly service at every door. Essential: full UK driving licence (category B), experience of multi-drop work, good timekeeping. Desirable: C1 licence, experience with handheld scanners. Full-time, 5 days over 7, overtime available.',
+    ],
+    [
+      F.nurse,
+      'Staff Nurse, Acute Medicine',
+      'Riverside NHS Trust',
+      'We are looking for a compassionate Staff Nurse to join our Acute Medical Unit. You must be a registered nurse with the NMC. You will assess and plan care for acutely unwell adults, give medicines safely, use NEWS2 to spot deterioration and work closely with the multidisciplinary team. Experience of mentoring students is desirable. We value kindness, clear communication and teamwork.',
+    ],
+    [
+      F.engineer,
+      'Senior Software Engineer',
+      'Northwind Tech',
+      'Northwind Tech needs a Senior Software Engineer to build and run our customer platform. Essential: strong TypeScript and Node.js, experience designing APIs, cloud infrastructure (AWS or GCP), automated testing and code review. Desirable: Kubernetes, experience mentoring engineers, leading technical projects end to end. Hybrid working, two days a week in our Manchester office.',
+    ],
+  ];
+  for (const [doc, jobTitle, company, advert] of adverts) {
+    const profile = profileDigest(doc).text;
+    const src = [profile, company, jobTitle, doc.basics.name];
+    samples.push({
+      name: `${doc.presetId}: job match`,
+      task: 'job.match',
+      input: { advert, profile },
+      sourceTexts: [],
+    });
+    samples.push({
+      name: `${doc.presetId}: tailored CV`,
+      task: 'job.tailor',
+      input: { advert, jobTitle, company, profile },
+      sourceTexts: src,
+    });
+    samples.push({
+      name: `${doc.presetId}: cover letter`,
+      task: 'letter.write',
+      input: { advert, jobTitle, company, name: doc.basics.name, profile, tone: 'warm' },
+      sourceTexts: src,
+    });
+  }
+
   return samples;
+}
+
+/** Text an evaluation checks for new facts, by task. */
+function outputTexts(result: unknown): string[] {
+  const r = result as Record<string, unknown>;
+  if (typeof r.text === 'string') return [r.text];
+  if (Array.isArray(r.bullets)) return r.bullets as string[];
+  if (Array.isArray(r.paragraphs)) return r.paragraphs as string[];
+  if (typeof r.summary === 'string' && 'order' in r) return [String(r.headline ?? ''), r.summary];
+  return [];
+}
+
+/** Evidence IDs a match cites that are not lines of the CV (the app drops them; counted here). */
+function unknownEvidence(s: EvalSample, result: unknown): string[] {
+  if (s.task !== 'job.match') return [];
+  const ids = new Set(profileDigest(sampleDoc(s)).lines.keys());
+  const reqs = (result as { requirements: { evidence: string[] }[] }).requirements;
+  return reqs.flatMap((r) => r.evidence.filter((e) => !ids.has(e.trim())).map((e) => `id “${e}”`));
+}
+function sampleDoc(s: EvalSample): ResumeDocument {
+  const all = [F.driver, F.nurse, F.engineer];
+  return all.find((d) => s.name.startsWith(`${d.presetId}:`)) ?? F.driver;
 }
 
 /** Independent check: unmarked numbers or credentials in the final text that are not in the input. */
@@ -225,15 +292,14 @@ export async function runEvalSample(
       residual: [],
       ms,
     };
-  const texts =
-    'text' in r.result ? [r.result.text] : 'bullets' in r.result ? r.result.bullets : [];
+  const texts = outputTexts(r.result);
   return {
     index,
     name: s.name,
     task: s.task,
     ok: true,
     output: r.result,
-    caught: r.findings.map((f) => `${f.kind} “${f.value}”`),
+    caught: [...r.findings.map((f) => `${f.kind} “${f.value}”`), ...unknownEvidence(s, r.result)],
     residual: s.sourceTexts.length ? texts.flatMap((t) => residual(t, s)) : [],
     ms,
   };
