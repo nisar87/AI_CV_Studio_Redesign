@@ -70,7 +70,7 @@ export async function prepareJobAi(
     body,
     deps: { provider, models: aiModels(), timeoutMs: 60_000 },
     done: async (ok) => {
-      track(ok ? 'ai_ok' : 'ai_fail');
+      await track(ok ? 'ai_ok' : 'ai_fail');
       if (!ok) await gate.release();
     },
   };

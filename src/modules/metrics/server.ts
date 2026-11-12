@@ -30,8 +30,12 @@ export type MetricEvent = (typeof EVENTS)[number];
 
 export const today = (d = new Date()) => d.toISOString().slice(0, 10);
 
-export function track(event: MetricEvent, n = 1): void {
-  void getUserStore()
+/**
+ * Counts an event. Callers await it: on Cloud Run, work still running after the response is sent
+ * may never finish, which would undercount. Never throws.
+ */
+export function track(event: MetricEvent, n = 1): Promise<void> {
+  return getUserStore()
     .bumpMetrics(today(), { [event]: n })
     .catch((e: Error) =>
       console.warn(JSON.stringify({ level: 'warn', area: 'metrics', event, message: e.message })),

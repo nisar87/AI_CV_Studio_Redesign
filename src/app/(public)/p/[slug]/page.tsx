@@ -30,6 +30,6 @@ export default async function PortfolioRoute({ params }: Props) {
   await getUserStore()
     .bumpPortfolioViews(slug)
     .catch(() => {});
-  track('portfolio_view');
+  await track('portfolio_view');
   return <PortfolioPage doc={r.doc} portfolio={r.portfolio} />;
 }

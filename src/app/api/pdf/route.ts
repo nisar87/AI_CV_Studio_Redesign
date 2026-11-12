@@ -47,13 +47,13 @@ export async function POST(req: Request) {
   const user = await currentUser();
   const design = await checkDesign(user, parsed.data.design.templateId);
   if (!design.ok) {
-    track(design.reason === 'sign_in' ? 'pdf_denied_signin' : 'pdf_denied_premium');
+    await track(design.reason === 'sign_in' ? 'pdf_denied_signin' : 'pdf_denied_premium');
     return apiError(denialCode(design), design.message, rid, { reason: design.reason });
   }
   const gate = await reserve(user, 'pdf.download');
   if (!gate.decision.ok) {
-    if (gate.decision.reason === 'sign_in') track('pdf_denied_signin');
-    if (gate.decision.reason === 'limit') track('pdf_denied_limit');
+    if (gate.decision.reason === 'sign_in') await track('pdf_denied_signin');
+    if (gate.decision.reason === 'limit') await track('pdf_denied_limit');
     return apiError(denialCode(gate.decision), gate.decision.message, rid, {
       reason: gate.decision.reason,
       ...('limit' in gate.decision ? { limit: gate.decision.limit, used: gate.decision.used } : {}),
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
   inFlight++;
   try {
     const { pdf, pages } = await renderResumePdf(parsed.data);
-    track('pdf_ok');
+    await track('pdf_ok');
     return new Response(Buffer.from(pdf), {
       status: 200,
       headers: {

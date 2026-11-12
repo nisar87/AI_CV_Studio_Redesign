@@ -27,6 +27,6 @@ export default async function SharedCvPage({ params }: Props) {
   await getUserStore()
     .bumpShareViews(token, new Date().toISOString())
     .catch(() => {});
-  track('share_view');
+  await track('share_view');
   return <SharedCv doc={r.doc} />;
 }

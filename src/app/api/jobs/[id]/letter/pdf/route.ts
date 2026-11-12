@@ -36,7 +36,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       fonts: { kind: 'inline', read: readFontBase64 },
     });
     const { pdf } = await renderPdfFromHtml(await getBrowser(), html);
-    track('pdf_ok');
+    await track('pdf_ok');
     const name = (doc.data.basics.name || 'Cover')
       .replace(/[^\p{L}\p{N}]+/gu, '-')
       .replace(/^-|-$/g, '');

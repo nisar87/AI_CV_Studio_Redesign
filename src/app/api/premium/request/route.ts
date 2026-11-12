@@ -73,7 +73,7 @@ export async function POST(req: Request) {
     status: 'pending',
     createdAt: new Date().toISOString(),
   });
-  track('premium_request');
+  await track('premium_request');
   return NextResponse.json(
     { ok: true, id: saved.id },
     { headers: { 'Cache-Control': 'no-store' } },

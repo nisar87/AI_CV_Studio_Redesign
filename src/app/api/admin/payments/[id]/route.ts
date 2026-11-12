@@ -33,9 +33,9 @@ export function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
         { error: { code: 'CONFLICT', message: 'This request was already handled.' } },
         409,
       );
-    track(decided.status === 'approved' ? 'premium_approved' : 'premium_rejected');
+    await track(decided.status === 'approved' ? 'premium_approved' : 'premium_rejected');
     if (decided.status === 'approved')
-      track(
+      await track(
         'premium_approval_minutes',
         Math.max(0, Math.round((Date.now() - Date.parse(decided.createdAt)) / 60_000)),
       );

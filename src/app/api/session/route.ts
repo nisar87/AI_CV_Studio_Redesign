@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     const known = await getUserStore()
       .knownUser(session.uid)
       .catch(() => true);
-    track(known ? 'signin' : 'account_new');
+    await track(known ? 'signin' : 'account_new');
     await getUserStore()
       .touchUser(session.uid, { email: session.email, name: session.name })
       .catch((e: Error) =>

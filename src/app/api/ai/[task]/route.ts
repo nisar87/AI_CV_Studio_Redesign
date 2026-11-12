@@ -80,7 +80,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ task: string }
     }),
   );
 
-  track(r.ok ? 'ai_ok' : 'ai_fail');
+  await track(r.ok ? 'ai_ok' : 'ai_fail');
   if (!r.ok) {
     await gate.release();
     if (r.code === 'INVALID_INPUT')
