@@ -270,11 +270,24 @@ describe('gemini adapter', () => {
     expect(body.systemInstruction.parts[0].text).toBe('sys');
   });
 
-  it('falls back to plain JSON mode if the schema field is not accepted', async () => {
+  it('sends a lean schema (structure only, no length limits)', async () => {
+    const { leanSchema } = await import('./providers/gemini');
+    expect(
+      leanSchema({
+        type: 'object',
+        additionalProperties: false,
+        properties: { a: { type: 'array', maxItems: 3, items: { type: 'string', maxLength: 9 } } },
+      }),
+    ).toEqual({ type: 'object', properties: { a: { type: 'array', items: { type: 'string' } } } });
+  });
+
+  it('falls back to plain JSON mode (shape in the prompt) when the schema is rejected', async () => {
     const fetchImpl = vi
       .fn()
       .mockResolvedValueOnce(
-        reply(400, { error: { message: 'Unknown name "responseJsonSchema"' } }),
+        reply(400, {
+          error: { message: 'The specified schema produces a constraint that has too many states' },
+        }),
       )
       .mockResolvedValueOnce(
         reply(200, { candidates: [{ content: { parts: [{ text: '{}' }] } }] }),
@@ -286,6 +299,7 @@ describe('gemini adapter', () => {
     await g.generate(req);
     const second = JSON.parse(String((fetchImpl.mock.calls[1] as [string, RequestInit])[1].body));
     expect(second.generationConfig.responseJsonSchema).toBeUndefined();
+    expect(second.contents[0].parts[0].text).toContain('JSON Schema');
   });
 
   it.each([

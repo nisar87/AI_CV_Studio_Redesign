@@ -27,12 +27,16 @@ export function createGeminiProvider({
   baseUrl?: string;
 }): AiProvider {
   async function call(req: GenerateRequest, withSchema: boolean) {
+    // Without the schema field, the shape goes into the prompt instead.
+    const user = withSchema
+      ? req.user
+      : `${req.user}\n\nReply with JSON matching this JSON Schema:\n${JSON.stringify(leanSchema(req.schema))}`;
     const body = {
       systemInstruction: { parts: [{ text: req.system }] },
-      contents: [{ role: 'user', parts: [{ text: req.user }] }],
+      contents: [{ role: 'user', parts: [{ text: user }] }],
       generationConfig: {
         responseMimeType: 'application/json',
-        ...(withSchema ? { responseJsonSchema: req.schema } : {}),
+        ...(withSchema ? { responseJsonSchema: leanSchema(req.schema) } : {}),
         temperature: req.temperature,
         maxOutputTokens: req.maxTokens,
       },
@@ -59,16 +63,29 @@ export function createGeminiProvider({
     id: 'gemini',
     async generate(req) {
       let { res, json } = await call(req, true);
-      // Older API versions or models may not accept `responseJsonSchema`; fall back to plain
-      // JSON mode (the prompt describes the shape and Zod validates the result).
-      if (
-        res.status === 400 &&
-        /response_?json_?schema|responseJsonSchema/i.test(json.error?.message ?? '')
-      ) {
+      // A model may reject the schema field or find a schema too complex ("too many states");
+      // fall back to plain JSON mode (shape in the prompt; Zod still validates the result).
+      if (res.status === 400) {
+        console.warn(
+          JSON.stringify({
+            level: 'warn',
+            area: 'ai',
+            event: 'schema_rejected',
+            message: (json.error?.message ?? '').slice(0, 300),
+          }),
+        );
         ({ res, json } = await call(req, false));
       }
       if (!res.ok) {
         const msg = json.error?.message ?? `HTTP ${res.status}`;
+        console.warn(
+          JSON.stringify({
+            level: 'warn',
+            area: 'ai',
+            status: res.status,
+            message: msg.slice(0, 300),
+          }),
+        );
         if (res.status === 429) throw new AiProviderError('rate_limited', msg);
         if (res.status === 401 || res.status === 403) throw new AiProviderError('auth', msg);
         if (res.status === 400 || res.status === 404) throw new AiProviderError('bad_request', msg);
@@ -92,4 +109,29 @@ export function createGeminiProvider({
       };
     },
   };
+}
+
+/**
+ * The schema sent to the model: structure only. Length/count limits and patterns make Gemini's
+ * constrained decoding much larger (and can be rejected as "too many states"); Zod enforces them
+ * on the answer anyway.
+ */
+export function leanSchema(schema: unknown): unknown {
+  if (Array.isArray(schema)) return schema.map(leanSchema);
+  if (!schema || typeof schema !== 'object') return schema;
+  const DROP = new Set([
+    'maxLength',
+    'minLength',
+    'maxItems',
+    'minItems',
+    'pattern',
+    'additionalProperties',
+    '$schema',
+    'default',
+  ]);
+  return Object.fromEntries(
+    Object.entries(schema as Record<string, unknown>)
+      .filter(([k]) => !DROP.has(k))
+      .map(([k, v]) => [k, leanSchema(v)]),
+  );
 }
