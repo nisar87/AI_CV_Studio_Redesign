@@ -1,6 +1,7 @@
 import { getBusinessConfig } from '@/modules/billing/server';
 import { monthKey } from '@/modules/billing/gate';
 import { json, withAdmin } from '@/modules/admin/server';
+import { metricsSummary } from '@/modules/metrics/server';
 import { getUserStore } from '@/modules/store';
 
 export const runtime = 'nodejs';
@@ -11,13 +12,17 @@ export function GET() {
     const store = getUserStore();
     const now = new Date().toISOString();
     const month = monthKey();
-    const [users, usage, passes, cfg, pending] = await Promise.all([
+    const [users, usage, passes, cfg, pending, metrics] = await Promise.all([
       store.userStats(),
       store.usageTotals(month),
       store.listPasses(),
       getBusinessConfig(true),
       store.listPaymentRequests({ status: 'pending', limit: 200 }),
+      metricsSummary(30),
     ]);
+    const t = metrics.total;
+    const d = metrics.today;
+    const n = (o: Record<string, number>, k: string) => o[k] ?? 0;
     return json({
       month,
       users: { total: users.total, recent: users.recent.slice(0, 10) },
@@ -27,6 +32,34 @@ export function GET() {
         'ai.action': usage['ai.action'] ?? 0,
       },
       payments: { pending: pending.length },
+      // Success numbers (master plan §6), last 30 days unless marked "today".
+      numbers: {
+        from: metrics.from,
+        newAccounts: n(t, 'account_new'),
+        visitorsAtDownload: n(t, 'pdf_denied_signin'),
+        pdfs: n(t, 'pdf_ok'),
+        hitDownloadLimit: n(t, 'pdf_denied_limit'),
+        imports: n(t, 'import_ok'),
+        importsWithAi: n(t, 'import_ai'),
+        importFailures: n(t, 'import_fail'),
+        aiActions: n(t, 'ai_ok'),
+        aiFailures: n(t, 'ai_fail'),
+        aiCallsToday: n(d, 'ai_ok') + n(d, 'ai_fail') + n(d, 'import_ai'),
+        aiDailyBudget: Number(process.env.AI_DAILY_BUDGET) || 2000,
+        premiumRequests: n(t, 'premium_request'),
+        premiumApproved: n(t, 'premium_approved'),
+        premiumRejected: n(t, 'premium_rejected'),
+        avgApprovalMinutes: n(t, 'premium_approved')
+          ? Math.round(n(t, 'premium_approval_minutes') / n(t, 'premium_approved'))
+          : null,
+        daily: metrics.days.map((x) => ({
+          day: x.day,
+          accounts: n(x.counts, 'account_new'),
+          pdfs: n(x.counts, 'pdf_ok'),
+          imports: n(x.counts, 'import_ok'),
+          ai: n(x.counts, 'ai_ok'),
+        })),
+      },
       premium: { active: passes.filter((p) => p.expiresAt > now).length, total: passes.length },
       config: {
         version: cfg.version,

@@ -30,6 +30,23 @@ export class MemoryUserStore implements UserStore {
     this.seen?.set(uid, new Date().toISOString());
   }
 
+  private metrics = new Map<string, Record<string, number>>();
+  async bumpMetrics(day: string, counts: Record<string, number>) {
+    const m = this.metrics.get(day) ?? {};
+    for (const [k, v] of Object.entries(counts)) m[k] = (m[k] ?? 0) + v;
+    this.metrics.set(day, m);
+  }
+  async getMetrics(from: string, to: string) {
+    return [...this.metrics.entries()]
+      .filter(([d]) => d >= from && d <= to)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([day, counts]) => ({ day, counts: { ...counts } }));
+  }
+  async findPaymentByReference(referenceKey: string) {
+    const p = this.payments.find((x) => x.referenceKey === referenceKey && x.status !== 'rejected');
+    return p ? structuredClone(p) : null;
+  }
+
   async deleteUserData(uid: string) {
     this.users.delete(uid);
     this.seen.delete(uid);

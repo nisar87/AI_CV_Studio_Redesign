@@ -40,6 +40,35 @@ export class FirestoreUserStore implements UserStore {
       .set({ ...info, lastSeenAt: FieldValue.serverTimestamp(), studioV2: true }, { merge: true });
   }
 
+  async bumpMetrics(day: string, counts: Record<string, number>) {
+    const inc = Object.fromEntries(
+      Object.entries(counts).map(([k, v]) => [k, FieldValue.increment(v)]),
+    );
+    await this.db.collection('metrics').doc(day).set({ day, counts: inc }, { merge: true });
+  }
+  async getMetrics(from: string, to: string) {
+    const snap = await this.db
+      .collection('metrics')
+      .where('day', '>=', from)
+      .where('day', '<=', to)
+      .get();
+    return snap.docs
+      .map((d) => ({
+        day: d.get('day') as string,
+        counts: (d.get('counts') ?? {}) as Record<string, number>,
+      }))
+      .sort((a, b) => a.day.localeCompare(b.day));
+  }
+  async findPaymentByReference(referenceKey: string) {
+    const snap = await this.db
+      .collection('paymentRequests')
+      .where('referenceKey', '==', referenceKey)
+      .limit(5)
+      .get();
+    const hit = snap.docs.find((d) => d.get('status') !== 'rejected');
+    return hit ? { id: hit.id, ...(hit.data() as Omit<PaymentRequest, 'id'>) } : null;
+  }
+
   async deleteUserData(uid: string) {
     // users/{uid} with every document and version below it.
     await this.db.recursiveDelete(this.db.collection('users').doc(uid));

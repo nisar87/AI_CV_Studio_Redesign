@@ -5,6 +5,7 @@ import { importWithAi } from '@/modules/import/ai';
 import { currentUser } from '@/modules/identity/session';
 import { extractLines, ImportError, MAX_IMPORT_BYTES } from '@/modules/import/extract';
 import { parseCv } from '@/modules/import/parse';
+import { track } from '@/modules/metrics/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -55,6 +56,8 @@ export async function POST(req: Request) {
       : ({ ok: false, reason: 'switched_off' } as const);
     const { doc, report } = ai.ok ? ai : parseCv(lines, { locale });
     const method = ai.ok ? 'ai' : 'rules';
+    track('import_ok');
+    track(ai.ok ? 'import_ai' : 'import_rules');
     if (/-(US|CA)$/.test(locale)) doc.design.pageSize = 'Letter';
     console.log(
       JSON.stringify({
@@ -75,6 +78,7 @@ export async function POST(req: Request) {
     );
   } catch (e) {
     await gate.release();
+    track('import_fail');
     if (e instanceof ImportError)
       return apiError('INVALID_INPUT', e.message, rid, { reason: e.code });
     console.error(

@@ -64,6 +64,12 @@ test('admin changes settings; the gate follows; history records and restores', a
   const { context, page } = await adminPage(browser);
   await page.goto('/admin');
   await expect(page.getByTestId('admin-stats')).toContainText('Accounts');
+  await expect(page.getByTestId('admin-numbers')).toContainText('New accounts');
+  await expect(page.getByRole('meter', { name: 'AI daily budget used' })).toBeVisible();
+  const o = (await (await context.request.get('/api/admin/overview')).json()) as {
+    numbers: { newAccounts: number };
+  };
+  expect(o.numbers.newAccounts).toBeGreaterThan(0);
 
   await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByLabel('Free: PDF downloads per month').fill('0');

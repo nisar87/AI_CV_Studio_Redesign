@@ -132,6 +132,22 @@ test('buy → admin approves → Premium starts; the audit log records it', asyn
   await context.close();
 });
 
+test('the same transaction ID cannot be claimed twice, even by another account', async ({
+  page,
+  request,
+}) => {
+  await setConfig(request, SALES);
+  const data = { passId: 'month', methodId: 'bank', reference: 'DUP-555 777' };
+  expect((await page.request.post('/api/premium/request', { data })).status()).toBe(200);
+  const other = await request.post('/api/premium/request', {
+    data: { ...data, reference: 'dup555777' },
+  });
+  expect(other.status()).toBe(400);
+  expect(((await other.json()) as { error: { message: string } }).error.message).toContain(
+    'already been used',
+  );
+});
+
 test('a rejected payment shows the reason and the buyer can try again', async ({
   page,
   request,
