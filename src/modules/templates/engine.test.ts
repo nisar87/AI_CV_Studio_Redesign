@@ -194,3 +194,32 @@ describe('needs-input markers', () => {
     );
   });
 });
+
+describe('entry keep rules', () => {
+  const withBullets = (bullets: string[]) => {
+    const doc = structuredClone(FIXTURES.engineer);
+    const exp = doc.sections.find((s) => s.kind === 'experience')!;
+    if (exp.kind !== 'experience') throw new Error('fixture');
+    exp.items = [{ ...exp.items[0]!, bullets }];
+    return doc;
+  };
+  /** data-keep of each bullet block of the (single) experience entry. */
+  const bulletKeeps = (html: string) =>
+    [...html.matchAll(/data-keep="([a-z-]+)" class="b-bullet[ "]/g)].map((m) => m[1]);
+
+  it('keeps an entry of six short bullets whole', () => {
+    const keeps = bulletKeeps(
+      buildDocumentHtml(withBullets(Array(6).fill('Short line.')), { fonts }),
+    );
+    expect(keeps).toHaveLength(4);
+    expect(keeps.slice(0, -1).every((k) => k === 'with-next')).toBe(true);
+  });
+
+  it('lets an entry of six long bullets break between bullets (real CV: half-empty page)', () => {
+    const long = 'Designed and scaled mission-critical backend services for telecom data, '.repeat(
+      2,
+    );
+    const keeps = bulletKeeps(buildDocumentHtml(withBullets(Array(6).fill(long)), { fonts }));
+    expect(keeps).toEqual(['none', 'none', 'with-next', 'none']);
+  });
+});

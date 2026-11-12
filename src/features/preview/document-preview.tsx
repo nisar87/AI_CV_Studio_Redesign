@@ -27,6 +27,8 @@ type Props = {
 };
 
 const GAP = 24;
+/** How long a build may take before it is loaded again once. */
+const RETRY_MS = 5000;
 
 /**
  * Live CV preview. Renders the exact document that is printed to PDF, inside a sandboxed iframe.
@@ -68,6 +70,8 @@ export function DocumentPreview({
   const slotSeq = useRef<[number, number]>([0, 0]);
   const seq = useRef(0);
   const firstBuild = useRef(true);
+  const retry = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(retry.current), []);
   const [slots, setSlots] = useState<[string | null, string | null]>([null, null]);
   const slotsRef = useRef<[string | null, string | null]>([null, null]);
   // Last ready result per frame, so a frame that already shows the wanted document can be
@@ -108,6 +112,17 @@ export function DocumentPreview({
         const next: [string | null, string | null] = target === 0 ? [html, s[1]] : [s[0], html];
         slotsRef.current = next;
         setSlots(next);
+        // Safety net: a build that never reports back would leave the frame at its old page count
+        // (clipping the CV). Reload it once with a marker so the browser runs it again.
+        const mySeq = slotSeq.current[target];
+        window.clearTimeout(retry.current);
+        retry.current = window.setTimeout(() => {
+          if (slotSeq.current[target] !== mySeq || slotResult.current[target]) return;
+          const again: [string | null, string | null] = [...slotsRef.current];
+          again[target] = `${html}<!-- retry -->`;
+          slotsRef.current = again;
+          setSlots(again);
+        }, RETRY_MS);
       },
       firstBuild.current ? 0 : debounceMs,
     );

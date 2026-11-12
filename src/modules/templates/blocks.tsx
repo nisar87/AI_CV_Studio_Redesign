@@ -66,8 +66,13 @@ function Bullets({ items }: { items: string[] }) {
 }
 
 const BULLETS_IN_HEAD = 2;
-/** Entries with up to this many bullets are never split across pages. */
+/** Entries with up to this many bullets are never split across pages… */
 export const KEEP_WHOLE_ENTRY_MAX_BULLETS = 6;
+/**
+ * …unless their bullets are long: six two-line bullets are a third of a page, and keeping that
+ * whole can push a whole section to the next page and leave half a page empty.
+ */
+export const KEEP_WHOLE_ENTRY_MAX_CHARS = 600;
 /** Skills per chunk when a large group is split across pages. */
 const SKILL_CHUNK = 6;
 
@@ -214,7 +219,8 @@ function sectionBlocksRaw(
         node: <Bullets items={[b]} />,
       })),
     ];
-    if (e.bullets.length <= KEEP_WHOLE_ENTRY_MAX_BULLETS) {
+    const chars = e.bullets.reduce((n, b) => n + b.length, 0);
+    if (e.bullets.length <= KEEP_WHOLE_ENTRY_MAX_BULLETS && chars <= KEEP_WHOLE_ENTRY_MAX_CHARS) {
       // Ordinary-sized entries stay whole, so a page never starts with stray bullets from a job
       // whose title is on the previous page. Long entries may still split (between bullets).
       for (let k = 0; k < seq.length - 1; k++) seq[k]!.keep = 'with-next';
