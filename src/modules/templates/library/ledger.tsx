@@ -6,7 +6,7 @@ import {
   type TemplateComponentProps,
   type TemplateHooks,
 } from '../blocks';
-import type { TemplateDefinition } from '../types';
+import type { CatalogueTemplate } from '../types';
 
 /**
  * Ledger — Swiss editorial. An oversized name over a heavy rule, numbered section labels in a
@@ -129,7 +129,7 @@ body{counter-reset:sec}
 .l-slash{color:var(--accent);font-weight:600}
 `;
 
-export const ledger: TemplateDefinition = {
+export const ledger: CatalogueTemplate = {
   id: 'ledger',
   name: 'Ledger',
   description:

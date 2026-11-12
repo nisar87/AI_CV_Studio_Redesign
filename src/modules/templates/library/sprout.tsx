@@ -6,7 +6,7 @@ import {
   type TemplateComponentProps,
   type TemplateHooks,
 } from '../blocks';
-import type { TemplateDefinition } from '../types';
+import type { CatalogueTemplate } from '../types';
 
 /**
  * Sprout — friendly and fresh. A soft rounded header card with a portrait, rounded date chips
@@ -141,7 +141,7 @@ const css = `
 .s-tags li{padding:2pt 8pt;border-radius:12pt;background:var(--accent-soft);color:var(--accent-deep);font-weight:500;font-size:.93em;line-height:1.35}
 `;
 
-export const sprout: TemplateDefinition = {
+export const sprout: CatalogueTemplate = {
   id: 'sprout',
   name: 'Sprout',
   description:

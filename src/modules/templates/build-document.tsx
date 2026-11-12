@@ -2,10 +2,10 @@ import { renderToStaticMarkup } from 'react-dom/server.edge';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import { baseCss } from './base-css';
 import { sectionBlocks } from './blocks';
-import { designCssVars, resolveDesign, type ResolvedDesign } from './design';
+import { designCssVars, type ResolvedDesign } from './design';
+import { documentDesign } from '@/modules/design/render';
 import { fontFaceCss, type FontSource } from './fonts';
 import { RUNTIME_JS } from './paginate/runtime-source';
-import { getTemplate } from './registry';
 import { toRenderModel } from './render-model';
 
 export type BuildOptions = {
@@ -26,22 +26,38 @@ const escapeHtml = (s: string) =>
   );
 
 export function resolveDocumentDesign(doc: ResumeDocument): ResolvedDesign {
-  return resolveDesign(doc.design, getTemplate(doc.design.templateId).support);
+  return documentDesign(doc).design;
 }
 
 /**
  * Build the complete, self-contained HTML document for a CV.
  * The same string is shown in the preview iframe and printed to PDF by Chromium.
  */
-export function buildDocumentHtml(doc: ResumeDocument, opts: BuildOptions): string {
-  const template = getTemplate(doc.design.templateId);
-  const design = resolveDesign(doc.design, template.support);
+export function buildDocumentHtml(input: ResumeDocument, opts: BuildOptions): string {
+  const { template, design, doc } = documentDesign(input);
   const base = toRenderModel(doc);
   const model = template.photo === 'none' ? { ...base, photo: '' } : base;
   const aside = new Set<string>(template.asideKinds);
+  const third = new Set<string>(template.thirdKinds ?? []);
 
   const mainBlocks = model.sections
-    .filter((s) => !aside.has(s.kind))
+    .filter((s) => !aside.has(s.kind) && !third.has(s.kind))
+    .flatMap((s) => sectionBlocks(s, template.hooks, design));
+  if (template.MainEnd)
+    mainBlocks.push(
+      <div data-block="" data-keep="together" className="b-end" key="main-end">
+        <template.MainEnd model={model} design={design} />
+      </div>,
+    );
+  const asideTop = template.AsideTop
+    ? [
+        <div data-block="" data-keep="together" className="b-aside-top" key="aside-top">
+          <template.AsideTop model={model} design={design} />
+        </div>,
+      ]
+    : [];
+  const thirdBlocks = model.sections
+    .filter((s) => third.has(s.kind))
     .flatMap((s) => sectionBlocks(s, template.hooks, design));
   const asideContact =
     template.contactsIn === 'aside' && template.AsideContact && model.contacts.length > 0
@@ -77,10 +93,12 @@ export function buildDocumentHtml(doc: ResumeDocument, opts: BuildOptions): stri
           <div data-flow="main">{mainBlocks}</div>
           {asideContact.length + asideBlocks.length > 0 && (
             <div data-flow="aside">
+              {asideTop}
               {asideContact}
               {asideBlocks}
             </div>
           )}
+          {thirdBlocks.length > 0 && <div data-flow="third">{thirdBlocks}</div>}
           {Decor && (
             <div data-slot="decor">
               <Decor model={model} design={design} />
@@ -105,7 +123,7 @@ export function buildDocumentHtml(doc: ResumeDocument, opts: BuildOptions): stri
   const title = model.name ? `${model.name} — CV` : 'CV';
 
   return `<!DOCTYPE html>
-<html lang="${escapeHtml(doc.locale.split('-')[0] || 'en')}" data-template="${template.id}" data-photo="${model.photo ? '1' : '0'}">
+<html lang="${escapeHtml(doc.locale.split('-')[0] || 'en')}" data-template="${template.id}" data-photo="${model.photo ? '1' : '0'}"${template.keepColumns ? ' data-keep-columns=""' : ''}>
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${escapeHtml(csp)}">

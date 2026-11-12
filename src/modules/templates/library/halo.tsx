@@ -6,7 +6,7 @@ import {
   type TemplateComponentProps,
   type TemplateHooks,
 } from '../blocks';
-import type { TemplateDefinition } from '../types';
+import type { CatalogueTemplate } from '../types';
 
 /**
  * Halo — a centred portrait framed by a fine double ring, a graceful serif name and a calm
@@ -122,7 +122,7 @@ const css = `
 .ha-list li::before{content:'';position:absolute;left:.1em;top:calc(var(--lh) * 0.5em - .12em);width:.32em;height:.32em;transform:rotate(45deg);background:var(--accent)}
 `;
 
-export const halo: TemplateDefinition = {
+export const halo: CatalogueTemplate = {
   id: 'halo',
   name: 'Halo',
   description:

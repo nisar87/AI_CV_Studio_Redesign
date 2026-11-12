@@ -6,7 +6,7 @@ import {
   type TemplateComponentProps,
   type TemplateHooks,
 } from '../blocks';
-import type { TemplateDefinition } from '../types';
+import type { CatalogueTemplate } from '../types';
 
 /**
  * Vivid — a bold colour band with soft geometric art and a portrait that overlaps its edge.
@@ -159,7 +159,7 @@ html[data-photo="0"] .v-portrait:not(.cv-portrait--initials){display:none}
 .v-tags li{padding:1.8pt 6.5pt;border-radius:10pt;background:var(--accent-soft);color:var(--accent-deep);font-weight:500;font-size:.93em;line-height:1.35}
 `;
 
-export const vivid: TemplateDefinition = {
+export const vivid: CatalogueTemplate = {
   id: 'vivid',
   name: 'Vivid',
   description:

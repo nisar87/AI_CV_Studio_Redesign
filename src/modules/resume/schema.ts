@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { designSpecV2 } from '@/modules/design/spec';
+import { DENSITIES, FONT_PAIR_IDS, PAGE_SIZES, TEMPLATE_IDS } from './ids';
 import { PRESET_IDS } from './professions';
 
 /**
@@ -100,21 +102,7 @@ export const SECTION_KINDS = [
   'custom',
 ] as const;
 
-export const TEMPLATE_IDS = [
-  'clarity',
-  'meridian',
-  'heritage',
-  'atelier',
-  'ledger',
-  'chronicle',
-  'vivid',
-  'folio',
-  'halo',
-  'sprout',
-] as const;
-export const FONT_PAIR_IDS = ['modern', 'classic', 'humanist', 'executive', 'technical'] as const;
-export const DENSITIES = ['compact', 'balanced', 'airy'] as const;
-export const PAGE_SIZES = ['A4', 'Letter'] as const;
+export { TEMPLATE_IDS, FONT_PAIR_IDS, DENSITIES, PAGE_SIZES } from './ids';
 
 export const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Use a #RRGGBB colour');
 
@@ -132,6 +120,11 @@ export const designSpec = z.object({
       showPhoto: z.boolean().optional(),
     })
     .default({}),
+  /**
+   * Design Spec v2 (R6). When present it is the source of truth for the look; the fields above
+   * are kept in sync (design/catalogue.ts toV1) for readers that only know v1.
+   */
+  v2: designSpecV2.optional(),
 });
 
 export const basics = z.object({

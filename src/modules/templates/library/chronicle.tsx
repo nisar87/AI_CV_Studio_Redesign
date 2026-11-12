@@ -6,7 +6,7 @@ import {
   type TemplateComponentProps,
   type TemplateHooks,
 } from '../blocks';
-import type { TemplateDefinition } from '../types';
+import type { CatalogueTemplate } from '../types';
 
 /**
  * Chronicle — a career told as a timeline. Dates sit in a left gutter beside a fine vertical
@@ -144,7 +144,7 @@ const css = `
 .ch-tags li{padding:1.5pt 6.5pt;border-radius:10pt;border:.75pt solid var(--accent-line);color:var(--ink);font-size:.93em;line-height:1.35}
 `;
 
-export const chronicle: TemplateDefinition = {
+export const chronicle: CatalogueTemplate = {
   id: 'chronicle',
   name: 'Chronicle',
   description:

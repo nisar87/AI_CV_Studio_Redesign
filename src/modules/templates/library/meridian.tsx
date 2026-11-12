@@ -6,7 +6,7 @@ import {
   type TemplateComponentProps,
   type TemplateHooks,
 } from '../blocks';
-import type { TemplateDefinition } from '../types';
+import type { CatalogueTemplate } from '../types';
 
 /**
  * Meridian — confident header band, main column for experience and a tinted side column
@@ -135,7 +135,7 @@ const css = `
 .m-skills-inline{color:var(--ink-2)}
 `;
 
-export const meridian: TemplateDefinition = {
+export const meridian: CatalogueTemplate = {
   id: 'meridian',
   name: 'Meridian',
   description:

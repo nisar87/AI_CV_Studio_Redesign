@@ -6,7 +6,7 @@ import {
   type TemplateComponentProps,
   type TemplateHooks,
 } from '../blocks';
-import type { TemplateDefinition } from '../types';
+import type { CatalogueTemplate } from '../types';
 
 /**
  * Clarity — single column, calm and highly readable. The default for most people.
@@ -132,7 +132,7 @@ const css = `
 .c-tags li{padding:1.5pt 6pt;border-radius:3pt;background:var(--accent-soft);color:var(--ink);font-size:.92em}
 `;
 
-export const clarity: TemplateDefinition = {
+export const clarity: CatalogueTemplate = {
   id: 'clarity',
   name: 'Clarity',
   description: 'Single column with a clean accent line. Calm, clear and easy for anyone to read.',

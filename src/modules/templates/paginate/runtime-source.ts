@@ -85,7 +85,7 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     return e;
   }
   var decorSource = null;
-  function makePage(first, hasAside) {
+  function makePage(first, hasAside, hasThird) {
     var page = el('section', 'cv-page ' + (first ? 'cv-page--first' : 'cv-page--rest'));
     if (decorSource) {
       var decor = el('div', 'cv-decor');
@@ -102,10 +102,15 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
       aside = el('div', 'cv-aside');
       body.appendChild(aside);
     }
+    var third = null;
+    if (hasThird) {
+      third = el('div', 'cv-third');
+      body.appendChild(third);
+    }
     page.appendChild(top);
     page.appendChild(body);
     page.appendChild(el('div', 'cv-foot'));
-    return { page: page, main: main, aside: aside, top: top };
+    return { page: page, main: main, aside: aside, third: third, top: top };
   }
   function blocksOf(flow) {
     return flow ? Array.prototype.slice.call(flow.querySelectorAll(':scope > [data-block]')) : [];
@@ -133,6 +138,7 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     if (!source || !target) return null;
     var mainFlow = source.querySelector('[data-flow="main"]');
     var asideFlow = source.querySelector('[data-flow="aside"]');
+    var thirdFlow = source.querySelector('[data-flow="third"]');
     state = {
       source: source,
       target: target,
@@ -141,7 +147,9 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
       mainFlow: mainFlow,
       asideFlow: asideFlow,
       mainBlocks: blocksOf(mainFlow),
-      asideBlocks: blocksOf(asideFlow)
+      asideBlocks: blocksOf(asideFlow),
+      thirdFlow: thirdFlow,
+      thirdBlocks: blocksOf(thirdFlow)
     };
     decorSource = source.querySelector('[data-slot="decor"]');
     return state;
@@ -151,6 +159,7 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     if (st.header) st.source.insertBefore(st.header, st.source.firstChild);
     for (i = 0; i < st.mainBlocks.length; i++) st.mainFlow.appendChild(st.mainBlocks[i]);
     if (st.asideFlow) for (i = 0; i < st.asideBlocks.length; i++) st.asideFlow.appendChild(st.asideBlocks[i]);
+    if (st.thirdFlow) for (i = 0; i < st.thirdBlocks.length; i++) st.thirdFlow.appendChild(st.thirdBlocks[i]);
     st.target.innerHTML = '';
     st.source.style.display = '';
   }
@@ -172,14 +181,19 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     var running = st.running;
     var mainBlocks = st.mainBlocks;
     var asideBlocks = st.asideBlocks;
+    var thirdBlocks = st.thirdBlocks;
     var hasAside = asideBlocks.length > 0;
+    var hasThird = thirdBlocks.length > 0;
+    // "keep-columns" designs keep the side column(s) on every page instead of going full width.
+    var keepColumns = document.documentElement.hasAttribute('data-keep-columns');
     var target = st.target;
     document.documentElement.classList.toggle('cv-has-aside', hasAside);
+    document.documentElement.classList.toggle('cv-has-third', hasThird);
 
     var measure = el('div', 'cv-measure');
     target.appendChild(measure);
-    var p1 = makePage(true, hasAside);
-    var p2 = makePage(false, hasAside);
+    var p1 = makePage(true, hasAside, hasThird);
+    var p2 = makePage(false, hasAside, hasThird);
     if (header) p1.top.appendChild(header.cloneNode(true));
     if (running) p2.top.appendChild(running.cloneNode(true));
     measure.appendChild(p1.page);
@@ -188,18 +202,25 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     var capMainN = p2.main.clientHeight - R;
     var capAside1 = p1.aside ? p1.aside.clientHeight - R : 0;
     var capAsideN = p2.aside ? p2.aside.clientHeight - R : 0;
+    var capThird1 = p1.third ? p1.third.clientHeight - R : 0;
+    var capThirdN = p2.third ? p2.third.clientHeight - R : 0;
 
     // Side column first: it decides from which page on the main column can use the full width.
     var asideMeasure = hasAside ? measureFlow(asideBlocks, p2.aside) : [];
     var asidePlan = hasAside
       ? planPages(asideMeasure, function (p) { return p === 0 ? capAside1 : capAsideN; })
       : { pages: [[]], overflow: [] };
+    var thirdMeasure = hasThird ? measureFlow(thirdBlocks, p2.third) : [];
+    var thirdPlan = hasThird
+      ? planPages(thirdMeasure, function (p) { return p === 0 ? capThird1 : capThirdN; })
+      : { pages: [[]], overflow: [] };
+    var hasSide = hasAside || hasThird;
     var wideFrom;
     var capMainWide = capMainN;
     var mainMeasure;
-    if (hasAside) {
-      wideFrom = asidePlan.pages.length;
-      var p3 = makePage(false, false);
+    if (hasSide && !keepColumns) {
+      wideFrom = Math.max(hasAside ? asidePlan.pages.length : 1, hasThird ? thirdPlan.pages.length : 1);
+      var p3 = makePage(false, false, false);
       p3.page.className += ' cv-page--wide';
       if (running) p3.top.appendChild(running.cloneNode(true));
       measure.appendChild(p3.page);
@@ -213,11 +234,11 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     function capMain(p) { return p === 0 ? capMain1 : wideFrom !== undefined && p >= wideFrom ? capMainWide : capMainN; }
     var mainPlan = planPages(mainMeasure, capMain, wideFrom);
 
-    var total = Math.max(mainPlan.pages.length, asidePlan.pages.length);
+    var total = Math.max(mainPlan.pages.length, asidePlan.pages.length, thirdPlan.pages.length);
     target.removeChild(measure);
     for (var p = 0; p < total; p++) {
-      var isWide = hasAside && p > 0 && p >= wideFrom;
-      var pg = makePage(p === 0, hasAside && !isWide);
+      var isWide = hasSide && wideFrom !== undefined && p > 0 && p >= wideFrom;
+      var pg = makePage(p === 0, hasAside && !isWide, hasThird && !isWide);
       if (isWide) pg.page.className += ' cv-page--wide';
       if (p === 0 && header) pg.top.appendChild(header);
       else if (p > 0 && running) pg.top.appendChild(running.cloneNode(true));
@@ -226,6 +247,8 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
       for (k = 0; k < mi.length; k++) pg.main.appendChild(mainBlocks[mi[k]]);
       var ai = asidePlan.pages[p] || [];
       if (pg.aside) for (k = 0; k < ai.length; k++) pg.aside.appendChild(asideBlocks[ai[k]]);
+      var ti = thirdPlan.pages[p] || [];
+      if (pg.third) for (k = 0; k < ti.length; k++) pg.third.appendChild(thirdBlocks[ti[k]]);
       if (total > 1) pg.page.querySelector('.cv-foot').textContent = (p + 1) + ' / ' + total;
       target.appendChild(pg.page);
       // Height of side-column content, for designs whose column background should end with it.
@@ -237,10 +260,11 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     var lp = total - 1;
     var fillMain = lp < mainPlan.pages.length ? sum(mainMeasure, mainPlan.pages[lp], wideFrom !== undefined && lp >= wideFrom) / capMain(lp) : 0;
     var fillAside = hasAside && lp < asidePlan.pages.length ? sum(asideMeasure, asidePlan.pages[lp], false) / (lp === 0 ? capAside1 : capAsideN) : 0;
+    var fillThird = hasThird && lp < thirdPlan.pages.length ? sum(thirdMeasure, thirdPlan.pages[lp], false) / (lp === 0 ? capThird1 : capThirdN) : 0;
     return {
       pages: total,
-      overflow: mainPlan.overflow.length + asidePlan.overflow.length,
-      lastFill: Math.max(fillMain, fillAside)
+      overflow: mainPlan.overflow.length + asidePlan.overflow.length + thirdPlan.overflow.length,
+      lastFill: Math.max(fillMain, fillAside, fillThird)
     };
   }
 

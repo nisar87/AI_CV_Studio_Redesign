@@ -6,7 +6,7 @@ import {
   type TemplateComponentProps,
   type TemplateHooks,
 } from '../blocks';
-import type { TemplateDefinition } from '../types';
+import type { CatalogueTemplate } from '../types';
 
 /**
  * Heritage — centred serif masthead, ruled small-caps section titles, generous whitespace.
@@ -102,7 +102,7 @@ const css = `
 .h-skills{color:var(--ink-2);text-align:center;text-wrap:balance}
 `;
 
-export const heritage: TemplateDefinition = {
+export const heritage: CatalogueTemplate = {
   id: 'heritage',
   name: 'Heritage',
   description:

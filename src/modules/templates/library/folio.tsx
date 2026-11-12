@@ -6,7 +6,7 @@ import {
   type TemplateComponentProps,
   type TemplateHooks,
 } from '../blocks';
-import type { TemplateDefinition } from '../types';
+import type { CatalogueTemplate } from '../types';
 
 /**
  * Folio — magazine editorial. A split name (light first name, bold coloured surname), a framed
@@ -136,7 +136,7 @@ const css = `
 .f-skills li{color:var(--ink-2);padding:.6pt 0}
 `;
 
-export const folio: TemplateDefinition = {
+export const folio: CatalogueTemplate = {
   id: 'folio',
   name: 'Folio',
   description:

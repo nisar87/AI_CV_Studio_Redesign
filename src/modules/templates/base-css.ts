@@ -32,7 +32,7 @@ ul{list-style:none}
 .cv-portrait--initials{display:flex;align-items:center;justify-content:center}
 .cv-body{flex:1 1 auto;min-height:0;display:flex;align-items:stretch}
 .cv-main{flex:1 1 auto;min-width:0;overflow:hidden}
-.cv-aside{flex:none;overflow:hidden}
+.cv-aside,.cv-third{flex:none;overflow:hidden}
 /* Continuation pages without side-column content use the full width. */
 .cv-page.cv-page--wide .cv-main{padding-left:0;padding-right:0;border:0}
 /* Every block is positioned so Chrome paints (and PDF text extraction reads) blocks strictly in

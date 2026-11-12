@@ -6,7 +6,7 @@ import {
   type TemplateComponentProps,
   type TemplateHooks,
 } from '../blocks';
-import type { TemplateDefinition } from '../types';
+import type { CatalogueTemplate } from '../types';
 
 /**
  * Atelier — a deep, full-height colour sidebar carrying the portrait, contact details and
@@ -138,7 +138,7 @@ const css = `
 .cv-aside .cv-bullets{color:rgba(255,255,255,.85)}
 `;
 
-export const atelier: TemplateDefinition = {
+export const atelier: CatalogueTemplate = {
   id: 'atelier',
   name: 'Atelier',
   description:

@@ -9,9 +9,9 @@ import { ledger } from './library/ledger';
 import { meridian } from './library/meridian';
 import { sprout } from './library/sprout';
 import { vivid } from './library/vivid';
-import type { TemplateDefinition } from './types';
+import type { CatalogueTemplate } from './types';
 
-export const TEMPLATES: Record<TemplateId, TemplateDefinition> = {
+export const TEMPLATES: Record<TemplateId, CatalogueTemplate> = {
   clarity,
   meridian,
   heritage,
@@ -25,7 +25,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDefinition> = {
 };
 
 /** Display order in pickers: a spread of styles, safest first. */
-export const TEMPLATE_LIST: TemplateDefinition[] = [
+export const TEMPLATE_LIST: CatalogueTemplate[] = [
   clarity,
   atelier,
   ledger,
@@ -38,6 +38,6 @@ export const TEMPLATE_LIST: TemplateDefinition[] = [
   heritage,
 ];
 
-export function getTemplate(id: TemplateId): TemplateDefinition {
+export function getTemplate(id: TemplateId): CatalogueTemplate {
   return TEMPLATES[id] ?? clarity;
 }
