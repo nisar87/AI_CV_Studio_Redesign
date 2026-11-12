@@ -103,7 +103,7 @@ const css = `
 .b-skills{padding-top:3pt}
 .b-compact.b-first,.b-skills.b-first{padding-top:1pt}
 .ha-row{display:flex;justify-content:space-between;align-items:baseline;gap:.9em}
-.ha-title{font-family:var(--font-heading);font-weight:var(--heading-weight);font-size:1.18em;line-height:1.2;color:var(--ink)}
+.ha-title{font-family:var(--font-heading);word-spacing:.08em;font-weight:var(--heading-weight);font-size:1.18em;line-height:1.2;color:var(--ink)}
 .ha-dates{flex:none;font-size:.9em;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
 .ha-sub{margin-top:.08em;font-size:.97em}
 .ha-org{color:var(--accent);font-weight:600}
