@@ -115,7 +115,7 @@ A card gateway can add renewals later behind the same billing interface (§4.5).
 ### 4.2 Foundation B — Document engine (already built, extended)
 
 - One render path (HTML → paginated preview → identical PDF) serves **every document type**.
-- Templates declare which document types they support. A "family" shares tokens, so the CV, letter and portfolio match.
+- Templates declare which document types they support. A "family" shares tokens, so the CV, letter and portfolio match. *(As built: the cover letter is rendered from the CV's own design settings; templates do not yet declare document types.)*
 - The template authoring guide and quality gates apply to every new template and type.
 
 ### 4.3 Foundation C — Entitlements, usage and billing (the single gate)
@@ -196,7 +196,7 @@ Goal: real people sign up, make CVs, import old CVs, buy Premium, and you run it
 
 | Milestone | Scope | Done when |
 |---|---|---|
-| **R1.1 Identity and cloud documents** | Sign-in (email, Google), account page, server sessions; Firestore documents with sync; device CVs move into the account; old accounts work | A visitor's CV appears after sign-up on another device; an old user signs in; rules tests pass in CI |
+| **R1.1 Identity and cloud documents** | Sign-in (email, Google), account page, server sessions; Firestore documents with sync; device CVs move into the account; old accounts work | A visitor's CV appears after sign-up on another device; an old user signs in; rules tests pass in CI *(rules tests not built, §4.3)* |
 | **R1.2 Entitlement gate and config** | `billing` module; capabilities; usage counters; config resolver and schemas; `/api/me/entitlements`; downloads, designs and AI gated; Premium offer UI | A crafted request cannot bypass any limit (e2e); changing a design to Premium in config takes effect within 60 s |
 | **R1.3 Admin Console v1** | Dashboard, Users, Payments, Plans, Designs, Features, Payment methods, AI, Audit log | Owner changes a price, a design tier and a limit, then restores the previous version, all without code |
 | **R1.4 Get Premium (manual)** | Pass purchase page and order form (order number + WhatsApp screenshot, see §4.5); approval sets expiry; expiry ends access; *(emails for approved and rejected: not built)* | Owner completes a real payment end to end on staging, then on production |
@@ -240,7 +240,7 @@ Each later release is planned in detail only when the previous one is live, usin
 2. **Staging first.** The owner reviews on staging and approves in one message; then it goes to production. *(In practice since 2026-11-12: the owner asked for work to continue without waiting for review, so changes go to production after the full automated run, and are then verified on the live site. Staging deploys from `develop` in step and remains available for owner review.)*
 3. **Foundations are frozen interfaces.** Features use `requireUser`, `can/consume`, the config resolver and the document engine. They never work around them. Code review rejects bypasses.
 4. **No placeholders in production.** Prices, accounts and texts are decided before the milestone that needs them (§9).
-5. **Quality is automated.** Template gates, e2e journeys, rules tests and the AI evaluation run in CI. The owner judges the product, not regressions.
+5. **Quality is automated.** Template gates, e2e journeys and unit tests run in CI; the live AI evaluation runs from the Console on production *(rules tests: not built yet)*. The owner judges the product, not regressions.
 6. **Cut, don't stub.** If something cannot be finished in its milestone, it is removed from the UI rather than shown as "coming soon".
 
 ## 8. Risks and mitigations
