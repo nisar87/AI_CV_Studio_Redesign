@@ -52,7 +52,7 @@ export function AdminPayments() {
     setBusy(r.id);
     setError(null);
     try {
-      const res = await adminSend<{ expiresAt: string | null }>(
+      const res = await adminSend<{ expiresAt: string | null; emailed?: boolean }>(
         `/api/admin/payments/${r.id}`,
         'POST',
         { decision, reason },
@@ -60,9 +60,10 @@ export function AdminPayments() {
       toast.show({
         tone: 'success',
         message:
-          decision === 'approve'
+          (decision === 'approve'
             ? `Approved — Premium until ${when(res.expiresAt)}`
-            : 'Rejected — the buyer will see your message',
+            : 'Rejected — the buyer will see your message') +
+          (res.emailed ? '. The buyer was emailed.' : '. No email was sent (email is not set up).'),
       });
       load();
     } catch (e) {

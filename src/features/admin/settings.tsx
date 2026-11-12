@@ -616,6 +616,7 @@ export function AdminSettings() {
             value={draft.support.email}
             onChange={(e) => edit((c) => void (c.support.email = e.target.value.trim()))}
           />
+          <EmailCheck />
         </Section>
 
         <Section title="Announcement" hint="A short message shown at the top of every page.">
@@ -660,6 +661,56 @@ export function AdminSettings() {
         </div>
       </div>
     </>
+  );
+}
+
+/** Whether buyer emails can be sent, and a test send to the admin's own address. */
+function EmailCheck() {
+  const toast = useToast();
+  const [status, setStatus] = useState<{ configured: boolean; from: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  useEffect(() => {
+    adminGet<{ configured: boolean; from: string }>('/api/admin/notify')
+      .then(setStatus)
+      .catch(() => {});
+  }, []);
+  return (
+    <div className="mt-4 flex flex-col gap-2" data-testid="email-check">
+      <p className="text-sm">
+        {status === null
+          ? 'Checking email…'
+          : status.configured
+            ? `Buyer emails are on${status.from ? `, sent from ${status.from}` : ''}.`
+            : 'Buyer emails are off: the mailbox password (SMTP_PASSWORD) is not set on the server yet.'}
+      </p>
+      <div>
+        <Button
+          size="sm"
+          variant="secondary"
+          loading={busy}
+          onClick={async () => {
+            setBusy(true);
+            setProblem(null);
+            try {
+              const r = await adminSend<{ to: string }>('/api/admin/notify', 'POST', {});
+              toast.show({ tone: 'success', message: `Test email sent to ${r.to}` });
+            } catch (e) {
+              setProblem((e as Error).message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          Send a test email to me
+        </Button>
+      </div>
+      {problem && (
+        <p role="alert" className="text-danger text-sm">
+          {problem}
+        </p>
+      )}
+    </div>
   );
 }
 

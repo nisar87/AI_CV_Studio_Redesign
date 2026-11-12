@@ -20,7 +20,7 @@ export default function StartPage() {
         </p>
       </div>
       <Link
-        href="/cv/import"
+        href="/makeover"
         className="border-line bg-surface hover:border-primary mt-6 flex items-center gap-3 rounded-lg border p-4 transition-colors"
       >
         <FileUp aria-hidden className="text-primary shrink-0" />

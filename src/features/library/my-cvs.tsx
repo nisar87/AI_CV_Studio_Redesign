@@ -257,7 +257,7 @@ export function MyCvs() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <ButtonLink href="/start">Create a CV</ButtonLink>
-            <ButtonLink href="/cv/import" variant="secondary">
+            <ButtonLink href="/makeover" variant="secondary">
               Import a CV
             </ButtonLink>
           </div>

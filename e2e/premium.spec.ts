@@ -139,6 +139,20 @@ test('buy → admin approves → Premium starts; the audit log records it', asyn
   adminPage.once('dialog', (d) => void d.accept());
   await row.getByRole('button', { name: 'Approve' }).click();
   await expect(adminPage.getByText(/Approved — Premium until/)).toBeVisible();
+  await expect(adminPage.getByText(/The buyer was emailed/)).toBeVisible();
+  // The buyer's email (test outbox; production sends through the owner's mailbox).
+  const outbox = async () =>
+    (
+      (await (await request.get('/api/test/setup')).json()) as {
+        outbox: { subject: string; text: string }[];
+      }
+    ).outbox;
+  const mail = (await outbox()).find((m) => m.subject === `Premium is active — order ${orderNo}`);
+  expect(mail?.text).toContain('is now active until');
+  // The console can send a test email.
+  const t = await context.request.post('/api/admin/notify', { data: {} });
+  expect(t.status()).toBe(200);
+  expect((await outbox()).some((m) => m.subject === 'Test email from AI CV Studio')).toBe(true);
 
   const ent = (await (await page.request.get('/api/me/entitlements')).json()) as { plan: string };
   expect(ent.plan).toBe('premium');

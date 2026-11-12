@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from './support/test';
 
 const PAGES = [
-  { path: '/', heading: /professional CV/i },
+  { path: '/', heading: /see it transformed/i },
   { path: '/start', heading: /What kind of work do you do/i },
   { path: '/cv', heading: /My CVs/i },
   { path: '/templates', heading: /Designs/i },
@@ -10,7 +10,7 @@ const PAGES = [
   { path: '/privacy', heading: /Privacy/i },
   { path: '/terms', heading: /Terms of use/i },
   { path: '/premium', heading: /Every design/i },
-  { path: '/cv/import', heading: /Import your CV/i },
+  { path: '/makeover', heading: /Upload your CV, see it transformed/i },
   { path: '/signin', heading: /Sign in/i },
 ];
 

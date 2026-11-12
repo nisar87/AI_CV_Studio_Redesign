@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { profileDigest } from '@/modules/jobs/digest';
 import * as F from '@/modules/resume/fixtures';
 import { describe, expect, it, vi } from 'vitest';
@@ -206,6 +208,15 @@ describe('mock provider', () => {
       company: 'Swift',
       profile: profileDigest(F.driver).text,
     },
+    'import.transcribe': { kind: 'image' },
+    'makeover.diagnose': {
+      chip: 'wording',
+      presetId: 'driver',
+      items: [
+        { id: 'experience.0.bullets.0', text: 'i delivered parcels to costumers' },
+        { id: 'experience.0.bullets.1', text: 'Planned routes ZZ-INVENT' },
+      ],
+    },
     'import.structure': {
       lines: [
         'Imran Qureshi',
@@ -221,6 +232,38 @@ describe('mock provider', () => {
     const r = await runTask(id, samples[id], 0, { provider: mock, models });
     expect(r.ok ? 'ok' : JSON.stringify(r)).toBe('ok');
     if (r.ok) expect(r.findings).toEqual([]);
+  });
+
+  it('transcribes attached files and drops polish suggestions with invented facts', async () => {
+    const data = Buffer.from('xx\nCVTEXT-BEGIN\nAli Khan\nWelder\nCVTEXT-END\nCVPHOTO').toString(
+      'base64',
+    );
+    const t = await runTask('import.transcribe', { kind: 'image' }, 0, {
+      provider: mock,
+      models,
+      files: [{ mimeType: 'image/png', data }],
+    });
+    expect(t).toMatchObject({ ok: true, result: { lines: ['Ali Khan', 'Welder'], photo: true } });
+    // The scanned-PDF fixture carries its text as PDF comment lines.
+    const pdf = readFileSync(join(__dirname, '../import/__fixtures__/scanned.pdf')).toString(
+      'base64',
+    );
+    const s = await runTask('import.transcribe', { kind: 'pdf' }, 0, {
+      provider: mock,
+      models,
+      files: [{ mimeType: 'application/pdf', data: pdf }],
+    });
+    expect(s.ok && s.result.lines.slice(0, 2)).toEqual([
+      'Ahmed Raza Khan',
+      'Lahore, Pakistan | +92 300 1234567 | ahmed.raza@example.com | linkedin.com/in/ahmedraza',
+    ]);
+    const d = await runTask('makeover.diagnose', samples['makeover.diagnose'], 0, {
+      provider: mock,
+      models,
+    });
+    expect(d.ok && d.result.items).toEqual([
+      { id: 'experience.0.bullets.0', after: 'Delivered parcels to customers', reason: 'Wording' },
+    ]);
   });
 
   it('interprets the two example requests from the brief', async () => {

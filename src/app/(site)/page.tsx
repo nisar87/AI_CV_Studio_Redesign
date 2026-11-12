@@ -13,19 +13,20 @@ import {
 import { ButtonLink } from '@/components/ui/button';
 import { Container } from '@/components/ui/misc';
 import { PaperStack } from '@/features/home/paper-stack';
+import { LandingDrop } from '@/features/makeover/landing-drop';
 import { ContinueCardClient } from '@/features/library/client';
 import { PROFESSIONS } from '@/modules/resume/professions';
 
 const STEPS = [
   {
     icon: MessageSquareText,
-    title: 'Tell us what you do',
-    body: 'Pick your kind of work. We only ask the questions that matter for it — a driver’s CV is not a software engineer’s.',
+    title: 'Upload the CV you have',
+    body: 'A PDF, a Word file or a photo of a paper CV. No CV yet? Tell us what you do and answer a few simple questions instead.',
   },
   {
     icon: Palette,
-    title: 'We design it',
-    body: 'Your details are laid out in a professional design right away. Change colours, fonts or the whole look in one tap.',
+    title: 'Pick a design',
+    body: 'We choose designs that suit your kind of work and show your CV in each one. Change colours, fonts or the whole look in one tap.',
   },
   {
     icon: Download,
@@ -63,21 +64,30 @@ export default function HomePage() {
             </Suspense>
             <ContinueCardClient />
             <h1 className="font-display text-ink text-[40px] leading-[1.08] font-semibold tracking-tight sm:text-5xl lg:text-[58px]">
-              A professional CV, <span className="text-primary italic">in your own words.</span>
+              Upload your CV, <span className="text-primary italic">see it transformed.</span>
             </h1>
             <p className="text-ink-muted max-w-[34rem] text-lg leading-relaxed">
-              Tell us what kind of work you do and answer a few simple questions. We turn it into a
-              well-designed CV you can change any time and download as a PDF.
+              Drop the CV you have and see it in a professional design in under a minute — in your
+              own words, with nothing added.
             </p>
+            <div className="w-full max-w-[34rem]">
+              <LandingDrop />
+            </div>
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-              <ButtonLink href="/start" size="lg" iconAfter={<ArrowRight aria-hidden size={18} />}>
-                Create my CV
+              <ButtonLink
+                href="/start"
+                variant="secondary"
+                iconAfter={<ArrowRight aria-hidden size={18} />}
+              >
+                No CV yet? Create one
               </ButtonLink>
-              <ButtonLink href="/templates" size="lg" variant="secondary">
+              <ButtonLink href="/templates" variant="ghost">
                 See the designs
               </ButtonLink>
             </div>
-            <p className="text-ink-subtle text-sm">Takes about 10 minutes. Works on your phone.</p>
+            <p className="text-ink-subtle text-sm">
+              No sign-in needed to see the result. Works on your phone.
+            </p>
           </div>
           <PaperStack />
         </Container>

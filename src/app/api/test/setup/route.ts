@@ -4,6 +4,7 @@ import { businessConfig, DEFAULT_CONFIG } from '@/modules/billing/config';
 import { invalidateConfigCache } from '@/modules/billing/server';
 import { currentUser } from '@/modules/identity/session';
 import { getUserStore } from '@/modules/store';
+import { testOutbox } from '@/modules/notify/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,12 @@ export const dynamic = 'force-dynamic';
  * it can never touch production data. Body: { premium?, config?, resetConfig?, admin? }.
  */
 const enabled = () => process.env.E2E_TEST_HOOKS === '1' && process.env.DATA_STORE === 'memory';
+
+/** GET → the test email outbox (MAIL_OUTBOX=memory). */
+export function GET() {
+  if (!enabled()) return new NextResponse(null, { status: 404 });
+  return NextResponse.json({ outbox: testOutbox() });
+}
 
 export async function POST(req: Request) {
   if (!enabled()) return new NextResponse(null, { status: 404 });

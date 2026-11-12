@@ -18,7 +18,7 @@ export type AiImport =
 export async function importWithAi(
   lines: string[],
   key: string,
-  opts: { locale?: string } = {},
+  opts: { locale?: string; timeoutMs?: number } = {},
 ): Promise<AiImport> {
   const { mode, provider } = getAiProvider();
   if (mode === 'off' || !provider) return { ok: false, reason: 'off' };
@@ -30,7 +30,7 @@ export async function importWithAi(
   const r = await runTask('import.structure', { lines: input }, 0, {
     provider,
     models: aiModels(),
-    timeoutMs: 60_000,
+    timeoutMs: opts.timeoutMs ?? 50_000,
   });
   if (!r.ok) return { ok: false, reason: `${r.code}:${r.reason}` };
   const fidelity = checkFidelity(r.result, lines);

@@ -3,11 +3,20 @@
  * memory and never stored. Returns plain lines in reading order.
  */
 
-export const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
-const MAX_PDF_PAGES = 10;
+export const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
+export const MAX_PDF_PAGES = 10;
+/** Below this many characters a PDF is treated as a scan and read by the vision model. */
+export const SCAN_CHARS = 200;
 
-export type ImportKind = 'pdf' | 'docx';
-export type Extracted = { kind: ImportKind; lines: string[] };
+export type ImportKind = 'pdf' | 'docx' | 'doc' | 'image';
+export type Extracted = {
+  kind: ImportKind;
+  /** MIME type of the original (for the vision model). */
+  mime: string;
+  lines: string[];
+  /** A scanned PDF or a photo: the text has to be read from the image. */
+  scanned: boolean;
+};
 
 export class ImportError extends Error {
   constructor(
@@ -18,34 +27,60 @@ export class ImportError extends Error {
   }
 }
 
+const ascii = (b: Uint8Array, from: number, to: number) =>
+  String.fromCharCode(...b.subarray(from, to));
+
 /** Identify the file by its bytes (never by its name or declared type alone). */
-export function sniff(bytes: Uint8Array, name = ''): ImportKind | 'doc' | null {
+export function sniff(bytes: Uint8Array): { kind: ImportKind; mime: string } | null {
   if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46)
-    return 'pdf';
+    return { kind: 'pdf', mime: 'application/pdf' };
   if (bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04)
-    return /\.docx$/i.test(name) || !name ? 'docx' : 'docx';
+    return {
+      kind: 'docx',
+      mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    };
   // Old binary Word (.doc) files start with the OLE2 signature.
   if (bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0)
-    return 'doc';
+    return { kind: 'doc', mime: 'application/msword' };
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff)
+    return { kind: 'image', mime: 'image/jpeg' };
+  if (bytes[0] === 0x89 && ascii(bytes, 1, 4) === 'PNG')
+    return { kind: 'image', mime: 'image/png' };
+  if (ascii(bytes, 0, 4) === 'RIFF' && ascii(bytes, 8, 12) === 'WEBP')
+    return { kind: 'image', mime: 'image/webp' };
+  // HEIC/HEIF (iPhone photos): an ISO box "ftyp" with a HEIF brand.
+  if (
+    ascii(bytes, 4, 8) === 'ftyp' &&
+    /^(heic|heix|hevc|hevx|heim|heis|mif1|msf1)$/.test(ascii(bytes, 8, 12))
+  )
+    return { kind: 'image', mime: 'image/heic' };
   return null;
 }
 
-export async function extractLines(bytes: Uint8Array, name = ''): Promise<Extracted> {
-  if (bytes.byteLength > MAX_IMPORT_BYTES)
-    throw new ImportError(
-      'TOO_LARGE',
-      'That file is larger than 5 MB. Please choose a smaller file.',
-    );
-  const kind = sniff(bytes, name);
-  if (kind === 'doc')
-    throw new ImportError(
-      'UNSUPPORTED',
-      'This is an older Word file (.doc). Open it in Word and use “Save as” → .docx or PDF, then try again.',
-    );
-  if (!kind) throw new ImportError('UNSUPPORTED', 'Please choose a PDF or a Word (.docx) file.');
+export const ACCEPTED_NAMES = /\.(pdf|docx|doc|jpe?g|png|webp|heic|heif)$/i;
+
+export const TOO_LARGE_MESSAGE = 'That file is larger than 10 MB. Please choose a smaller file.';
+export const UNSUPPORTED_MESSAGE =
+  'Please choose a PDF, a Word file (.docx or .doc) or a photo of your CV (JPG, PNG or HEIC).';
+
+/**
+ * Reads the text of a CV file. Scanned PDFs and photos come back with `scanned: true` (and few or
+ * no lines); the caller sends those to the vision model (import/vision.ts).
+ */
+export async function extractLines(bytes: Uint8Array): Promise<Extracted> {
+  if (bytes.byteLength > MAX_IMPORT_BYTES) throw new ImportError('TOO_LARGE', TOO_LARGE_MESSAGE);
+  const type = sniff(bytes);
+  if (!type) throw new ImportError('UNSUPPORTED', UNSUPPORTED_MESSAGE);
+  const { kind, mime } = type;
+  if (kind === 'image') return { kind, mime, lines: [], scanned: true };
   let lines: string[];
   try {
-    lines = kind === 'pdf' ? await pdfLines(bytes) : await docxLines(bytes);
+    lines =
+      kind === 'pdf'
+        ? await pdfLines(bytes)
+        : kind === 'doc'
+          ? await docLines(bytes)
+          : await docxLines(bytes);
   } catch (e) {
     if (e instanceof ImportError) throw e;
     throw new ImportError(
@@ -55,15 +90,14 @@ export async function extractLines(bytes: Uint8Array, name = ''): Promise<Extrac
   }
   lines = tidyLines(lines.map(clean).filter((l) => l.length > 0));
   const chars = lines.join('').length;
-  if (chars < 20)
-    throw new ImportError(
-      'NO_TEXT',
-      kind === 'pdf'
-        ? 'We couldn’t find any text in this PDF. It may be a scanned picture of a CV — please upload the Word file or a PDF saved from Word instead.'
-        : 'This document looks empty.',
-    );
-  return { kind, lines };
+  if (kind === 'pdf' && chars < SCAN_CHARS) return { kind, mime, lines, scanned: true };
+  if (chars < 20) throw new ImportError('NO_TEXT', 'This document looks empty.');
+  return { kind, mime, lines, scanned: false };
 }
+
+/** The message when a scan cannot be read (vision unavailable or it found nothing). */
+export const SCAN_UNREADABLE =
+  'We couldn’t read the text in this file. It looks like a scan or a photo — please try a clearer photo, or upload the Word file or a PDF saved from Word.';
 
 /** Joins pieces a PDF split across lines (emails, date ranges) and drops page counters. */
 export function tidyLines(lines: string[]): string[] {
@@ -165,6 +199,12 @@ export function groupLines(items: Item[]): string[] {
 function near(parts: Item[], it: Item) {
   const size = it.h || 10;
   return parts.some((p) => it.x <= p.x + p.w + size * 2.5 && it.x + it.w >= p.x - size * 2.5);
+}
+
+async function docLines(bytes: Uint8Array): Promise<string[]> {
+  const { default: WordExtractor } = await import('word-extractor');
+  const doc = await new WordExtractor().extract(Buffer.from(bytes));
+  return doc.getBody().split(/\r?\n/);
 }
 
 async function docxLines(bytes: Uint8Array): Promise<string[]> {

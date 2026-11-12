@@ -3,6 +3,7 @@ import { getBusinessConfig, grantPass } from '@/modules/billing/server';
 import { actor, json, withAdmin } from '@/modules/admin/server';
 import { track } from '@/modules/metrics/server';
 import { getUserStore } from '@/modules/store';
+import { paymentEmail, sendMail } from '@/modules/notify/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -97,6 +98,22 @@ export function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
         });
       }
     }
-    return json({ ok: true, status: decided.status, expiresAt });
+    // Tell the buyer (never blocks the decision; a failure is logged and shown to the admin).
+    const { value: cfgNow } = await getBusinessConfig();
+    const mail = paymentEmail(decided, {
+      expiresAt,
+      reason: why,
+      supportEmail: cfgNow.support.email,
+    });
+    const emailed = mail
+      ? await sendMail(mail, cfgNow.support.email)
+      : ({ ok: false, reason: 'no_recipient' } as const);
+    return json({
+      ok: true,
+      status: decided.status,
+      expiresAt,
+      emailed: emailed.ok,
+      ...(emailed.ok ? {} : { emailProblem: emailed.reason }),
+    });
   });
 }

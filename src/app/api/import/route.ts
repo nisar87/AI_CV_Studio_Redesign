@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import { apiError, clientKey, createRateLimiter, requestId } from '@/lib/http';
 import { denialCode, getBusinessConfig, reserve } from '@/modules/billing/server';
-import { importWithAi } from '@/modules/import/ai';
 import { currentUser } from '@/modules/identity/session';
-import { extractLines, ImportError, MAX_IMPORT_BYTES } from '@/modules/import/extract';
-import { parseCv } from '@/modules/import/parse';
+import { ImportError, MAX_IMPORT_BYTES, TOO_LARGE_MESSAGE } from '@/modules/import/extract';
+import { readCv } from '@/modules/import/pipeline';
 import { track } from '@/modules/metrics/server';
 
 export const runtime = 'nodejs';
@@ -25,11 +24,7 @@ export async function POST(req: Request) {
     return apiError('RATE_LIMITED', 'Too many uploads. Please wait a minute.', rid);
   const length = Number(req.headers.get('content-length') ?? 0);
   if (length > MAX_IMPORT_BYTES + 64 * 1024)
-    return apiError(
-      'INVALID_INPUT',
-      'That file is larger than 5 MB. Please choose a smaller file.',
-      rid,
-    );
+    return apiError('INVALID_INPUT', TOO_LARGE_MESSAGE, rid);
 
   const user = await currentUser();
   const gate = await reserve(user, 'import.cv');
@@ -48,17 +43,12 @@ export async function POST(req: Request) {
     const localeRaw = String(form.get('locale') ?? '');
     const locale = /^[a-z]{2}-[A-Z]{2}$/.test(localeRaw) ? localeRaw : 'en-GB';
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const { kind, lines } = await extractLines(bytes, file.name);
-    // Gemini sorts the CV when available (verified copy-only); the rules are the fallback.
     const features = (await getBusinessConfig()).value.features;
-    const ai = features.ai
-      ? await importWithAi(lines, user?.uid ?? clientKey(req), { locale })
-      : ({ ok: false, reason: 'switched_off' } as const);
-    const { doc, report } = ai.ok ? ai : parseCv(lines, { locale });
-    const method = ai.ok ? 'ai' : 'rules';
+    // Gemini sorts the CV when available (verified copy-only); the rules are the fallback.
+    const read = await readCv(bytes, { key: user?.uid ?? clientKey(req), locale, ai: features.ai });
+    const { doc, report, method, kind, lines } = read;
     await track('import_ok');
-    await track(ai.ok ? 'import_ai' : 'import_rules');
-    if (/-(US|CA)$/.test(locale)) doc.design.pageSize = 'Letter';
+    await track(method === 'ai' ? 'import_ai' : 'import_rules');
     console.log(
       JSON.stringify({
         level: 'info',
@@ -67,13 +57,14 @@ export async function POST(req: Request) {
         kind,
         lines: lines.length,
         method,
-        aiFallback: ai.ok ? undefined : ai.reason,
+        scanned: read.scanned,
+        coverage: Math.round(read.coverage.ratio * 1000) / 10,
         sections: report.sections.length,
         unplaced: report.unplaced,
       }),
     );
     return NextResponse.json(
-      { document: doc, report, method },
+      { document: doc, report, method, scanned: read.scanned },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (e) {

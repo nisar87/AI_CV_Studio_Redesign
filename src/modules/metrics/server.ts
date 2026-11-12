@@ -29,6 +29,19 @@ export const EVENTS = [
   'referral_joined',
   'referral_reward',
   'coupon_used',
+  // R5 Instant Makeover funnel: landing → upload → reveal → saved/downloaded.
+  'landing_view',
+  'makeover_start',
+  'makeover_reveal',
+  'makeover_preview',
+  'makeover_fail',
+  'makeover_saved',
+  'makeover_design_switch',
+  'vision_ok',
+  'vision_fail',
+  'polish_ok',
+  'polish_fail',
+  'polish_accept',
 ] as const;
 export type MetricEvent = (typeof EVENTS)[number];
 
@@ -71,7 +84,15 @@ export async function aiCallsToday(now = Date.now()): Promise<number> {
   try {
     const rows = await getUserStore().getMetrics(day, day);
     const c = rows[0]?.counts ?? {};
-    const used = (c.ai_ok ?? 0) + (c.ai_fail ?? 0) + (c.import_ai ?? 0);
+    const used = [
+      'ai_ok',
+      'ai_fail',
+      'import_ai',
+      'vision_ok',
+      'vision_fail',
+      'polish_ok',
+      'polish_fail',
+    ].reduce((n, k) => n + (c[k] ?? 0), 0);
     budgetCache = { at: now, day, used };
     return used;
   } catch {

@@ -13,14 +13,15 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const MAX_BODY = 48 * 1024;
+const INTERNAL = new Set<string>(['import.structure', 'import.transcribe', 'makeover.diagnose']);
 const limiter = sharedAiLimiter();
 
 /** POST /api/ai/:task — docs/engineering/api-contracts.md. Logs never contain user text. */
 export async function POST(req: Request, ctx: { params: Promise<{ task: string }> }) {
   const rid = requestId();
   const { task } = await ctx.params;
-  // import.structure is internal (used by /api/import with its own checks), not a public task.
-  if (!isTaskId(task) || task === 'import.structure')
+  // Import and makeover tasks are internal (their routes have their own checks).
+  if (!isTaskId(task) || INTERNAL.has(task))
     return apiError('INVALID_INPUT', 'Unknown AI task.', rid);
 
   const { mode, provider } = getAiProvider();

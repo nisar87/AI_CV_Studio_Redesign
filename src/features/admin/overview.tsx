@@ -34,6 +34,17 @@ type Overview = {
     aiFailures: number;
     aiCallsToday: number;
     aiDailyBudget: number;
+    makeover?: {
+      landing: number;
+      started: number;
+      revealed: number;
+      previews: number;
+      failed: number;
+      saved: number;
+      designSwitches: number;
+      scansRead: number;
+      polish: number;
+    };
     premiumRequests: number;
     premiumApproved: number;
     premiumRejected: number;
@@ -146,6 +157,36 @@ export function when(iso: string | null | undefined) {
 
 const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : '—');
 
+/** Landing → upload → reveal → saved (spec §16 R5). */
+function Funnel({ m }: { m: NonNullable<Overview['numbers']['makeover']> }) {
+  const steps: [string, number][] = [
+    ['Home page visits', m.landing],
+    ['Uploads', m.started],
+    ['Reveals', m.revealed],
+    ['Saved to an account', m.saved],
+  ];
+  return (
+    <div className="border-line mt-5 border-t pt-4" data-testid="makeover-funnel">
+      <h3 className="font-semibold">Instant Makeover</h3>
+      <ol className="mt-2 grid gap-3 sm:grid-cols-4">
+        {steps.map(([label, v], i) => (
+          <li key={label}>
+            <span className="text-ink-muted block text-sm">{label}</span>
+            <span className="text-lg font-semibold tabular-nums">{v}</span>
+            {i > 0 && (
+              <span className="text-ink-muted ml-2 text-sm">{pct(v, steps[i - 1]![1])}</span>
+            )}
+          </li>
+        ))}
+      </ol>
+      <p className="text-ink-muted mt-2 text-sm">
+        {m.failed} failed · {m.previews} previews · {m.scansRead} scans or photos read ·{' '}
+        {m.designSwitches} design switches · {m.polish} polish checks
+      </p>
+    </div>
+  );
+}
+
 function Numbers({ n }: { n: Overview['numbers'] }) {
   const budgetUse = n.aiDailyBudget ? n.aiCallsToday / n.aiDailyBudget : 0;
   const rows: [string, string, string?][] = [
@@ -202,6 +243,7 @@ function Numbers({ n }: { n: Overview['numbers'] }) {
           </div>
         ))}
       </dl>
+      {n.makeover && <Funnel m={n.makeover} />}
       <div className="mt-5">
         <p className="text-sm">
           AI calls today: <strong className="tabular-nums">{n.aiCallsToday}</strong> of{' '}

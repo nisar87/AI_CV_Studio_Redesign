@@ -32,6 +32,7 @@ const ACTION_LABEL: Record<string, string> = {
   'user.disable': 'Blocked sign-in',
   'user.enable': 'Allowed sign-in',
   'payment.approve': 'Approved payment',
+  'email.test': 'Sent a test email',
   'payment.reject': 'Rejected payment',
 };
 

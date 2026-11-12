@@ -49,6 +49,8 @@ export default defineConfig({
       env: {
         RATE_LIMIT_PDF_PER_MINUTE: '1000',
         RATE_LIMIT_IMPORT_PER_MINUTE: '1000',
+        MAKEOVER_VISITOR_PER_DAY: '100000',
+        MAIL_OUTBOX: 'memory',
         // AI e2e runs use the deterministic mock provider; generous limits for parallel workers.
         AI_PROVIDER: 'mock',
         AI_REQUESTS_PER_10_MIN: '1000',

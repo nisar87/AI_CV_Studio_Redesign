@@ -33,13 +33,13 @@ test('set up the profile from a CV, then make a new CV from it', async ({ page }
 });
 
 test('an imported CV can become the career profile', async ({ page }) => {
-  await page.goto('/cv/import');
+  await page.goto('/makeover');
   await page
-    .getByTestId('cv-file')
+    .getByTestId('makeover-file')
     .setInputFiles(join(process.cwd(), 'src/modules/import/__fixtures__/word-sales.docx'));
-  await expect(page.getByTestId('import-done')).toBeVisible();
+  await expect(page.getByTestId('makeover-done')).toBeVisible({ timeout: 30_000 });
   await page.getByLabel(/Use this as my career profile/).check();
-  await page.getByRole('button', { name: 'Open in the editor' }).click();
+  await page.getByTestId('makeover-edit').click();
   await expect(page.getByText('This is your career profile')).toBeVisible();
   await expect(page.getByLabel('Full name')).toHaveValue('Ahmed Raza Khan');
 });

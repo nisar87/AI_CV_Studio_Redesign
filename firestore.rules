@@ -1,0 +1,32 @@
+rules_version = '2';
+
+// AI CV Studio — Firestore security rules.
+//
+// Every read and write of the studio's data is made by the server with the Admin SDK, which is not
+// subject to these rules. Browsers never talk to Firestore directly, so no client access is
+// allowed to any studio collection — not even to a signed-in person's own documents.
+//
+// IMPORTANT for deployment: this Firebase project is shared with other services (career-os).
+// Merge these `match` blocks into the project's existing rules instead of replacing them; the
+// final catch-all below is only safe if nothing else in the project uses client access.
+// Tested by scripts/rules-test.mjs against the Firestore emulator (CI).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{path=**} { allow read, write: if false; }
+    match /documents/{path=**} { allow read, write: if false; }
+    match /versions/{path=**} { allow read, write: if false; }
+    match /jobs/{path=**} { allow read, write: if false; }
+    match /usage/{path=**} { allow read, write: if false; }
+    match /passes/{path=**} { allow read, write: if false; }
+    match /paymentRequests/{path=**} { allow read, write: if false; }
+    match /config/{path=**} { allow read, write: if false; }
+    match /adminAudit/{path=**} { allow read, write: if false; }
+    match /metrics/{path=**} { allow read, write: if false; }
+    match /shares/{path=**} { allow read, write: if false; }
+    match /portfolios/{path=**} { allow read, write: if false; }
+    match /referralCodes/{path=**} { allow read, write: if false; }
+
+    // Catch-all (remove when merging with rules of other services in this project).
+    match /{path=**} { allow read, write: if false; }
+  }
+}

@@ -10,9 +10,13 @@ export type GenerateRequest = {
   maxTokens: number;
   temperature: number;
   signal?: AbortSignal;
+  /** Attached files (vision tasks): a PDF or page images, base64-encoded. */
+  files?: AiFile[];
   /** Task id and parsed input — used only by the deterministic mock provider. */
   task: { id: TaskId; input: unknown };
 };
+
+export type AiFile = { mimeType: string; data: string };
 
 export type GenerateResult = {
   /** Raw text returned by the model (expected to be JSON). */

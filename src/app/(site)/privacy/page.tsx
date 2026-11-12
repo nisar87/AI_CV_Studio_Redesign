@@ -52,9 +52,12 @@ export default function PrivacyPage() {
             them. Unpublishing or deleting the page takes it down straight away.
           </li>
           <li>
-            <strong>Importing a CV:</strong> the file is read on our server and not kept. Its text
-            may be sent to Google’s Gemini service to sort it into sections; we then check that
-            nothing was added that isn’t in your file.
+            <strong>Uploading a CV (makeover or import):</strong> the file is read on our server and
+            not kept. Its text may be sent to Google’s Gemini service to sort it into sections; we
+            then check that nothing was added that isn’t in your file. A scanned PDF or a photo of a
+            CV is sent to Gemini as a picture so its text can be read. The “before” view of your
+            original is drawn in your own browser. If you use the polish suggestions, the lines
+            concerned are sent to Gemini to suggest fixes.
           </li>
           <li>
             <strong>Writing help in the editor:</strong> only the part you asked about (for example

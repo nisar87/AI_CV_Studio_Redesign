@@ -86,7 +86,7 @@ export function ProfileSetup() {
           <p className="text-ink-muted text-sm">
             Upload a PDF or Word file, then use it as your profile.
           </p>
-          <Link href="/cv/import" className="text-primary font-semibold">
+          <Link href="/makeover" className="text-primary font-semibold">
             Import a CV
           </Link>
         </Card>

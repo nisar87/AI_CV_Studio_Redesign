@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: 'Help' };
 const FAQ: { q: string; a: React.ReactNode }[] = [
   {
     q: 'Do I need an account?',
-    a: 'You can make and preview a CV without one. To download a PDF or import a CV, create a free account — your CVs are then saved in your account and appear on every device you sign in on.',
+    a: 'You can make and preview a CV without one, and see your uploaded CV made over. To download a PDF or save an uploaded CV, create a free account — your CVs are then saved in your account and appear on every device you sign in on.',
   },
   {
     q: 'Where is my CV saved?',
@@ -20,7 +20,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: 'Can I bring in the CV I already have?',
-    a: 'Yes. Choose “Import a CV” and upload a PDF or Word (.docx) file. We read the text into editable sections without adding anything, so you can give it a new design. Scanned pictures of a CV can’t be read yet.',
+    a: 'Yes. Drop it on the home page (or choose “Import a CV”): a PDF, a Word file (.docx or .doc) or a clear photo of a paper CV, up to 10 MB. We read the text into editable sections without adding anything and show it in designs chosen for your kind of work. Text read from a photo or a scan may contain a misread word, so check names and numbers.',
   },
   {
     q: 'What is an “applicant tracking system”?',

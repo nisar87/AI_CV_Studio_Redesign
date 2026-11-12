@@ -1,6 +1,6 @@
 # Project Status (checkpoint)
 
-_Last updated: 2026-11-12 (live on Firebase App Hosting at aicvstudio.app)_
+_Last updated: 2026-11-13 (live on Firebase App Hosting at aicvstudio.app)_
 
 ## Current state
 
@@ -19,6 +19,7 @@ _Last updated: 2026-11-12 (live on Firebase App Hosting at aicvstudio.app)_
 | R2 Job-ready | `r2/job-ready` | ✅ Live on aicvstudio.app (2026-11-12) |
 | R3 Professional presence | `r3/presence` | ✅ Live on aicvstudio.app (2026-11-12) |
 | R4 Growth | `r4/growth` | ✅ Live on aicvstudio.app (2026-11-12); card gateway and Urdu deferred |
+| R5 Instant Makeover | `r5/makeover` | ✅ Built and tested (2026-11-13); see the R5 section for production verification |
 
 ## Phase 0 report
 
@@ -481,6 +482,43 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
 - **Tests:** 172 unit tests; full e2e 271 passed, 0 failed.
 - **Production:** sales are open (EasyPaisa, support email and WhatsApp number set by the owner on 2026-11-12).
 
+## Release 5 — Instant Makeover (2026-11-13)
+
+Spec: `docs/product/complete-studio-spec.md` §6 and §16 (R5). Owner decisions in Appendix C.
+
+- **The flow (`/makeover`, and the drop zone on the home page):**
+  - Accepts PDF (text or scanned), Word `.docx` and old `.doc`, and photos (JPG, PNG, WebP, HEIC), up to 10 MB and 10 pages. The type is detected from the bytes.
+  - Progress view, then the reveal: the original under the new CV with a before/after slider, and a strip of 6 designs rendered with the person's own content.
+  - No sign-in needed to see the result. Download or save asks a visitor to create an account; the result is kept in the browser through sign-up and saved automatically when they return.
+  - `/cv/import` now redirects to `/makeover` (the old import screen was removed). The `/api/import` API stays and uses the same reading pipeline.
+- **Server (`src/modules/import/pipeline.ts`):** extract text → vision for scans and photos (`import.transcribe`, the file sent to Gemini as inline data) → `import.structure` (copy-only, verified) or the rules → coverage check (`import/coverage.ts`, distinct content words, target 97%). The AI steps share a 55-second time budget so a request never hits the host's time limit.
+- **Profession (`makeover/profile.ts`):** rules first, as the spec allows: weighted keywords over headline, job titles and summary, plus years from the dates. No AI call.
+- **Ranking (`makeover/rank.ts`):** a pure, tested score per design (profession 0–40, length 0–20, photo 0–15, density 0–15). The six always include a single-column, a side-column and a bold design. The pre-selected design is the best one the person can download.
+- **Polish chips (`makeover/polish.ts`, `/api/makeover/polish`, task `makeover.diagnose`):**
+  - Counts are worked out without AI. Suggestions are fetched only when a chip is opened, shown as before/after pairs, and applied only when accepted.
+  - Every suggestion passes the truth guard. A suggestion with an unsupported number, name or credential is dropped, never shown (tested end to end with an injected "45%").
+  - "Fix wording" is free once per makeover. "Strengthen bullets" and later wording checks are AI actions (Premium). "Fill gaps" asks for missing contact details inline and lists the rest for the editor.
+- **Allowances:**
+  - A signed-in account with imports left gets a full makeover; one `import.cv` use is counted at the reveal.
+  - A visitor gets a preview (3 a day per network address); one import is counted when it is saved after sign-up (`/api/makeover/claim`).
+  - An account over its monthly imports gets one preview a day, watermarked, which cannot be saved.
+  - The server keeps only counters per makeover (`usage/mk_<id>_polish`), never CV content. Crafted claim and polish requests are refused (tested).
+- **Buyer emails (`src/modules/notify/`):** approving or rejecting an order emails the buyer (order number, end date or reason). Admin → Settings shows whether email is on and can send a test email. SMTP through Namecheap Private Email; skipped and logged until the owner sets the mailbox password (see Owner to-do).
+- **Firestore rules:** `firestore.rules` denies all browser access to every studio collection (the server uses the Admin SDK). `npm run test:rules` checks it in the Firestore emulator; it runs in CI. Deploying the rules is an owner step, because the project is shared with career-os.
+- **Funnel:** Admin overview shows home page visits → uploads → reveals → saved, plus previews, failures, scans read, design switches and polish checks. AI vision and polish calls count towards the daily AI budget.
+- **Privacy and Help pages** describe photo and scan reading and the polish suggestions.
+- **Deviations from the spec (recorded):**
+  - The "before" view is drawn in the browser (PDF page 1, the photo, or the Word file's text). Nothing is stored on the server, so it is not shown after the sign-in round trip.
+  - Progress steps move on a timer while the single request runs, and are completed when the answer arrives.
+  - A photo in the original is not cropped out and offered yet (it needs image coordinates). Planned with the R6 engine work.
+  - Unplaced lines get "Add to my CV" and "Leave out" buttons instead of drag targets.
+- **Tests:**
+  - 198 unit tests: ranking and the variety rule on every fixture, profile detection, coverage, polish addressing, vision and diagnose tasks with the mock, notify emails, `.doc`/scan/photo detection.
+  - Synthetic corpus in `src/modules/import/__fixtures__`: Word `.docx` and `.doc`, text PDF, two-column PDF, scanned PDF, JPG and PNG photos, and a CV with wording problems.
+  - e2e `makeover.spec.ts`: home page drop → reveal with 6 designs and 3 layout families; before/after slider; design switch; a visitor's makeover survives sign-up and appears on another device in the chosen design; scans and photos; allowance and watermark; free wording polish; the invented fact is never shown; Premium-only bullets; crafted requests refused. Buyer email checked in `premium.spec.ts`.
+  - Full e2e: 284 passed, 0 failed.
+- **Left for the owner (spec §6.6 human parts):** the 40 real CVs (10 Word, 10 builder PDFs, 10 two-column, 5 scans, 5 phone photos) and the timing measurements on production.
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.
@@ -489,10 +527,14 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
 4. **Alerts:** Cloud Monitoring → Alerting → add an email notification channel to the "AI CV Studio production" policy.
 5. **Staging Google sign-in:** add the staging domain to Firebase Auth → Authorised domains.
 6. **Git tags:** run `git push origin --tags` from a local clone.
+7. **Buyer emails:** create the mailbox password secret (`firebase apphosting:secrets:set SMTP_PASSWORD`, then `firebase apphosting:secrets:grantaccess SMTP_PASSWORD --backend aicvstudio`), then uncomment the SMTP lines at the end of `apphosting.yaml` (set `SMTP_USER` to the mailbox). Then use Admin → Settings → "Send a test email to me".
+8. **Firestore rules:** merge `firestore.rules` into the project's rules (career-os shares the project) and publish them in the Firebase console.
+9. **Makeover acceptance with real CVs:** try 40 real CVs (10 Word, 10 PDFs from other builders, 10 two-column, 5 scans, 5 phone photos) on `/makeover` and note any wrong or missing text.
+10. **Later releases:** the 30-person design preference test (R7), an outside reviewer, and publishing the browser extension to the Chrome Web Store (R10).
 
 ## Next action (exact)
 
-1. All planned releases (R1–R4) are built. Next: watch real usage in the Admin overview after sales open, then plan the next release from those numbers (master plan §6). Candidates: card gateway (after business registration), Urdu interface, application reminders.
+1. R5 Instant Makeover is built and tested. Next: R6 Design engine (spec §7 and §16): Design Spec v2, normalise, composer and primitives; the 10 designs as specs with a pixel-identical migration test; schema v2; Design Studio levels 2 and 3; Fit to pages; ATS-safe toggle; saved designs; the engine behind a switch.
 
 ## Deployment (2026-11-12)
 

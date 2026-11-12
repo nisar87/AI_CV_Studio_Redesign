@@ -2,7 +2,7 @@ import 'server-only';
 import { z } from 'zod';
 import type { Finding } from './guard';
 import { placeholderQuestions } from './placeholders';
-import { AiProviderError, type AiProvider } from './provider';
+import { AiProviderError, type AiFile, type AiProvider } from './provider';
 import { taskInputs, taskOutputs, type TaskId, type TaskOutput } from './schemas';
 import { TASKS, type TaskDef } from './tasks';
 
@@ -26,6 +26,8 @@ export type RunDeps = {
   provider: AiProvider;
   models: { fast: string; smart: string };
   timeoutMs?: number;
+  /** Files sent with the request (vision tasks). */
+  files?: AiFile[];
   /** Injected for tests. */
   sleep?: (ms: number) => Promise<void>;
 };
@@ -93,6 +95,7 @@ export async function runTask<T extends TaskId>(
           maxTokens: task.maxTokens,
           temperature,
           signal: AbortSignal.timeout(deps.timeoutMs ?? 20_000),
+          ...(deps.files ? { files: deps.files } : {}),
           task: { id, input },
         });
         usage.inputTokens += res.usage.inputTokens;

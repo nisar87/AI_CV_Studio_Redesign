@@ -158,7 +158,11 @@ describe('parseCv', () => {
 
 describe('real files', () => {
   it('rejects unsupported and old Word files by their bytes', async () => {
-    expect(sniff(new Uint8Array([0xd0, 0xcf, 0x11, 0xe0]))).toBe('doc');
+    expect(sniff(new Uint8Array([0xd0, 0xcf, 0x11, 0xe0]))?.kind).toBe('doc');
+    expect(sniff(fixture('scan-photo.jpg'))).toEqual({ kind: 'image', mime: 'image/jpeg' });
+    expect(sniff(fixture('scan-photo.png'))).toEqual({ kind: 'image', mime: 'image/png' });
+    const heic = new Uint8Array([0, 0, 0, 24, ...Buffer.from('ftypheic')]);
+    expect(sniff(heic)).toEqual({ kind: 'image', mime: 'image/heic' });
     await expect(extractLines(new Uint8Array([0x47, 0x49, 0x46, 0x38]))).rejects.toBeInstanceOf(
       ImportError,
     );
@@ -170,9 +174,22 @@ describe('real files', () => {
     ).toEqual(['Skills', '• Excel & Word']);
   });
 
-  for (const file of ['word-sales.docx', 'word-sales.pdf']) {
+  it('marks scanned PDFs and photos for the vision step', async () => {
+    expect(await extractLines(fixture('scanned.pdf'))).toMatchObject({
+      kind: 'pdf',
+      scanned: true,
+    });
+    expect(await extractLines(fixture('scan-photo.png'))).toMatchObject({
+      kind: 'image',
+      mime: 'image/png',
+      scanned: true,
+      lines: [],
+    });
+  });
+
+  for (const file of ['word-sales.docx', 'word-sales.pdf', 'word-sales.doc']) {
     it(`imports a typical Word CV (${file})`, async () => {
-      const { lines } = await extractLines(fixture(file), file);
+      const { lines } = await extractLines(fixture(file));
       const { doc, report } = parseCv(lines);
       expect(resumeDocument.safeParse(doc).success).toBe(true);
       expect(doc.basics).toMatchObject({
@@ -213,7 +230,7 @@ describe('real files', () => {
   }
 
   it('imports a two-page, two-column PDF in reading order', async () => {
-    const { lines } = await extractLines(fixture('two-column.pdf'), 'two-column.pdf');
+    const { lines } = await extractLines(fixture('two-column.pdf'));
     const { doc } = parseCv(lines);
     expect(doc.basics.name).toBe('Daniel Okafor');
     // Jobs from page 2 (printed after the side column) rejoin the work history.

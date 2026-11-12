@@ -21,6 +21,8 @@ export const TASK_IDS = [
   'letter.write',
   'linkedin.write',
   'interview.prep',
+  'import.transcribe',
+  'makeover.diagnose',
 ] as const;
 export type TaskId = (typeof TASK_IDS)[number];
 
@@ -81,6 +83,21 @@ export const taskInputs = {
   }),
   'import.structure': z.object({
     lines: z.array(z.string().max(600)).min(1).max(400),
+  }),
+  /** The file itself travels as an attachment (RunDeps.files); this only says what it is. */
+  'import.transcribe': z.object({
+    kind: z.enum(['pdf', 'image']),
+  }),
+  'makeover.diagnose': z.object({
+    chip: z.enum(['wording', 'bullets']),
+    presetId: z.enum(PRESET_IDS),
+    /** Addressed lines of the CV, e.g. { id: "experience.0.bullets.2", text: "..." }. */
+    items: z
+      .array(z.object({ id: z.string().max(80), text: z.string().min(1).max(600) }))
+      .min(1)
+      .max(60),
+    /** Other words of the CV (names, employers, titles) the guard may accept. */
+    context: z.string().max(12_000).default(''),
   }),
   'job.match': z.object({
     advert: z.string().min(80).max(12_000),
@@ -157,6 +174,22 @@ export const taskOutputs = {
   'write.improveBullets': z.object({ bullets: z.array(z.string().min(1).max(260)).min(1).max(12) }),
   'write.fromNotes': z.object({ bullets: z.array(z.string().min(1).max(260)).min(1).max(8) }),
   'suggest.skills': z.object({ skills: z.array(z.string().min(1).max(60)).min(1).max(12) }),
+  'import.transcribe': z.object({
+    lines: z.array(z.string().max(600)).max(600),
+    /** True when the page shows a photo of the person. */
+    photo: z.boolean(),
+  }),
+  'makeover.diagnose': z.object({
+    items: z
+      .array(
+        z.object({
+          id: z.string().max(80),
+          after: z.string().min(1).max(600),
+          reason: z.string().max(160),
+        }),
+      )
+      .max(60),
+  }),
   /** One generic entry shape for every kind keeps the schema small (see import/ai.ts mapping). */
   'import.structure': z.object({
     name: z.string().max(120),

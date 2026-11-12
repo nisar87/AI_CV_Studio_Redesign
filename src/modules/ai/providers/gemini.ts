@@ -33,7 +33,17 @@ export function createGeminiProvider({
       : `${req.user}\n\nReply with JSON matching this JSON Schema:\n${JSON.stringify(leanSchema(req.schema))}`;
     const body = {
       systemInstruction: { parts: [{ text: req.system }] },
-      contents: [{ role: 'user', parts: [{ text: user }] }],
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            ...(req.files ?? []).map((f) => ({
+              inlineData: { mimeType: f.mimeType, data: f.data },
+            })),
+            { text: user },
+          ],
+        },
+      ],
       generationConfig: {
         responseMimeType: 'application/json',
         ...(withSchema ? { responseJsonSchema: leanSchema(req.schema) } : {}),

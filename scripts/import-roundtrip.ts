@@ -22,7 +22,7 @@ async function main() {
     for (const [fx, src] of Object.entries(FIXTURES)) {
       const file = `artifacts/visual/templates/${t}-${fx}.pdf`;
       if (!existsSync(file) || fx === 'extreme') continue;
-      const { lines } = await extractLines(new Uint8Array(readFileSync(file)), file);
+      const { lines } = await extractLines(new Uint8Array(readFileSync(file)));
       const { doc } = parseCv(lines);
       const want = {
         name: src.basics.name,

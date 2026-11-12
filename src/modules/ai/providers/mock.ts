@@ -3,7 +3,7 @@ import { docToStructure } from '@/modules/import/structure';
 import { PRESETS } from '@/modules/resume/presets';
 import { TEMPLATE_CATALOG } from '../catalog';
 import { guessDesign, guessPreset, guessTitle } from '../heuristics';
-import type { AiProvider, GenerateRequest } from '../provider';
+import type { AiFile, AiProvider, GenerateRequest } from '../provider';
 import type { DesignChoice, ParsedInput, TaskId } from '../schemas';
 
 /**
@@ -34,7 +34,7 @@ function variant<T>(items: T[], attempt: number): T[] {
   return [...items.slice(1), items[0]!];
 }
 
-function answer(task: TaskId, input: unknown, attempt: number): unknown {
+function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] = []): unknown {
   switch (task) {
     case 'intake.interpret': {
       const i = input as ParsedInput<'intake.interpret'>;
@@ -248,7 +248,74 @@ function answer(task: TaskId, input: unknown, attempt: number): unknown {
       const i = input as ParsedInput<'import.structure'>;
       return docToStructure(parseCv(i.lines).doc);
     }
+    case 'import.transcribe':
+      return transcribe(files);
+    case 'makeover.diagnose': {
+      const i = input as ParsedInput<'makeover.diagnose'>;
+      return {
+        items: i.items.flatMap((it) => {
+          // Test hook: lets e2e prove an invented number never reaches the screen.
+          if (/ZZ-INVENT/.test(it.text))
+            return [
+              { id: it.id, after: `${tidy(it.text)} and raised sales by 45%`, reason: 'Test' },
+            ];
+          const after = i.chip === 'wording' ? fixWording(it.text) : tidy(it.text);
+          return after && after !== it.text
+            ? [
+                {
+                  id: it.id,
+                  after,
+                  reason: i.chip === 'wording' ? 'Wording' : 'Starts with the action',
+                },
+              ]
+            : [];
+        }),
+      };
+    }
   }
+}
+
+const MISSPELT: [RegExp, string][] = [
+  [/\bresponsable\b/gi, 'responsible'],
+  [/\bmanagment\b/gi, 'management'],
+  [/\brecieved\b/gi, 'received'],
+  [/\bcostumers\b/gi, 'customers'],
+  [/\bteh\b/gi, 'the'],
+];
+function fixWording(t: string): string {
+  let out = t
+    .trim()
+    .replace(/^i\s+/i, '')
+    .replace(/\s{2,}/g, ' ');
+  for (const [re, rep] of MISSPELT) out = out.replace(re, rep);
+  return cap(out);
+}
+
+/**
+ * Demo "vision": test files carry their text between CVTEXT-BEGIN / CVTEXT-END markers (e2e
+ * fixtures); anything else gets a fixed sample CV.
+ */
+function transcribe(files: AiFile[]) {
+  const raw = files[0] ? Buffer.from(files[0].data, 'base64').toString('utf8') : '';
+  const m = /CVTEXT-BEGIN\r?\n([\s\S]*?)\r?\n(?:%\s?)?CVTEXT-END/.exec(raw);
+  const lines = m
+    ? m[1]!.split(/\r?\n/)
+    : [
+        'Sara Malik',
+        'Staff Nurse',
+        'sara.malik@example.com · 0300 1234567 · Lahore',
+        'Experience',
+        'Staff Nurse, Services Hospital, Lahore',
+        'Jan 2019 – Present',
+        'Cared for patients on a busy surgical ward',
+        'Education',
+        'BSc Nursing, University of Health Sciences, 2018',
+      ];
+  return {
+    // PDF fixtures carry the text as "% " comment lines.
+    lines: lines.map((l) => l.replace(/^%\s?/, '').trim()).filter(Boolean),
+    photo: /CVPHOTO/.test(raw),
+  };
 }
 
 export function createMockProvider(): AiProvider {
@@ -256,7 +323,7 @@ export function createMockProvider(): AiProvider {
     id: 'mock',
     async generate(req: GenerateRequest) {
       const attempt = Number(/Attempt (\d+)/.exec(req.user)?.[1] ?? 0);
-      const text = JSON.stringify(answer(req.task.id, req.task.input, attempt));
+      const text = JSON.stringify(answer(req.task.id, req.task.input, attempt, req.files));
       return { text, usage: { inputTokens: 0, outputTokens: 0 } };
     },
   };
