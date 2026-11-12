@@ -31,3 +31,15 @@ describe('diffSummary', () => {
     expect(out.some((l) => l.startsWith('passes[year]: —'))).toBe(true);
   });
 });
+
+describe('discount codes', () => {
+  it('names a new code by its code', () => {
+    const code = { code: 'LAUNCH20', percentOff: 20, active: true };
+    expect(diffSummary({ coupons: [] }, { coupons: [code] })).toEqual([
+      `coupons[LAUNCH20]: — → ${JSON.stringify(code)}`,
+    ]);
+    expect(diffSummary({ coupons: [code] }, { coupons: [{ ...code, active: false }] })).toEqual([
+      'coupons[LAUNCH20].active: true → false',
+    ]);
+  });
+});
