@@ -20,7 +20,7 @@ _Last updated: 2026-11-13 (live on Firebase App Hosting at aicvstudio.app)_
 | R3 Professional presence | `r3/presence` | ✅ Live on aicvstudio.app (2026-11-12) |
 | R4 Growth | `r4/growth` | ✅ Live on aicvstudio.app (2026-11-12); card gateway and Urdu deferred |
 | R5 Instant Makeover | `r5/makeover` | ✅ Live on aicvstudio.app (2026-11-13), verified with real Gemini |
-| R6 Design engine | `r6/design-engine` | ✅ Built and tested (2026-11-13); see the R6 section for production |
+| R6 Design engine | `r6/design-engine` | ✅ Live on aicvstudio.app (2026-11-13); the Design Studio switch is off until the owner turns it on |
 
 ## Phase 0 report
 
@@ -571,6 +571,13 @@ Spec: `docs/product/complete-studio-spec.md` §7 and §16 (R6), Appendix A.
   - **300 random specs** lay out in Chrome with zero overflow.
   - **PDF parity for 12 composed layouts × 2 fixtures:** PDF page count = preview page count, and the name is extracted before the first job.
   - **Studio e2e:** switch, detach and undo re-attach, ATS-safe, Fit to one page (2 → 1 page), saved designs on another CV, server-side spec cleaning, the Premium gate, and axe.
+- **Verified on production (2026-11-13):**
+  - Existing CVs open and render as before.
+  - A composed design (ATS-safe version of a side-column band design) printed to a 1-page PDF in production Chromium.
+  - A custom design is refused to a free account with the Premium message (402).
+  - `/api/designs` answers.
+  - The Design Studio switch is present and off.
+  - CI green on the branch, then merged to `main` and `develop`.
 - **Deviations from the spec (recorded):**
   - `templates/library/` is **kept** as the signature code of the attached catalogue designs instead of being deleted. A generic re-implementation could not be pixel-identical, and the spec's gate is the identical migration. New designs (R7) are pure specs.
   - Schema v2 is **additive** (`design.v2` beside the v1 fields), not a rename with a data migration: no risk to stored CVs.
