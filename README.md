@@ -1,5 +1,9 @@
 # AI CV Studio
 
+![AI CV Studio — Instant Makeover](docs/screenshots/02-makeover-result.png)
+
+More screenshots: [docs/screenshots](docs/screenshots/README.md).
+
 An AI-first career document studio: tell us what kind of work you do, answer a few plain-language questions, pick or describe a look, and get a professional CV you can edit and download as a PDF — free, without an account.
 
 - **Status, verification results and the exact next step:** [`docs/STATUS.md`](docs/STATUS.md)

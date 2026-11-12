@@ -65,6 +65,12 @@ export function normalise(input: DesignSpecV2, doc?: ResumeDocument): Normalised
       s.placement.third = [];
     }
     s.placement.third = s.placement.third.filter((k) => !s.placement.side.includes(k));
+    // Three columns with nothing chosen for the right one: share the side sections across both.
+    if (L.type === 'rails' && !s.placement.third.length && s.placement.side.length >= 2) {
+      const half = Math.ceil(s.placement.side.length / 2);
+      s.placement.third = s.placement.side.slice(half);
+      s.placement.side = s.placement.side.slice(0, half);
+    }
     if (!s.placement.side.length && !s.placement.third.length && s.placement.contactIn !== 'side') {
       s.placement.side =
         L.type === 'rails'

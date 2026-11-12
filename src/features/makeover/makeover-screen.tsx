@@ -316,7 +316,9 @@ export function MakeoverScreen() {
           <Check aria-hidden className="text-primary" /> Here’s your new CV
         </h2>
         <p className="text-ink-muted">
-          {profession ? `Read as a ${profession.toLowerCase()} CV. ` : ''}
+          {profession
+            ? `Read as ${/^[aeiou]/i.test(profession) ? 'an' : 'a'} ${profession.toLowerCase()} CV. `
+            : ''}
           {result.method === 'ai'
             ? 'Sorted by AI, then checked word by word against your file — nothing was added.'
             : 'Everything is in editable sections. Check each one before you send it.'}

@@ -150,6 +150,16 @@ describe('normalise', () => {
     expect(r.spec.layout.sideWidthPct).toBe(27);
     expect(r.spec.placement.third).toEqual(['awards']);
   });
+  it('three columns share the side sections when the right column is empty', () => {
+    const r = normalise(
+      parseSpec({
+        layout: { type: 'rails' },
+        placement: { side: ['skills', 'languages', 'awards'] },
+      }),
+    );
+    expect(r.spec.placement.side).toEqual(['skills', 'languages']);
+    expect(r.spec.placement.third).toEqual(['awards']);
+  });
   it('ATS-safe makes one plain column with standard headings and no art', () => {
     const r = normalise(parseSpec({ ...catalogueSpec('atelier'), atsSafe: true }));
     expect(r.spec.baseId).toBeUndefined();
