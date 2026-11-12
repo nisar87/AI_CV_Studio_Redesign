@@ -83,6 +83,32 @@ const CREDENTIAL_WORDS = [
 ];
 const CREDENTIAL_SET = new Set(CREDENTIAL_WORDS);
 
+/** Word families: "certification" is not new if the person wrote "certified" or "certificate". */
+const CREDENTIAL_FAMILIES = [
+  /^certif/,
+  /^licen[cs]/,
+  /^qualifi/,
+  /^regist/,
+  /^accredit/,
+  /^charter/,
+  /^award/,
+  /^master/,
+  /^bachelor/,
+];
+function credentialKnown(w: string, source: Source) {
+  const fam = CREDENTIAL_FAMILIES.find((re) => re.test(w));
+  if (!fam) return false;
+  for (const x of source.words) if (fam.test(x)) return true;
+  return false;
+}
+
+/** "NMC-registered" is known when "NMC" and "registered" both appear in the source. */
+const partsKnown = (w: string, source: Source) =>
+  /[-/]/.test(w) && w.split(/[-/]+/).every((p) => !p || source.words.has(p));
+
+/** Sentence openers never joined into a flagged name ("A GMC-registered…" flags only the name). */
+const OPENERS = new Set(['a', 'an', 'the', 'my', 'our', 'this', 'as', 'in', 'at', 'with', 'for']);
+
 /** Capitalised words that are not names (still checked if they carry a number). */
 const ALLOW_CAPITALISED = new Set(['i', 'cv', 'ok']);
 
@@ -201,7 +227,8 @@ function guardSegment(text: string, source: Source, before: string) {
       continue;
     }
     const w = stripWord(raw);
-    const known = source.words.has(w) || source.words.has(w.replace(/\./g, ''));
+    const known =
+      source.words.has(w) || source.words.has(w.replace(/\./g, '')) || partsKnown(w, source);
 
     if (NUMBER_WORDS[w] && !known && !source.numbers.has(NUMBER_WORDS[w]!.replace(/s$/, ''))) {
       flushRun();
@@ -213,7 +240,7 @@ function guardSegment(text: string, source: Source, before: string) {
       });
       continue;
     }
-    if (CREDENTIAL_SET.has(w) && !known) {
+    if (CREDENTIAL_SET.has(w) && !known && !credentialKnown(w, source)) {
       flushRun();
       reps.push({
         start,
@@ -248,7 +275,7 @@ function guardSegment(text: string, source: Source, before: string) {
       continue;
     }
     pending =
-      capitalised && sentenceStart && !known && !/(?:ed|ing|ly)$/i.test(raw)
+      capitalised && sentenceStart && !known && !/(?:ed|ing|ly)$/i.test(raw) && !OPENERS.has(w)
         ? { start, end, raw }
         : null;
     flushRun();

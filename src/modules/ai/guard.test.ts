@@ -104,3 +104,22 @@ describe('truth guard', () => {
     expect(check(['Driver'], 'Driver with 20 years of experience', years).findings).toHaveLength(1);
   });
 });
+
+describe('truth guard: word families and compounds (live eval false alarms)', () => {
+  const src = buildSource([
+    'NMC registered nurse (Adult)',
+    'AWS Certified Solutions Architect – Professional',
+  ]);
+  it('accepts a hyphenated compound whose parts are all in the CV', () => {
+    expect(guardText('An NMC-registered adult nurse.', src).findings).toEqual([]);
+    expect(guardText('A GMC-registered doctor.', src).findings.map((f) => f.value)).toEqual([
+      'GMC-registered',
+    ]);
+  });
+  it('accepts a credential word from the same family the person used', () => {
+    expect(guardText('I hold the AWS Professional certification.', src).findings).toEqual([]);
+    expect(guardText('I hold a degree in computing.', src).findings.map((f) => f.kind)).toEqual([
+      'credential',
+    ]);
+  });
+});
