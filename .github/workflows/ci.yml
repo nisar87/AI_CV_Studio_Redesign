@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   verify:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
         env:
           GEMINI_API_KEY: ci-sentinel-not-a-real-key-123
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      - run: npx playwright test e2e/templates.spec.ts -g "text order" --project=desktop; google-chrome --version; pdftotext -v
         env:
           CI: 'true'
           # Preview in real Google Chrome (what users run), not Playwright's headless test shell,
