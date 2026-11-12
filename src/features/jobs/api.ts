@@ -62,6 +62,11 @@ export const jobAiApi = {
       method: 'POST',
       body: JSON.stringify({ document, tone }),
     }),
+  interview: (id: string, document: ResumeDocument) =>
+    call<{ job: Job }>(`/api/jobs/${id}/interview`, {
+      method: 'POST',
+      body: JSON.stringify({ document }),
+    }).then((r) => r.job),
   async letterPdf(id: string, document: ResumeDocument): Promise<Blob> {
     const r = await fetch(`/api/jobs/${id}/letter/pdf`, {
       method: 'POST',

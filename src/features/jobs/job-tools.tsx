@@ -12,6 +12,7 @@ import {
   FileText,
   Lock,
   Mail,
+  MessagesSquare,
   Sparkles,
   Wand2,
 } from 'lucide-react';
@@ -22,6 +23,7 @@ import { TextArea, TextField } from '@/components/ui/field';
 import { useToast } from '@/components/ui/toast';
 import { useEntitlements } from '@/features/account/entitlements';
 import { saveBlob } from '@/lib/save-blob';
+import type { InterviewKind } from '@/modules/jobs/interview';
 import type { MatchResult } from '@/modules/jobs/match';
 import type { Job } from '@/modules/jobs/schema';
 import { buildLetterHtml } from '@/modules/letters/build-letter';
@@ -32,7 +34,7 @@ import { getTemplate } from '@/modules/templates/registry';
 import { getRepository } from '@/modules/storage/repository';
 import { jobAiApi, jobsApi, JobsError } from './api';
 
-type Busy = null | 'match' | 'tailor' | 'letter' | 'save' | 'pdf';
+type Busy = null | 'match' | 'tailor' | 'letter' | 'save' | 'pdf' | 'interview' | 'notes';
 const MIN_ADVERT = 80;
 
 /** Problem shown under the tools, with the right next step for sign-in or Premium denials. */
@@ -193,7 +195,19 @@ export function JobTools({ job, onJobChange }: { job: Job; onJobChange: (j: Job)
           {job.match && <MatchView match={job.match} cvId={sourceId} />}
 
           <LetterEditor
-            key={job.letter?.updatedAt ?? 'none'}
+            key={`letter:${job.letter?.updatedAt ?? 'none'}`}
+            job={job}
+            source={source}
+            disabled={advertShort || !source}
+            busy={busy}
+            setBusy={setBusy}
+            onProblem={setProblem}
+            onJobChange={onJobChange}
+            refresh={refresh}
+          />
+
+          <InterviewPrepSection
+            key={`interview:${job.interview?.at ?? 'none'}`}
             job={job}
             source={source}
             disabled={advertShort || !source}
@@ -318,6 +332,186 @@ function ApplicationEmail({
         </a>
       </div>
     </div>
+  );
+}
+
+const KIND_LABEL: Record<InterviewKind, string> = {
+  experience: 'Your experience',
+  skills: 'Skills',
+  situation: 'Tell me about a time…',
+  motivation: 'Why this job',
+  gap: 'Something your CV doesn’t show',
+};
+
+/** Likely questions for this job, with notes from the CV and space for the person's own answer. */
+function InterviewPrepSection({
+  job,
+  source,
+  disabled,
+  busy,
+  setBusy,
+  onProblem,
+  onJobChange,
+  refresh,
+}: {
+  job: Job;
+  source: ResumeDocument | null;
+  disabled: boolean;
+  busy: Busy;
+  setBusy: (b: Busy) => void;
+  onProblem: (p: Problem | null) => void;
+  onJobChange: (j: Job) => void;
+  refresh: () => void;
+}) {
+  const toast = useToast();
+  const prep = job.interview;
+  const [notes, setNotes] = useState<string[]>(job.interviewNotes ?? []);
+  const dirty = JSON.stringify(notes) !== JSON.stringify(job.interviewNotes ?? []);
+  const cvId = source?.id ?? '';
+
+  async function act(kind: Exclude<Busy, null>, fn: () => Promise<void>) {
+    setBusy(kind);
+    onProblem(null);
+    try {
+      await fn();
+    } catch (e) {
+      onProblem(toProblem(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+  const prepare = () => {
+    if (
+      (job.interviewNotes ?? []).some((n) => n.trim()) &&
+      !confirm('New questions replace the current ones and your notes on them. Continue?')
+    )
+      return;
+    void act('interview', async () => {
+      if (!source) return;
+      onJobChange(await jobAiApi.interview(job.id, source));
+      refresh();
+    });
+  };
+  const save = () =>
+    act('notes', async () => {
+      onJobChange(await jobsApi.update(job.id, { interviewNotes: notes }));
+      toast.show({ tone: 'success', message: 'Notes saved' });
+    });
+
+  return (
+    <section
+      aria-label="Interview preparation"
+      className="border-line flex flex-col gap-4 border-t pt-5"
+    >
+      <h3 className="flex items-center gap-2 font-semibold">
+        <MessagesSquare aria-hidden size={18} /> Interview preparation
+      </h3>
+      <Button
+        variant={prep ? 'ghost' : 'secondary'}
+        icon={<Sparkles aria-hidden size={18} />}
+        disabled={disabled || busy !== null}
+        loading={busy === 'interview'}
+        onClick={prepare}
+        className="self-start"
+      >
+        {prep ? 'New questions' : 'Prepare for the interview'}
+      </Button>
+      {prep && (
+        <div className="flex flex-col gap-3" data-testid="interview">
+          <ol className="flex flex-col gap-3">
+            {prep.questions.map((q, i) => (
+              <li key={i} className="border-line rounded-md border p-4">
+                <p className="text-ink-muted text-xs font-semibold tracking-wide uppercase">
+                  {KIND_LABEL[q.kind]}
+                </p>
+                <p className="mt-1 font-semibold">{q.question}</p>
+                {q.why && <p className="text-ink-muted mt-1 text-sm">{q.why}</p>}
+                {q.points.length > 0 && (
+                  <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-sm">
+                    {q.points.map((p, j) => (
+                      <li key={j}>
+                        <AskInline text={p} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {q.evidence.length > 0 && (
+                  <p className="text-ink-muted mt-2 text-xs">
+                    From your CV:{' '}
+                    {q.evidence.map((ev, j) => (
+                      <span key={j}>
+                        {j > 0 && ' · '}
+                        {cvId ? (
+                          <Link
+                            href={`/cv/${cvId}?focus=${encodeURIComponent(ev.ref)}`}
+                            className="text-primary font-semibold"
+                          >
+                            {ev.text.length > 60 ? `${ev.text.slice(0, 57)}…` : ev.text}
+                          </Link>
+                        ) : (
+                          ev.text
+                        )}
+                      </span>
+                    ))}
+                  </p>
+                )}
+                <TextArea
+                  label="My answer notes"
+                  optional
+                  rows={3}
+                  maxLength={2000}
+                  containerClassName="mt-3"
+                  value={notes[i] ?? ''}
+                  onChange={(e) => {
+                    const next = [...notes];
+                    while (next.length < prep.questions.length) next.push('');
+                    next[i] = e.target.value;
+                    setNotes(next);
+                  }}
+                />
+              </li>
+            ))}
+          </ol>
+          {prep.tips.length > 0 && (
+            <div className="bg-sunken rounded-md p-4 text-sm">
+              <p className="font-semibold">Tips for this interview</p>
+              <ul className="mt-1 flex list-disc flex-col gap-1 pl-5">
+                {prep.tips.map((t, i) => (
+                  <li key={i}>
+                    <AskInline text={t} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <Button
+            disabled={!dirty || busy !== null}
+            loading={busy === 'notes'}
+            onClick={save}
+            className="self-start"
+          >
+            Save my notes
+          </Button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** Highlights `{{?…}}` markers as [brackets] the person should check. */
+function AskInline({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/(\{\{\?[^{}]*\}\})/g).map((part, i) =>
+        part.startsWith('{{?') ? (
+          <mark key={i} className="bg-warning-soft rounded-sm px-1">
+            [{part.slice(3, -2)}]
+          </mark>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </>
   );
 }
 

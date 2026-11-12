@@ -185,6 +185,42 @@ function answer(task: TaskId, input: unknown, attempt: number): unknown {
         },
       };
     }
+    case 'interview.prep': {
+      const i = input as ParsedInput<'interview.prep'>;
+      const cv = digestLines(i.profile);
+      const bullets = cv.filter((l) => /\.B\d+$/.test(l.id));
+      const b = (n: number) => bullets[n % Math.max(1, bullets.length)];
+      return {
+        questions: [
+          {
+            question: `Tell me about your experience that fits this ${i.jobTitle} role.`,
+            kind: 'experience' as const,
+            why: 'They want to know you have done similar work.',
+            points: b(0)
+              ? [`In my current job I ${b(0)!.text.charAt(0).toLowerCase()}${b(0)!.text.slice(1)}.`]
+              : [],
+            evidence: b(0) ? [b(0)!.id] : [],
+          },
+          {
+            question: 'Tell me about a time you had to plan your work carefully.',
+            kind: 'situation' as const,
+            why: 'They are checking how you organise your day.',
+            points: b(1)
+              ? [`Situation: busy days. What I did: ${b(1)!.text}. Result: work done on time.`]
+              : [],
+            evidence: b(1) ? [b(1)!.id] : [],
+          },
+          {
+            question: `Why do you want to work${i.company ? ` at ${i.company}` : ' here'}?`,
+            kind: 'motivation' as const,
+            why: 'They want people who chose this job on purpose.',
+            points: ['Say what attracted you to the advert, in your own words.'],
+            evidence: [],
+          },
+        ],
+        tips: ['Read the advert again the night before.', 'Prepare one question to ask them.'],
+      };
+    }
     case 'linkedin.write': {
       const i = input as ParsedInput<'linkedin.write'>;
       const cv = digestLines(i.profile);

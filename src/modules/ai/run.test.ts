@@ -200,6 +200,12 @@ describe('mock provider', () => {
       tone: 'warm',
     },
     'linkedin.write': { profile: profileDigest(F.driver).text, target: 'transport planning' },
+    'interview.prep': {
+      advert: ADVERT,
+      jobTitle: 'Delivery Driver',
+      company: 'Swift',
+      profile: profileDigest(F.driver).text,
+    },
     'import.structure': {
       lines: [
         'Imran Qureshi',

@@ -230,6 +230,12 @@ export function evalSamples(): EvalSample[] {
       sourceTexts: src,
     });
     samples.push({
+      name: `${doc.presetId}: interview preparation`,
+      task: 'interview.prep',
+      input: { advert, jobTitle, company, profile },
+      sourceTexts: src,
+    });
+    samples.push({
       name: `${doc.presetId}: LinkedIn profile`,
       task: 'linkedin.write',
       input: { profile, target: '' },
@@ -249,6 +255,8 @@ function outputTexts(result: unknown): string[] {
     const email = r.email as { subject?: string; body?: string } | undefined;
     return [...(r.paragraphs as string[]), email?.subject ?? '', email?.body ?? ''];
   }
+  if (Array.isArray(r.questions))
+    return (r.questions as { points: string[] }[]).flatMap((q) => q.points);
   if (typeof r.about === 'string')
     return [
       String(r.headline ?? ''),
