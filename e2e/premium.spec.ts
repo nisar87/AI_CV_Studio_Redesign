@@ -206,3 +206,132 @@ test('sales cannot be opened without a pass and a payment method', async ({ brow
   expect(offer.methods.map((m) => m.label)).toEqual(['Bank transfer']);
   await context.close();
 });
+
+// R4: discount codes and invite rewards.
+const CODES: BusinessConfig = {
+  ...SALES,
+  coupons: [
+    {
+      code: 'LAUNCH20',
+      percentOff: 20,
+      extraDays: 0,
+      passIds: ['month'],
+      maxUses: 0,
+      expiresOn: '',
+      active: true,
+    },
+  ],
+  referrals: { enabled: true, rewardDays: 14, welcomeDays: 7 },
+};
+
+test('a discount code lowers the price; the admin sees the code; the server checks it', async ({
+  page,
+  request,
+  browser,
+}) => {
+  await setConfig(request, CODES);
+  await page.goto('/premium');
+  await page.getByRole('radio', { name: /1 month/ }).click();
+  const coupon = page.getByTestId('coupon');
+  await coupon.getByLabel('Discount code').fill('nope');
+  await coupon.getByRole('button', { name: 'Apply' }).click();
+  await expect(coupon.getByText('That code isn’t valid. Please check it.')).toBeVisible();
+  await coupon.getByLabel('Discount code').fill('launch20');
+  await coupon.getByRole('button', { name: 'Apply' }).click();
+  await expect(coupon).toContainText('Code LAUNCH20 applied — PKR 100 off');
+  await expect(page.getByTestId('payment-details')).toContainText('PKR 399');
+  // The code is only for the 1-month pass.
+  expect(
+    (
+      await page.request.post('/api/premium/quote', {
+        data: { passId: 'quarter', code: 'LAUNCH20' },
+      })
+    ).status(),
+  ).toBe(400);
+  await page.getByLabel('Transaction ID').fill('TID-COUPON-1');
+  await page.getByRole('button', { name: 'I’ve paid PKR 399' }).click();
+  await expect(page.getByTestId('premium-pending')).toContainText('PKR 399');
+
+  const { context, page: adminPage } = await admin(browser);
+  await adminPage.goto('/admin/payments');
+  const row = adminPage.getByTestId('payment').filter({ hasText: 'TID-COUPON-1' });
+  await expect(row).toContainText('PKR 399');
+  await expect(row.getByTestId('payment-extras')).toContainText(
+    'Code LAUNCH20 (list price PKR 499)',
+  );
+  await context.close();
+});
+
+test('invite link: the friend gets extra days, the inviter gets Premium when it is approved', async ({
+  page,
+  request,
+  browser,
+}) => {
+  await setConfig(request, CODES);
+  // The inviter (free account) finds their link on the Account page.
+  await page.goto('/account');
+  const invite = page.getByTestId('invite');
+  await expect(invite).toContainText('you get 14 days of Premium and they get 7 extra days');
+  const link = await invite.getByLabel('Your invite link').inputValue();
+  expect(link).toMatch(/\/r\/[A-Z2-9]{8}$/);
+
+  // A friend opens the link, then creates an account.
+  const friend = await browser.newContext();
+  const f = await friend.newPage();
+  await f.goto(link);
+  await expect(f.getByText('A friend invited you.')).toBeVisible();
+  await apiSignUp(friend.request);
+  await page.reload();
+  await expect(page.getByTestId('invite-joined')).toHaveText('1 friend has joined with your link.');
+
+  await f.goto('/premium');
+  await f.getByRole('radio', { name: /1 month/ }).click();
+  await expect(
+    f.getByText('A friend invited you: you get 7 extra days (37 days in total).'),
+  ).toBeVisible();
+  await f.getByLabel('Transaction ID').fill('TID-INVITE-1');
+  await f.getByRole('button', { name: 'I’ve paid PKR 499' }).click();
+  await expect(f.getByTestId('premium-pending')).toBeVisible();
+
+  const { context, page: adminPage } = await admin(browser);
+  await adminPage.goto('/admin/payments');
+  const row = adminPage.getByTestId('payment').filter({ hasText: 'TID-INVITE-1' });
+  await expect(row).toContainText('37 days');
+  await expect(row.getByTestId('payment-extras')).toContainText('Invited by a friend: +7 days');
+  adminPage.once('dialog', (d) => void d.accept());
+  await row.getByRole('button', { name: 'Approve' }).click();
+  await expect(adminPage.getByText(/Approved — Premium until/)).toBeVisible();
+
+  // The inviter now has Premium (14 days); the audit log records the reward.
+  const ent = (await (await page.request.get('/api/me/entitlements')).json()) as {
+    plan: string;
+    passExpiresAt: string;
+  };
+  expect(ent.plan).toBe('premium');
+  const days = (Date.parse(ent.passExpiresAt) - Date.now()) / 86_400_000;
+  expect(days).toBeGreaterThan(13.9);
+  expect(days).toBeLessThan(14.1);
+  await adminPage.goto('/admin/history');
+  await expect(adminPage.getByTestId('audit-log')).toContainText('referral.reward');
+  await context.close();
+  await friend.close();
+});
+
+test('you cannot invite yourself, and invites are hidden when switched off', async ({
+  page,
+  request,
+}) => {
+  await setConfig(request, CODES);
+  await page.goto('/account');
+  const link = await page.getByTestId('invite').getByLabel('Your invite link').inputValue();
+  // Opening your own link changes nothing for an existing account.
+  await page.request.get(link);
+  await page.reload();
+  await expect(page.getByTestId('invite-joined')).toHaveText(
+    'No one has joined with your link yet.',
+  );
+  await setConfig(request, { ...CODES, referrals: { ...CODES.referrals, enabled: false } });
+  await page.reload();
+  await expect(page.getByTestId('plan')).toBeVisible();
+  await expect(page.getByTestId('invite')).toHaveCount(0);
+});

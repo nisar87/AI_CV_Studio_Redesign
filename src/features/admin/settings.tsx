@@ -62,6 +62,12 @@ export function AdminSettings() {
       if (p) fn(p);
     });
 
+  const editCoupon = (i: number, fn: (c: BusinessConfig['coupons'][number]) => void) =>
+    edit((c) => {
+      const x = c.coupons[i];
+      if (x) fn(x);
+    });
+
   const editMethod = (i: number, fn: (m: BusinessConfig['payments']['methods'][number]) => void) =>
     edit((c) => {
       const m = c.payments.methods[i];
@@ -303,6 +309,188 @@ export function AdminSettings() {
               Add a pass
             </Button>
           )}
+        </Section>
+
+        <Section
+          title="Discount codes"
+          hint="Codes buyers can enter on the Premium page. A code can take a percentage off, add days, or both. Leave “Passes” empty to allow every pass; 0 uses means no limit."
+        >
+          <ul className="flex flex-col gap-4" data-testid="coupons">
+            {draft.coupons.map((c, i) => (
+              <li key={i} className="border-line flex flex-wrap items-end gap-3 border-b pb-4">
+                <TextField
+                  label="Code"
+                  value={c.code}
+                  maxLength={20}
+                  onChange={(e) =>
+                    editCoupon(
+                      i,
+                      (c) =>
+                        void (c.code = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '')),
+                    )
+                  }
+                  containerClassName="w-36"
+                />
+                <TextField
+                  label="% off"
+                  type="number"
+                  min={0}
+                  max={90}
+                  value={c.percentOff}
+                  onChange={(e) =>
+                    editCoupon(
+                      i,
+                      (c) =>
+                        void (c.percentOff = Math.min(
+                          90,
+                          Math.max(0, Math.floor(Number(e.target.value) || 0)),
+                        )),
+                    )
+                  }
+                  containerClassName="w-24"
+                />
+                <TextField
+                  label="Extra days"
+                  type="number"
+                  min={0}
+                  value={c.extraDays}
+                  onChange={(e) =>
+                    editCoupon(
+                      i,
+                      (c) =>
+                        void (c.extraDays = Math.min(
+                          365,
+                          Math.max(0, Math.floor(Number(e.target.value) || 0)),
+                        )),
+                    )
+                  }
+                  containerClassName="w-24"
+                />
+                <TextField
+                  label="Max uses"
+                  type="number"
+                  min={0}
+                  value={c.maxUses}
+                  onChange={(e) =>
+                    editCoupon(
+                      i,
+                      (c) =>
+                        void (c.maxUses = Math.max(0, Math.floor(Number(e.target.value) || 0))),
+                    )
+                  }
+                  containerClassName="w-24"
+                />
+                <TextField
+                  label="Last day"
+                  optional
+                  type="date"
+                  value={c.expiresOn}
+                  onChange={(e) => editCoupon(i, (c) => void (c.expiresOn = e.target.value))}
+                  containerClassName="w-44"
+                />
+                <fieldset className="flex flex-wrap items-center gap-x-3">
+                  <legend className="text-sm font-semibold">Passes</legend>
+                  {draft.passes.map((p) => (
+                    <CheckboxField
+                      key={p.id}
+                      label={p.label}
+                      checked={c.passIds.includes(p.id)}
+                      onChange={(v) =>
+                        editCoupon(
+                          i,
+                          (c) =>
+                            void (c.passIds = v
+                              ? [...c.passIds, p.id]
+                              : c.passIds.filter((x) => x !== p.id)),
+                        )
+                      }
+                    />
+                  ))}
+                </fieldset>
+                <CheckboxField
+                  label="Active"
+                  checked={c.active}
+                  onChange={(v) => editCoupon(i, (c) => void (c.active = v))}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Remove code ${c.code}`}
+                  icon={<Trash2 aria-hidden size={16} />}
+                  onClick={() => edit((c) => void c.coupons.splice(i, 1))}
+                />
+              </li>
+            ))}
+          </ul>
+          {draft.coupons.length < 30 && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="mt-3"
+              icon={<Plus aria-hidden size={16} />}
+              onClick={() =>
+                edit(
+                  (c) =>
+                    void c.coupons.push({
+                      code: `CODE${c.coupons.length + 1}`,
+                      percentOff: 10,
+                      extraDays: 0,
+                      passIds: [],
+                      maxUses: 0,
+                      expiresOn: '',
+                      active: false,
+                    }),
+                )
+              }
+            >
+              Add a code
+            </Button>
+          )}
+        </Section>
+
+        <Section
+          title="Invite friends"
+          hint="Each account gets an invite link on its Account page (shown while sales are on). When a friend who joined with it has their first pass approved, the inviter gets Premium days and the friend gets extra days on that pass."
+        >
+          <div className="flex flex-wrap items-end gap-4">
+            <CheckboxField
+              label="Invites are on"
+              checked={draft.referrals.enabled}
+              onChange={(v) => edit((c) => void (c.referrals.enabled = v))}
+            />
+            <TextField
+              label="Days for the inviter"
+              type="number"
+              min={0}
+              value={draft.referrals.rewardDays}
+              onChange={(e) =>
+                edit(
+                  (c) =>
+                    void (c.referrals.rewardDays = Math.min(
+                      365,
+                      Math.max(0, Math.floor(Number(e.target.value) || 0)),
+                    )),
+                )
+              }
+              containerClassName="w-40"
+            />
+            <TextField
+              label="Extra days for the friend"
+              type="number"
+              min={0}
+              value={draft.referrals.welcomeDays}
+              onChange={(e) =>
+                edit(
+                  (c) =>
+                    void (c.referrals.welcomeDays = Math.min(
+                      365,
+                      Math.max(0, Math.floor(Number(e.target.value) || 0)),
+                    )),
+                )
+              }
+              containerClassName="w-48"
+            />
+          </div>
         </Section>
 
         <Section

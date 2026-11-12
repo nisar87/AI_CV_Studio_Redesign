@@ -25,6 +25,9 @@ export const EVENTS = [
   'premium_approved',
   'premium_rejected',
   'premium_approval_minutes',
+  'referral_joined',
+  'referral_reward',
+  'coupon_used',
 ] as const;
 export type MetricEvent = (typeof EVENTS)[number];
 

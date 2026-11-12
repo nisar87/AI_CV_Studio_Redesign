@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { apiError, clientKey, createRateLimiter, readJson, requestId } from '@/lib/http';
 import { getBusinessConfig } from '@/modules/billing/server';
+import { quoteFor } from '@/modules/billing/quote';
 import { currentUser } from '@/modules/identity/session';
 import { track } from '@/modules/metrics/server';
 import { getUserStore } from '@/modules/store';
@@ -19,6 +20,7 @@ const body = z.object({
     .max(60)
     .regex(/^[\w\- #/.:]+$/, 'Use only letters, numbers and - / . : #'),
   note: z.string().trim().max(300).optional(),
+  code: z.string().trim().max(30).optional(),
 });
 
 const limiter = createRateLimiter({ capacity: 5, refillPerMinute: 1 });
@@ -42,6 +44,9 @@ export async function POST(req: Request) {
   const method = cfg.payments.methods.find((m) => m.id === parsed.data.methodId && m.active);
   if (!pass || !method)
     return apiError('INVALID_INPUT', 'That option is no longer available. Please reload.', rid);
+  // Price and days are worked out here, never taken from the browser.
+  const q = await quoteFor(user, cfg, pass.id, parsed.data.code);
+  if (!q.ok) return apiError('INVALID_INPUT', q.message, rid, { field: 'code' });
   const store = getUserStore();
   const pending = await store.listPaymentRequests({ uid: user.uid, status: 'pending', limit: 1 });
   if (pending.length)
@@ -63,8 +68,12 @@ export async function POST(req: Request) {
     email: user.email,
     passId: pass.id,
     passLabel: pass.label,
-    days: pass.days,
-    pricePkr: pass.pricePkr,
+    days: q.quote.days,
+    pricePkr: q.quote.pricePkr,
+    listPricePkr: q.quote.listPricePkr,
+    ...(q.quote.couponCode ? { couponCode: q.quote.couponCode } : {}),
+    ...(q.quote.welcomeDays ? { welcomeDays: q.quote.welcomeDays } : {}),
+    ...(q.referrerUid ? { referrerUid: q.referrerUid } : {}),
     methodId: method.id,
     methodLabel: method.label,
     reference: parsed.data.reference,

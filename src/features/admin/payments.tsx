@@ -131,8 +131,16 @@ export function AdminPayments() {
                 </p>
                 <p className="mt-1">
                   {r.passLabel} · <strong>PKR {r.pricePkr.toLocaleString()}</strong> ·{' '}
-                  {r.methodLabel}
+                  {r.methodLabel} · {r.days} days
                 </p>
+                {(r.couponCode || r.welcomeDays) && (
+                  <p className="text-ink-muted mt-0.5" data-testid="payment-extras">
+                    {r.couponCode &&
+                      `Code ${r.couponCode}${r.listPricePkr && r.listPricePkr !== r.pricePkr ? ` (list price PKR ${r.listPricePkr.toLocaleString()})` : ''}`}
+                    {r.couponCode && r.welcomeDays ? ' · ' : ''}
+                    {r.welcomeDays ? `Invited by a friend: +${r.welcomeDays} days` : ''}
+                  </p>
+                )}
                 <p className="mt-0.5">
                   Reference: <span className="font-mono">{r.reference}</span>
                 </p>

@@ -78,6 +78,14 @@ export default async function TermsPage() {
           </li>
         </ul>
 
+        <h2>Discount codes and invites</h2>
+        <p>
+          Discount codes work only on the passes and dates shown when you apply them, and can’t be
+          exchanged for money. When a friend who joined with your invite link has their first
+          Premium pass approved, you get the Premium days shown on your Account page; each friend
+          counts once, and inviting yourself or using fake accounts doesn’t count. We may change or
+          end offers for future purchases at any time.
+        </p>
         <h2>Fair use</h2>
         <p>Please don’t:</p>
         <ul>

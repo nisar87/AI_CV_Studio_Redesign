@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
+import { InvitedNote } from '@/features/referrals/invited-note';
 import {
   ArrowRight,
   Download,
@@ -56,6 +58,9 @@ export default function HomePage() {
       <section className="relative overflow-hidden">
         <Container className="grid items-center gap-12 pt-10 pb-16 md:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:pt-20 lg:pb-24">
           <div className="flex flex-col items-start gap-6">
+            <Suspense>
+              <InvitedNote />
+            </Suspense>
             <ContinueCardClient />
             <h1 className="font-display text-ink text-[40px] leading-[1.08] font-semibold tracking-tight sm:text-5xl lg:text-[58px]">
               A professional CV, <span className="text-primary italic">in your own words.</span>

@@ -1,5 +1,6 @@
 'use client';
 
+import { InviteCard } from '@/features/referrals/invite-card';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { CircleCheck, LogOut, MailWarning } from 'lucide-react';
@@ -192,6 +193,8 @@ export function AccountScreen() {
           )}
         </section>
       )}
+
+      {ent && ent.plan !== 'visitor' && <InviteCard />}
 
       <section className="flex flex-wrap gap-3" aria-label="Account actions">
         <ButtonLink href="/cv" variant="secondary">

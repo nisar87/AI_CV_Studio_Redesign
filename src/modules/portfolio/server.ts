@@ -23,8 +23,14 @@ export async function resolvePortfolio(slug: string) {
   return { portfolio: p, doc: stored.doc };
 }
 
-export const publicPortfolio = (p: Portfolio) => {
-  const { uid: _uid, ...rest } = p;
-  return rest;
-};
+export const publicPortfolio = (p: Portfolio) => ({
+  slug: p.slug,
+  docId: p.docId,
+  published: p.published,
+  showEmail: p.showEmail,
+  showPhone: p.showPhone,
+  createdAt: p.createdAt,
+  updatedAt: p.updatedAt,
+  views: p.views,
+});
 export type PortfolioView = ReturnType<typeof publicPortfolio>;

@@ -11,6 +11,7 @@ import {
 import { getBusinessConfig } from '@/modules/billing/server';
 import { getUserStore } from '@/modules/store';
 import { track } from '@/modules/metrics/server';
+import { recordInvite } from '@/modules/referrals/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,6 +45,8 @@ export async function POST(req: Request) {
       .knownUser(session.uid)
       .catch(() => true);
     await track(known ? 'signin' : 'account_new');
+    if (!known && (await recordInvite(session.uid).catch(() => false)))
+      await track('referral_joined');
     await getUserStore()
       .touchUser(session.uid, { email: session.email, name: session.name })
       .catch((e: Error) =>

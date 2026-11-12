@@ -86,6 +86,41 @@ export const businessConfig = z.object({
       instructions: z.string().max(600),
     })
     .default({ methods: [], instructions: '' }),
+  /**
+   * Discount codes (R4). A code gives a percentage off and/or extra days on a pass. Codes are
+   * matched case-insensitively. Empty `passIds` means every pass.
+   */
+  coupons: z
+    .array(
+      z.object({
+        code: z.string().regex(/^[A-Z0-9-]{3,20}$/, 'Use 3–20 capital letters, numbers or -'),
+        percentOff: z.number().int().min(0).max(90),
+        extraDays: z.number().int().min(0).max(365),
+        passIds: z.array(z.string().max(30)).max(6).default([]),
+        /** 0 = no limit. Counts pending and approved purchases. */
+        maxUses: z.number().int().min(0).max(100_000),
+        /** Last day it can be used (yyyy-mm-dd), or '' for no end. */
+        expiresOn: z.union([z.literal(''), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).default(''),
+        active: z.boolean(),
+      }),
+    )
+    .max(30)
+    .refine(
+      (cs) => new Set(cs.map((c) => c.code)).size === cs.length,
+      'Each code must be different.',
+    )
+    .default([]),
+  /**
+   * Invite friends (R4): when someone who joined through a person's link buys their first pass,
+   * the inviter gets `rewardDays` of Premium and the new buyer gets `welcomeDays` extra.
+   */
+  referrals: z
+    .object({
+      enabled: z.boolean(),
+      rewardDays: z.number().int().min(0).max(365),
+      welcomeDays: z.number().int().min(0).max(365),
+    })
+    .default({ enabled: false, rewardDays: 14, welcomeDays: 7 }),
   /** Public contact for help, payments and privacy requests; shown on Help, Terms and Premium. */
   support: z.object({ email: z.union([z.literal(''), z.email().max(120)]) }).default({ email: '' }),
 });
@@ -121,6 +156,8 @@ export const DEFAULT_CONFIG: BusinessConfig = {
   features: { ai: true, import: true, sales: false, signups: true, maintenance: false },
   announcement: { enabled: false, text: '' },
   support: { email: '' },
+  coupons: [],
+  referrals: { enabled: false, rewardDays: 14, welcomeDays: 7 },
   payments: {
     methods: [],
     instructions:

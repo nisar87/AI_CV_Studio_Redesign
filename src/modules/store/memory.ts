@@ -81,6 +81,8 @@ export class MemoryUserStore implements UserStore {
     this.jobs.delete(uid);
     for (const [t, sh] of this.shares) if (sh.uid === uid) this.shares.delete(t);
     for (const [k, v] of this.portfolios) if (v.uid === uid) this.portfolios.delete(k);
+    for (const [c, u] of this.referralCodes) if (u === uid) this.referralCodes.delete(c);
+    this.referredBy.delete(uid);
     for (const k of [...this.usage.keys()]) if (k.startsWith(`${uid}/`)) this.usage.delete(k);
     for (const p of this.payments) if (p.uid === uid) p.email = null;
   }
@@ -132,6 +134,31 @@ export class MemoryUserStore implements UserStore {
     this.bucket(uid).set(id, { id, updatedAt: at, deleted: true, doc: null });
     this.versions.delete(`${uid}/${id}`);
     for (const [t, sh] of this.shares) if (sh.uid === uid && sh.docId === id) this.shares.delete(t);
+  }
+
+  private referralCodes = new Map<string, string>(); // code → uid
+  private referredBy = new Map<string, string>();
+  async countCouponUses(code: string) {
+    return this.payments.filter((p) => p.couponCode === code && p.status !== 'rejected').length;
+  }
+  async referralCodeOf(uid: string, make: () => string) {
+    for (const [c, u] of this.referralCodes) if (u === uid) return c;
+    let code = make();
+    while (this.referralCodes.has(code)) code = make();
+    this.referralCodes.set(code, uid);
+    return code;
+  }
+  async referralOwner(code: string) {
+    return this.referralCodes.get(code) ?? null;
+  }
+  async setReferredBy(uid: string, referrerUid: string) {
+    if (uid !== referrerUid && !this.referredBy.has(uid)) this.referredBy.set(uid, referrerUid);
+  }
+  async getReferredBy(uid: string) {
+    return this.referredBy.get(uid) ?? null;
+  }
+  async countReferred(uid: string) {
+    return [...this.referredBy.values()].filter((r) => r === uid).length;
   }
 
   private portfolios = new Map<string, Portfolio>();
