@@ -1,0 +1,34 @@
+name: Release tags
+
+# Creates the milestone tags listed in .github/release-tags.txt ("name sha" per line).
+# Tags are added here because the build workspace cannot push tag refs directly.
+on:
+  push:
+    branches: [main]
+    paths: ['.github/release-tags.txt']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create missing tags
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          while read -r name sha; do
+            [ -z "$name" ] && continue
+            if git rev-parse -q --verify "refs/tags/$name" >/dev/null; then
+              echo "exists: $name"
+            else
+              git tag -a "$name" "$sha" -m "$name"
+              git push origin "refs/tags/$name"
+              echo "created: $name → $sha"
+            fi
+          done < .github/release-tags.txt
