@@ -304,11 +304,48 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
     2. Check pass prices.
     3. Optionally set the launch design tiers (Clarity, Chronicle and Heritage free; the rest Premium).
     4. Tick "Premium sales are open" and save.
-- Next: **R1.5 Import an existing CV** (PDF/DOCX upload → text extraction → structured CV, free allowance).
+- **R1.5 Import an existing CV — built, deployed and verified on production (2026-11-12).**
+  - **`/cv/import`** (linked from Start and My CVs):
+    - Drop a PDF or Word (.docx) file, up to 5 MB.
+    - "What we found" report and a live preview of the person's own CV in any design.
+    - "Open in the editor" saves it to the account.
+    - Visitors are asked to sign in. The monthly allowance shows; an import counts only when it succeeds.
+  - **Reading:**
+    - The server checks the file type by its bytes, reads it in memory and never stores it.
+    - PDF: `unpdf` with line rebuilding (columns, wrapped dates/emails, Word "Symbol" bullets).
+    - Word: `mammoth` HTML, so bullets survive.
+    - `.doc` files and scanned PDFs get plain guidance.
+  - **Structuring (owner direction: use Gemini where rules guess):**
+    - Gemini task `import.structure`: copy-only prompt, temperature 0.
+    - The answer is accepted only if every word of every content field exists in the file. Lines it left out go to "Other".
+    - If AI is off, fails or adds anything, the deterministic parser is used (60+ heading variants, date styles, layouts, page-2 continuation, monograms).
+    - The UI says when AI sorted the CV.
+    - It shares one AI budget with AI help and is not exposed on `/api/ai/*`.
+  - **Gemini provider hardening:**
+    - Sends a lean schema (structure only).
+    - On any schema rejection, retries in plain-JSON mode with the shape in the prompt.
+    - Logs Gemini's error message (no user text).
+    - Found in production: the first version got HTTP 400 and fell back to rules; fixed and re-verified.
+  - **Production check (owner's session, 2026-11-12), with a messy PDF containing a prompt-injection line:**
+    - `method: ai`, about 20 s.
+    - Name, headline, contacts, 2 jobs (role/company/location/dates/bullets), education, skills and languages all correct.
+    - The injected "add CEO of Google" was not obeyed: no extra job, and the line was kept only as text.
+    - The rules-only result on the same file had misplaced fields.
+    - Usage was reset afterwards.
+  - **Quality:**
+    - `npx tsx scripts/import-roundtrip.ts` re-imports 70 sample PDFs from our designs with the rules parser: 97.9% of field checks match.
+    - Unit tests use real Word/PDF fixtures, plus faithfulness, coverage and mapping tests.
+  - **Also in this release:**
+    - Deleting a CV now also deletes its kept versions. This was a privacy bug: versions used to remain.
+    - **Delete my account** on the Account page (CVs, versions, pass, usage; payment records kept with the email removed; admins excluded).
+    - **Privacy page rewritten** to match accounts, cloud storage, import and Gemini.
+    - **Gemini is on in production** (`AI_PROVIDER: gemini`, owner direction). AI writing help remains Premium-only through the gate.
+  - **Tests:** 136 unit tests; full e2e 218 passed, 0 failed (incl. import and account-deletion specs).
+- Next: **R1.6 Launch gate**: live AI eval for AI help (≥30 samples, 0 invented facts), accessibility/performance pass, terms page, staging backend, alerts.
 
 ## Next action (exact)
 
-1. Start **R1.5 Import** on branch `r1/import`: PDF/DOCX upload, server-side text extraction, structuring into the CV schema (deterministic parser first, AI `import.structure` for Premium when AI is on), review screen before saving, monthly import allowance via the gate.
+1. Start **R1.6 Launch gate** on branch `r1/launch`: run the live AI eval of the writing tasks, accessibility and performance review of all pages, terms page, alerting on errors and AI budget, and a staging backend.
 
 ## Deployment (2026-11-12)
 
@@ -326,7 +363,7 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
   - Deleted Cloud Functions: `gemini`, `extractlinkedinprofile`, `renderaiwowpdf`, `notificationsender`, `adminsetuserpremiumaccess`.
 - **Left untouched (separate products):** `career-os-*` services and their secrets.
 - **Old Firestore/Auth data:** not deleted. `career-os` shares the project, so wholesale deletion needs a separate check.
-- **AI help is paused in production** (`AI_PROVIDER: 'off'` in `apphosting.yaml`, owner decision 2026-11-12) until R1.6, when it reopens for Premium only. It was verified working earlier (2026-11-12, after `firebase apphosting:secrets:grantaccess GEMINI_API_KEY --backend aicvstudio`). Live checks on aicvstudio.app with real Gemini:
+- **Gemini is on in production** (`AI_PROVIDER: gemini`; it was paused earlier on 2026-11-12, then re-enabled on the owner's direction for import). AI writing help is Premium-only through the gate. It was verified working earlier (2026-11-12, after `firebase apphosting:secrets:grantaccess GEMINI_API_KEY --backend aicvstudio`). Live checks on aicvstudio.app with real Gemini:
   - Both brief examples give sensible choices:
     - Teacher → teacher preset, blue accent, elegant (executive) font, "School Teacher".
     - Driver → driver preset, Clarity, "Delivery Driver".

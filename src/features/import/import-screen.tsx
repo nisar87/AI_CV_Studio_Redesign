@@ -317,6 +317,7 @@ export function ImportScreen() {
               <p className="font-semibold" role="status">
                 Reading your CV…
               </p>
+              <p className="text-ink-muted text-sm">This can take up to half a minute.</p>
             </>
           ) : (
             <>
