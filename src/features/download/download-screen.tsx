@@ -18,6 +18,7 @@ import type { ResumeDocument } from '@/modules/resume/schema';
 import { buildDocumentHtml } from '@/modules/templates/build-document';
 import { HealthPanel } from '@/features/quality/health-panel';
 import { saveBlob } from '@/lib/save-blob';
+import { SharePanel } from '@/features/share/share-panel';
 
 type Blocked = {
   code: 'SIGN_IN_REQUIRED' | 'PREMIUM_REQUIRED' | 'LIMIT_REACHED' | 'DISABLED';
@@ -280,6 +281,7 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
               A backup file lets you open this CV in another browser, even without an account.
             </p>
           </div>
+          {account.status === 'signedIn' && <SharePanel docId={doc.id} />}
         </main>
         <section
           aria-label="Final preview"

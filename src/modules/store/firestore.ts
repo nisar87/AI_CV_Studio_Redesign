@@ -13,6 +13,7 @@ import {
   type AuditEntry,
   type PaymentRequest,
   type PaymentStatus,
+  type Share,
 } from './types';
 
 /**
@@ -23,6 +24,7 @@ import {
  *   passes/{uid}                             Pass (Premium access until expiresAt) + uid, email
  *   usage/{uid}_{yyyy-mm}                    { uid, month, 'pdf.download': n, ... }
  *   users/{uid}/jobs/{id}                    Job (tracker; deleted with the account)
+ *   shares/{token}                           Share (read-only CV link; deleted with the CV/account)
  *   paymentRequests/{auto}                   PaymentRequest (Premium purchase, manual payment)
  *   adminAudit/{auto}                        { at, by, action, target, detail }
  *   config/{area}                            { version, value, savedAt, savedBy }
@@ -94,11 +96,39 @@ export class FirestoreUserStore implements UserStore {
     await this.db.recursiveDelete(this.db.collection('users').doc(uid));
     await this.db.collection('passes').doc(uid).delete();
     const usage = await this.db.collection('usage').where('uid', '==', uid).get();
+    const shares = await this.db.collection('shares').where('uid', '==', uid).get();
     const payments = await this.db.collection('paymentRequests').where('uid', '==', uid).get();
     const batch = this.db.batch();
     usage.docs.forEach((d) => batch.delete(d.ref));
+    shares.docs.forEach((d) => batch.delete(d.ref));
     payments.docs.forEach((d) => batch.update(d.ref, { email: null }));
     await batch.commit();
+  }
+
+  private shares() {
+    return this.db.collection('shares');
+  }
+  async createShare(share: Share) {
+    await this.shares().doc(share.token).create(share);
+  }
+  async getShare(token: string) {
+    const s = await this.shares().doc(token).get();
+    return s.exists ? (s.data() as Share) : null;
+  }
+  async listShares(uid: string) {
+    const snap = await this.shares().where('uid', '==', uid).get();
+    return snap.docs.map((d) => d.data() as Share);
+  }
+  async updateShare(token: string, patch: Partial<Pick<Share, 'enabled'>>) {
+    await this.shares().doc(token).update(patch);
+  }
+  async deleteShare(token: string) {
+    await this.shares().doc(token).delete();
+  }
+  async bumpShareViews(token: string, at: string) {
+    await this.shares()
+      .doc(token)
+      .update({ views: FieldValue.increment(1), lastViewedAt: at });
   }
 
   async knownUser(uid: string) {
@@ -181,11 +211,15 @@ export class FirestoreUserStore implements UserStore {
   }
 
   async deleteDoc(uid: string, id: string, at: string) {
-    // Deleting removes the content and every kept version; only a tombstone remains for sync.
+    // Deleting removes the content, every kept version and its share links; only a tombstone
+    // remains for sync.
     const versions = await this.col(uid).doc(id).collection('versions').listDocuments();
-    if (versions.length) {
+    const shares = await this.db.collection('shares').where('uid', '==', uid).get();
+    const linked = shares.docs.filter((d) => d.get('docId') === id);
+    if (versions.length || linked.length) {
       const batch = this.db.batch();
       versions.forEach((v) => batch.delete(v));
+      linked.forEach((d) => batch.delete(d.ref));
       await batch.commit();
     }
     await this.col(uid).doc(id).set({

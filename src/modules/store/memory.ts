@@ -11,6 +11,7 @@ import {
   type AuditEntry,
   type PaymentRequest,
   type PaymentStatus,
+  type Share,
 } from './types';
 
 /** In-memory store for development and tests (one per server process). */
@@ -77,6 +78,7 @@ export class MemoryUserStore implements UserStore {
     for (const k of [...this.versions.keys()]) if (k.startsWith(`${uid}/`)) this.versions.delete(k);
     this.passes.delete(uid);
     this.jobs.delete(uid);
+    for (const [t, sh] of this.shares) if (sh.uid === uid) this.shares.delete(t);
     for (const k of [...this.usage.keys()]) if (k.startsWith(`${uid}/`)) this.usage.delete(k);
     for (const p of this.payments) if (p.uid === uid) p.email = null;
   }
@@ -127,6 +129,30 @@ export class MemoryUserStore implements UserStore {
   async deleteDoc(uid: string, id: string, at: string) {
     this.bucket(uid).set(id, { id, updatedAt: at, deleted: true, doc: null });
     this.versions.delete(`${uid}/${id}`);
+    for (const [t, sh] of this.shares) if (sh.uid === uid && sh.docId === id) this.shares.delete(t);
+  }
+
+  private shares = new Map<string, Share>();
+  async createShare(share: Share) {
+    this.shares.set(share.token, structuredClone(share));
+  }
+  async getShare(token: string) {
+    const s = this.shares.get(token);
+    return s ? structuredClone(s) : null;
+  }
+  async listShares(uid: string) {
+    return [...this.shares.values()].filter((s) => s.uid === uid).map((s) => structuredClone(s));
+  }
+  async updateShare(token: string, patch: Partial<Pick<Share, 'enabled'>>) {
+    const s = this.shares.get(token);
+    if (s) this.shares.set(token, { ...s, ...patch });
+  }
+  async deleteShare(token: string) {
+    this.shares.delete(token);
+  }
+  async bumpShareViews(token: string, at: string) {
+    const s = this.shares.get(token);
+    if (s) this.shares.set(token, { ...s, views: s.views + 1, lastViewedAt: at });
   }
 
   async listVersions(uid: string, id: string) {
