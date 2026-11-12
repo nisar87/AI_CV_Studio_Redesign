@@ -1,6 +1,7 @@
 import { apiError, readJson } from '@/lib/http';
 import { grantPass } from '@/modules/billing/server';
 import { actor, json, withAdmin } from '@/modules/admin/server';
+import { track } from '@/modules/metrics/server';
 import { getUserStore } from '@/modules/store';
 
 export const runtime = 'nodejs';
@@ -31,6 +32,12 @@ export function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
       return json(
         { error: { code: 'CONFLICT', message: 'This request was already handled.' } },
         409,
+      );
+    track(decided.status === 'approved' ? 'premium_approved' : 'premium_rejected');
+    if (decided.status === 'approved')
+      track(
+        'premium_approval_minutes',
+        Math.max(0, Math.round((Date.now() - Date.parse(decided.createdAt)) / 60_000)),
       );
     let expiresAt: string | null = null;
     if (decided.status === 'approved')

@@ -8,6 +8,10 @@ const PAGES = [
   { path: '/templates', heading: /Designs/i },
   { path: '/help', heading: /Help/i },
   { path: '/privacy', heading: /Privacy/i },
+  { path: '/terms', heading: /Terms of use/i },
+  { path: '/premium', heading: /Every design/i },
+  { path: '/cv/import', heading: /Import your CV/i },
+  { path: '/signin', heading: /Sign in/i },
 ];
 
 for (const { path, heading } of PAGES) {

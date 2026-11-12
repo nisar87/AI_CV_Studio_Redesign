@@ -4,6 +4,7 @@ import { runTask } from '@/modules/ai/run';
 import { isTaskId, type AiResponse, type TaskId } from '@/modules/ai/schemas';
 import { apiError, clientKey, readJson, requestId } from '@/lib/http';
 import { denialCode, reserve } from '@/modules/billing/server';
+import { track } from '@/modules/metrics/server';
 import { currentUser } from '@/modules/identity/session';
 
 export const runtime = 'nodejs';
@@ -79,6 +80,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ task: string }
     }),
   );
 
+  track(r.ok ? 'ai_ok' : 'ai_fail');
   if (!r.ok) {
     await gate.release();
     if (r.code === 'INVALID_INPUT')

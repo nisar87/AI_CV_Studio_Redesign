@@ -10,6 +10,7 @@ import {
 } from '@/modules/identity/session';
 import { getBusinessConfig } from '@/modules/billing/server';
 import { getUserStore } from '@/modules/store';
+import { track } from '@/modules/metrics/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -39,6 +40,10 @@ export async function POST(req: Request) {
         );
     }
     await setSessionCookie(session.value, session.maxAge);
+    const known = await getUserStore()
+      .knownUser(session.uid)
+      .catch(() => true);
+    track(known ? 'signin' : 'account_new');
     await getUserStore()
       .touchUser(session.uid, { email: session.email, name: session.name })
       .catch((e: Error) =>

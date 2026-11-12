@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { apiError, clientKey, createRateLimiter, readJson, requestId } from '@/lib/http';
 import { getBusinessConfig } from '@/modules/billing/server';
 import { currentUser } from '@/modules/identity/session';
+import { track } from '@/modules/metrics/server';
 import { getUserStore } from '@/modules/store';
 
 export const runtime = 'nodejs';
@@ -49,6 +50,14 @@ export async function POST(req: Request) {
       'We are still checking your last payment. You will get Premium as soon as it is approved.',
       rid,
     );
+  // The same transaction can't be claimed twice (by anyone).
+  const referenceKey = parsed.data.reference.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (await store.findPaymentByReference(referenceKey))
+    return apiError(
+      'INVALID_INPUT',
+      'This transaction ID has already been used. Please check it, or contact us if this is a mistake.',
+      rid,
+    );
   const saved = await store.createPaymentRequest({
     uid: user.uid,
     email: user.email,
@@ -59,10 +68,12 @@ export async function POST(req: Request) {
     methodId: method.id,
     methodLabel: method.label,
     reference: parsed.data.reference,
+    referenceKey,
     ...(parsed.data.note ? { note: parsed.data.note } : {}),
     status: 'pending',
     createdAt: new Date().toISOString(),
   });
+  track('premium_request');
   return NextResponse.json(
     { ok: true, id: saved.id },
     { headers: { 'Cache-Control': 'no-store' } },

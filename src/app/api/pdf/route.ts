@@ -3,6 +3,7 @@ import { pdfFilename } from '@/modules/export/filename';
 import { renderResumePdf } from '@/modules/export/pdf';
 import { apiError, clientKey, createRateLimiter, readJson, requestId } from '@/lib/http';
 import { checkDesign, denialCode, reserve } from '@/modules/billing/server';
+import { track } from '@/modules/metrics/server';
 import { currentUser } from '@/modules/identity/session';
 
 export const runtime = 'nodejs';
@@ -45,14 +46,19 @@ export async function POST(req: Request) {
   // Entitlement gate: design tier, then the monthly download allowance (counted on success only).
   const user = await currentUser();
   const design = await checkDesign(user, parsed.data.design.templateId);
-  if (!design.ok)
+  if (!design.ok) {
+    track(design.reason === 'sign_in' ? 'pdf_denied_signin' : 'pdf_denied_premium');
     return apiError(denialCode(design), design.message, rid, { reason: design.reason });
+  }
   const gate = await reserve(user, 'pdf.download');
-  if (!gate.decision.ok)
+  if (!gate.decision.ok) {
+    if (gate.decision.reason === 'sign_in') track('pdf_denied_signin');
+    if (gate.decision.reason === 'limit') track('pdf_denied_limit');
     return apiError(denialCode(gate.decision), gate.decision.message, rid, {
       reason: gate.decision.reason,
       ...('limit' in gate.decision ? { limit: gate.decision.limit, used: gate.decision.used } : {}),
     });
+  }
 
   if (inFlight >= MAX_CONCURRENT) {
     await gate.release();
@@ -68,6 +74,7 @@ export async function POST(req: Request) {
   inFlight++;
   try {
     const { pdf, pages } = await renderResumePdf(parsed.data);
+    track('pdf_ok');
     return new Response(Buffer.from(pdf), {
       status: 200,
       headers: {

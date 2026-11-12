@@ -7,9 +7,11 @@ import { IconButton } from '@/components/ui/icon-button';
 import { LogoMark } from '@/components/layout/logo';
 import { Spinner } from '@/components/ui/spinner';
 import { ops } from '@/modules/resume/ops';
+import { useAccount } from '@/features/account/account-context';
 import type { DocumentEditor } from '@/features/editor/use-document-editor';
 
 export function SaveStatus({ state }: { state: DocumentEditor['saveState'] }) {
+  const signedIn = useAccount().status === 'signedIn';
   return (
     <p
       aria-live="polite"
@@ -23,7 +25,9 @@ export function SaveStatus({ state }: { state: DocumentEditor['saveState'] }) {
       {state === 'saved' && (
         <>
           <Cloud aria-hidden size={16} />{' '}
-          <span className="hidden sm:inline">Saved on this device</span>
+          <span className="hidden sm:inline">
+            {signedIn ? 'Saved to your account' : 'Saved on this device'}
+          </span>
           <span className="sm:hidden">Saved</span>
         </>
       )}

@@ -91,3 +91,37 @@ describe('deleting', () => {
     expect(await s.getDoc('u', driver.id)).toMatchObject({ deleted: true, doc: null });
   });
 });
+
+describe('metrics and payment references', () => {
+  it('adds up daily counters and reads a date range', async () => {
+    const s = new MemoryUserStore();
+    await s.bumpMetrics('2026-11-01', { pdf_ok: 1 });
+    await s.bumpMetrics('2026-11-01', { pdf_ok: 2, import_ok: 1 });
+    await s.bumpMetrics('2026-11-05', { pdf_ok: 1 });
+    expect(await s.getMetrics('2026-11-01', '2026-11-04')).toEqual([
+      { day: '2026-11-01', counts: { pdf_ok: 3, import_ok: 1 } },
+    ]);
+  });
+
+  it('finds a used transaction reference unless it was rejected', async () => {
+    const s = new MemoryUserStore();
+    const base = {
+      uid: 'u',
+      email: null,
+      passId: 'month',
+      passLabel: '1 month',
+      days: 30,
+      pricePkr: 499,
+      methodId: 'bank',
+      methodLabel: 'Bank',
+      reference: 'TID 1',
+      referenceKey: 'tid1',
+      status: 'pending' as const,
+      createdAt: '2026-11-12T00:00:00.000Z',
+    };
+    const r = await s.createPaymentRequest(base);
+    expect(await s.findPaymentByReference('tid1')).toMatchObject({ id: r.id });
+    await s.decidePaymentRequest(r.id, { status: 'rejected', by: 'a', reason: 'no' });
+    expect(await s.findPaymentByReference('tid1')).toBeNull();
+  });
+});

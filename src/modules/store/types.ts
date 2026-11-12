@@ -26,6 +26,12 @@ export interface UserStore {
    * Payment requests are kept for accounting with the email removed.
    */
   deleteUserData(uid: string): Promise<void>;
+  /** Adds to today's event counters (metrics/{yyyy-mm-dd}); names are [a-z0-9_]. */
+  bumpMetrics(day: string, counts: Record<string, number>): Promise<void>;
+  /** Daily counters for days in [from, to] (inclusive, yyyy-mm-dd), oldest first. */
+  getMetrics(from: string, to: string): Promise<{ day: string; counts: Record<string, number> }[]>;
+  /** A pending or approved payment request with this transaction reference (normalised). */
+  findPaymentByReference(referenceKey: string): Promise<PaymentRequest | null>;
   /** Has this account used the studio before (signed in at least once)? */
   knownUser(uid: string): Promise<boolean>;
   listDocs(uid: string): Promise<DocSummary[]>;
@@ -104,6 +110,8 @@ export type PaymentRequest = {
   methodLabel: string;
   /** Transaction id / reference the buyer copied from their banking app. */
   reference: string;
+  /** Reference lower-cased with spaces and punctuation removed, for the duplicate check. */
+  referenceKey?: string;
   note?: string;
   status: PaymentStatus;
   createdAt: string;

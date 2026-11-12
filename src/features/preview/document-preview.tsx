@@ -22,6 +22,8 @@ type Props = {
   title?: string;
   /** Illustration only (gallery, thumbnails): hidden from assistive tech and not focusable. */
   decorative?: boolean;
+  /** Build the document only once it scrolls near the viewport (long galleries). */
+  lazy?: boolean;
 };
 
 const GAP = 24;
@@ -40,8 +42,24 @@ export function DocumentPreview({
   className,
   title = 'CV preview',
   decorative = false,
+  lazy = false,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(!lazy);
+  useEffect(() => {
+    if (inView || !wrapRef.current) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: '300px 0px' },
+    );
+    io.observe(wrapRef.current);
+    return () => io.disconnect();
+  }, [inView]);
   const frames = useRef<(HTMLIFrameElement | null)[]>([null, null]);
   const [width, setWidth] = useState(0);
   const [active, setActive] = useState(0);
@@ -65,6 +83,7 @@ export function DocumentPreview({
 
   // Build the document (debounced) and load it into the inactive frame; it becomes active when ready.
   useEffect(() => {
+    if (!inView) return;
     const t = window.setTimeout(
       () => {
         firstBuild.current = false;
@@ -93,7 +112,7 @@ export function DocumentPreview({
       firstBuild.current ? 0 : debounceMs,
     );
     return () => window.clearTimeout(t);
-  }, [doc, debounceMs]);
+  }, [doc, debounceMs, inView]);
 
   // Messages from the document.
   useEffect(() => {
@@ -136,7 +155,8 @@ export function DocumentPreview({
     <div
       ref={wrapRef}
       className={cn('relative w-full', className)}
-      style={{ height: s ? docHeight * s : undefined }}
+      // Before the width is measured, reserve the page's shape so nothing shifts when it renders.
+      style={s ? { height: docHeight * s } : { aspectRatio: `${page.widthPx} / ${docHeight}` }}
     >
       {s > 0 &&
         slots.map((src, i) =>

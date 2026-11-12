@@ -26,7 +26,7 @@ async function signUp(page: Page, email: string, next = '/cv') {
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
   await page.getByLabel('Confirm password').fill(PASSWORD);
-  await page.getByLabel('I am 18 or older and agree to the privacy notice').check();
+  await page.getByLabel('I am 18 or older and agree to the terms and privacy notice').check();
   await page.getByRole('button', { name: 'Create account' }).click();
   await expect(page).toHaveURL(new RegExp(`${next.replace(/\//g, '\\/')}$`));
 }
@@ -123,7 +123,7 @@ test('a CV made before signing in moves into the account and appears on another 
 
   const b = await newDevice(browser);
   await b.page.goto('/cv');
-  await expect(b.page.getByText('No CVs on this device yet')).toBeVisible();
+  await expect(b.page.getByText(/^No CVs (on this device )?yet$/)).toBeVisible();
   await signIn(b.page, email);
   // First sync on a new device downloads the CVs; allow for a busy machine (full parallel suite).
   await expect(b.page.getByRole('link', { name: 'Open My CV' })).toHaveCount(1, {
@@ -167,7 +167,7 @@ test('a CV made before signing in moves into the account and appears on another 
   await b.page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(b.page).toHaveURL(/\/$/);
   await b.page.goto('/cv');
-  await expect(b.page.getByText('No CVs on this device yet')).toBeVisible();
+  await expect(b.page.getByText(/^No CVs (on this device )?yet$/)).toBeVisible();
   await signIn(b.page, email);
   await expect.poll(() => localNames(b.page)).toEqual(['Imran Q. Qureshi']);
 
@@ -186,7 +186,7 @@ test('a CV made before signing in moves into the account and appears on another 
     )
     .toBe(0);
   await a.page.goto('/cv');
-  await expect(a.page.getByText('No CVs on this device yet')).toBeVisible();
+  await expect(a.page.getByText(/^No CVs (on this device )?yet$/)).toBeVisible();
   await Promise.all([a.ctx.close(), b.ctx.close(), c.ctx.close()]);
 });
 

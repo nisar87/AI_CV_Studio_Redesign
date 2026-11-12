@@ -25,6 +25,12 @@ export function SiteFooter() {
           <Link className="text-ink-muted hover:text-ink" href="/privacy">
             Privacy
           </Link>
+          <Link className="text-ink-muted hover:text-ink" href="/premium">
+            Premium
+          </Link>
+          <Link className="text-ink-muted hover:text-ink" href="/terms">
+            Terms
+          </Link>
         </nav>
       </Container>
       <Container className="border-line text-ink-subtle border-t py-5 text-xs">
