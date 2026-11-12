@@ -25,6 +25,7 @@ import { useEntitlements } from '@/features/account/entitlements';
 import { saveBlob } from '@/lib/save-blob';
 import type { InterviewKind } from '@/modules/jobs/interview';
 import type { MatchResult } from '@/modules/jobs/match';
+import { defaultSourceCv } from '@/modules/jobs/source-cv';
 import type { Job } from '@/modules/jobs/schema';
 import { buildLetterHtml } from '@/modules/letters/build-letter';
 import type { Letter } from '@/modules/letters/schema';
@@ -54,9 +55,7 @@ export function JobTools({ job, onJobChange }: { job: Job; onJobChange: (j: Job)
   const { ent, refresh } = useEntitlements();
   const repo = typeof window === 'undefined' ? null : getRepository();
   const cvs = useMemo(() => repo?.list() ?? [], [repo]);
-  const defaultSource =
-    cvs.find((c) => c.role === 'profile')?.id ?? job.documentIds[0] ?? cvs[0]?.id ?? '';
-  const [sourceId, setSourceId] = useState(defaultSource);
+  const [sourceId, setSourceId] = useState(() => defaultSourceCv(cvs));
   const [busy, setBusy] = useState<Busy>(null);
   const [problem, setProblem] = useState<Problem | null>(null);
 
