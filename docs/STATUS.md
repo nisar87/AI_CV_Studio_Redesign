@@ -528,12 +528,12 @@ Spec: `docs/product/complete-studio-spec.md` §6 and §16 (R5). Owner decisions 
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.
-2. **Launch designs:** set Clarity, Chronicle and Heritage as free and the rest as Premium, if you want the recommended split.
-3. **Optional growth:** add a launch code (for example `LAUNCH20`) and switch on **Invite friends**.
+2. ~~Launch designs~~: done 2026-11-13 (owner approved) — Clarity, Chronicle and Heritage free, the other 7 Premium. Changeable per design in Admin → Settings.
+3. ~~Growth~~: done 2026-11-13 (owner approved) — code `LAUNCH20` (20% off, 100 uses, until 2026-12-31; untick Active to pause) and Invite friends on (tick box in Settings).
 4. ~~Alerts~~: done 2026-11-13 — email channel "AI CV Studio alerts" (aicvstudio.app@gmail.com) added to the production policy.
 5. ~~Staging Google sign-in~~: done 2026-11-13 — staging domain added to Firebase Auth authorised domains.
 6. ~~Git tags~~: done 2026-11-13 — created by the `Release tags` workflow from `.github/release-tags.txt`.
-7. **Buyer emails:** create the mailbox password secret (`firebase apphosting:secrets:set SMTP_PASSWORD`, then `firebase apphosting:secrets:grantaccess SMTP_PASSWORD --backend aicvstudio`), then uncomment the SMTP lines at the end of `apphosting.yaml` (set `SMTP_USER` to the mailbox). Then use Admin → Settings → "Send a test email to me".
+7. ~~Buyer emails~~: on since 2026-11-13 — sent from support@aicvstudio.app (Namecheap Private Email; password in the Secret Manager secret `SMTP_PASSWORD`, set by the owner). A test email was accepted by the mail server.
 8. ~~Firestore rules~~: published 2026-11-13 (owner: this site is the only product in the project). They replaced the old Flutter app's rules, which let browsers write to `users` and `paymentRequests`; the old version stays in the console's rules history. The live site was checked afterwards.
 9. **Makeover acceptance with real CVs:** try 40 real CVs (10 Word, 10 PDFs from other builders, 10 two-column, 5 scans, 5 phone photos) on `/makeover` and note any wrong or missing text.
 10. **Later releases:** the 30-person design preference test (R7), an outside reviewer, and publishing the browser extension to the Chrome Web Store (R10).
