@@ -1,3 +1,4 @@
+import type { Job } from '@/modules/jobs/schema';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import {
   MAX_VERSIONS,
@@ -30,6 +31,28 @@ export class MemoryUserStore implements UserStore {
     this.seen?.set(uid, new Date().toISOString());
   }
 
+  private jobs = new Map<string, Map<string, Job>>();
+  private jobBucket(uid: string) {
+    let b = this.jobs.get(uid);
+    if (!b) this.jobs.set(uid, (b = new Map()));
+    return b;
+  }
+  async listJobs(uid: string) {
+    return structuredClone([...this.jobBucket(uid).values()]).sort((a, b) =>
+      b.updatedAt.localeCompare(a.updatedAt),
+    );
+  }
+  async getJob(uid: string, id: string) {
+    const j = this.jobBucket(uid).get(id);
+    return j ? structuredClone(j) : null;
+  }
+  async putJob(uid: string, job: Job) {
+    this.jobBucket(uid).set(job.id, structuredClone(job));
+  }
+  async deleteJob(uid: string, id: string) {
+    this.jobBucket(uid).delete(id);
+  }
+
   private metrics = new Map<string, Record<string, number>>();
   async bumpMetrics(day: string, counts: Record<string, number>) {
     const m = this.metrics.get(day) ?? {};
@@ -53,6 +76,7 @@ export class MemoryUserStore implements UserStore {
     this.docs.delete(uid);
     for (const k of [...this.versions.keys()]) if (k.startsWith(`${uid}/`)) this.versions.delete(k);
     this.passes.delete(uid);
+    this.jobs.delete(uid);
     for (const k of [...this.usage.keys()]) if (k.startsWith(`${uid}/`)) this.usage.delete(k);
     for (const p of this.payments) if (p.uid === uid) p.email = null;
   }

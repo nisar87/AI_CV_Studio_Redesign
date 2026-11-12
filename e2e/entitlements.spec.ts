@@ -14,13 +14,17 @@ test.describe.configure({ mode: 'serial' });
 const UNLIMITED = { 'pdf.download': -1, 'import.cv': -1, 'ai.action': -1 };
 const base: BusinessConfig = {
   ...DEFAULT_CONFIG,
-  plans: { ...DEFAULT_CONFIG.plans, premium: { label: 'Premium', limits: UNLIMITED } },
+  plans: { ...DEFAULT_CONFIG.plans, premium: { label: 'Premium', limits: UNLIMITED, maxJobs: -1 } },
 };
 const strict: BusinessConfig = {
   ...base,
   plans: {
     ...base.plans,
-    free: { label: 'Free', limits: { 'pdf.download': 2, 'import.cv': 2, 'ai.action': 0 } },
+    free: {
+      label: 'Free',
+      limits: { 'pdf.download': 2, 'import.cv': 2, 'ai.action': 0 },
+      maxJobs: 3,
+    },
   },
   designs: base.designs.map((d) => ({
     ...d,

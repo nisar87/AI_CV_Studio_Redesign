@@ -114,6 +114,73 @@ function answer(task: TaskId, input: unknown, attempt: number): unknown {
       ].filter((s) => !have.has(s.toLowerCase()));
       return { skills: variant(pool, attempt).slice(0, 8) };
     }
+    case 'job.match': {
+      const i = input as ParsedInput<'job.match'>;
+      const cv = digestLines(i.profile);
+      const sentences = i.advert
+        .split(/(?<=[.!?])\s+|\n+/)
+        .map((x) => x.trim())
+        .filter((x) => x.split(' ').length >= 4)
+        .slice(0, 5);
+      const requirements = sentences.map((text) => {
+        const ws = sig(text);
+        const ev = cv
+          .filter((l) => sig(l.text).filter((w) => ws.includes(w)).length >= 2)
+          .slice(0, 2);
+        return {
+          text: text.slice(0, 200),
+          importance: /essential|must|required/i.test(text) ? ('must' as const) : ('nice' as const),
+          status: ev.length ? ('met' as const) : ('missing' as const),
+          evidence: ev.map((l) => l.id).concat(attempt > 0 ? ['Z9.B9'] : []),
+          note: ev.length
+            ? 'Your CV shows this.'
+            : 'If this is true for you, add it to your profile.',
+        };
+      });
+      const keywords = [...new Set(sig(i.advert))].slice(0, 8);
+      return {
+        requirements,
+        keywords,
+        summary: 'Demo AI: a quick comparison of your CV with this advert.',
+      };
+    }
+    case 'job.tailor': {
+      const i = input as ParsedInput<'job.tailor'>;
+      const cv = digestLines(i.profile);
+      const jobs = cv.filter((l) => /^[JV]\d+$/.test(l.id));
+      const order = jobs.map((j) => ({
+        job: j.id,
+        bullets: cv
+          .filter((l) => l.id.startsWith(`${j.id}.B`))
+          .map((l) => l.id)
+          .reverse(),
+      }));
+      const skills = (cv.find((l) => l.id === 'SKILLS')?.text ?? '')
+        .split('; ')
+        .filter(Boolean)
+        .reverse();
+      const summary = cv.find((l) => l.id === 'SUMMARY')?.text ?? 'Experienced and reliable.';
+      return { headline: i.jobTitle, summary, order, skills };
+    }
+    case 'letter.write': {
+      const i = input as ParsedInput<'letter.write'>;
+      const cv = digestLines(i.profile);
+      const best = cv
+        .filter((l) => /\.B\d+$/.test(l.id))
+        .slice(0, 2)
+        .map((l) => l.text.replace(/\.$/, ''));
+      return {
+        greeting: 'Dear Hiring Manager,',
+        paragraphs: [
+          `I would like to apply for the ${i.jobTitle} role${i.company ? ` at ${i.company}` : ''}.`,
+          best.length
+            ? `In my work so far I have: ${best.join('; ')}.`
+            : 'My CV sets out my experience.',
+          'I would welcome the chance to talk about the role. Thank you for your time.',
+        ],
+        closing: i.tone === 'formal' ? 'Yours sincerely,' : 'Kind regards,',
+      };
+    }
     case 'import.structure': {
       // The demo "model" is the rules-based parser, returned in the AI's shape.
       const i = input as ParsedInput<'import.structure'>;
@@ -132,3 +199,44 @@ export function createMockProvider(): AiProvider {
     },
   };
 }
+
+/** Numbered CV lines ("J1.B2: text") back into objects. */
+function digestLines(profile: string) {
+  return profile
+    .split('\n')
+    .map((l) => l.match(/^([A-Z]+\d*(?:\.[A-Z]\d+)?): (.*)$/))
+    .filter((m): m is RegExpMatchArray => !!m)
+    .map((m) => ({ id: m[1]!, text: m[2]! }));
+}
+const STOP = new Set([
+  'with',
+  'that',
+  'this',
+  'will',
+  'your',
+  'have',
+  'from',
+  'they',
+  'their',
+  'about',
+  'what',
+  'work',
+  'able',
+  'must',
+  'essential',
+  'role',
+  'team',
+  'good',
+  'great',
+  'need',
+  'looking',
+  'join',
+  'for',
+  'and',
+  'the',
+  'you',
+  'are',
+  'our',
+]);
+const sig = (t: string) =>
+  (t.toLowerCase().match(/[a-z][a-z-]{3,}/g) ?? []).filter((w) => !STOP.has(w));

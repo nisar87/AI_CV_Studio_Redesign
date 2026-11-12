@@ -1,7 +1,7 @@
 'use client';
 
 import { AiDocProvider } from '@/features/ai/context';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Download, Eye, Palette, PenLine } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
@@ -65,6 +65,13 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
     content.current?.reveal(ref);
   };
   const compact = () => update((d) => ops.setDesign(d, { density: 'compact' }));
+  // Links from the CV check open the editor at a field: /cv/:id?focus=<sectionId>/<itemId>.
+  const focus = params.get('focus');
+  useEffect(() => {
+    if (!focus) return;
+    const t = window.setTimeout(() => content.current?.reveal(focus), 300);
+    return () => window.clearTimeout(t);
+  }, [focus]);
 
   const download = (
     <ButtonLink
@@ -107,7 +114,22 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
               aria-labelledby={tabId('editor', panelTab)}
               className="px-4 pt-4 sm:px-5"
             >
-              {welcome && (
+              {doc.role === 'profile' && (
+                <Banner
+                  tone="info"
+                  title="This is your career profile"
+                  className="mb-4"
+                  action={
+                    <ButtonLink href="/cv" size="sm" variant="secondary">
+                      Make a CV from it
+                    </ButtonLink>
+                  }
+                >
+                  Keep all your experience here — even things you leave off some CVs. New and
+                  tailored CVs are copies of it, so update facts here first.
+                </Banner>
+              )}
+              {welcome && doc.role !== 'profile' && (
                 <Banner
                   tone="success"
                   title="Your CV is ready"

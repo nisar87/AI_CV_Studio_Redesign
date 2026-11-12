@@ -1,5 +1,6 @@
 import 'server-only';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
+import type { Job } from '@/modules/jobs/schema';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import {
   MAX_VERSIONS,
@@ -21,6 +22,7 @@ import {
  *   users/{uid}/documents/{id}/versions/{v}  { savedAt, doc }   (last 10)
  *   passes/{uid}                             Pass (Premium access until expiresAt) + uid, email
  *   usage/{uid}_{yyyy-mm}                    { uid, month, 'pdf.download': n, ... }
+ *   users/{uid}/jobs/{id}                    Job (tracker; deleted with the account)
  *   paymentRequests/{auto}                   PaymentRequest (Premium purchase, manual payment)
  *   adminAudit/{auto}                        { at, by, action, target, detail }
  *   config/{area}                            { version, value, savedAt, savedBy }
@@ -38,6 +40,24 @@ export class FirestoreUserStore implements UserStore {
       .collection('users')
       .doc(uid)
       .set({ ...info, lastSeenAt: FieldValue.serverTimestamp(), studioV2: true }, { merge: true });
+  }
+
+  private jobsCol(uid: string) {
+    return this.db.collection('users').doc(uid).collection('jobs');
+  }
+  async listJobs(uid: string) {
+    const snap = await this.jobsCol(uid).orderBy('updatedAt', 'desc').limit(500).get();
+    return snap.docs.map((d) => d.data() as Job);
+  }
+  async getJob(uid: string, id: string) {
+    const s = await this.jobsCol(uid).doc(id).get();
+    return s.exists ? (s.data() as Job) : null;
+  }
+  async putJob(uid: string, job: Job) {
+    await this.jobsCol(uid).doc(job.id).set(job);
+  }
+  async deleteJob(uid: string, id: string) {
+    await this.jobsCol(uid).doc(id).delete();
   }
 
   async bumpMetrics(day: string, counts: Record<string, number>) {

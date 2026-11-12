@@ -162,6 +162,10 @@ export const resumeDocument = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   parentId: z.string().optional(),
+  /** "profile": the account's career profile (master record) that CVs are made from. */
+  role: z.enum(['cv', 'profile']).optional(),
+  /** Set on a CV tailored for a job in the tracker. */
+  jobId: z.string().max(64).optional(),
   basics,
   sections: z.array(section).max(30),
   design: designSpec,

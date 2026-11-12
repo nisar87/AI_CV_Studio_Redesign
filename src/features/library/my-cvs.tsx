@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { Copy, Download, FileText, Pencil, Trash2, Upload } from 'lucide-react';
+import { Copy, Download, FileText, Pencil, Trash2, Upload, UserRound } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Menu } from '@/components/ui/menu';
@@ -14,6 +14,7 @@ import type { ResumeDocument } from '@/modules/resume/schema';
 import { getRepository } from '@/modules/storage/repository';
 import { getTemplate } from '@/modules/templates/registry';
 import { useAccount } from '@/features/account/account-context';
+import { cvFromProfile, isProfile } from '@/modules/resume/profile';
 
 function load(): ResumeDocument[] {
   const repo = getRepository();
@@ -43,6 +44,15 @@ export function MyCvs() {
   const repo = getRepository();
   const account = useAccount();
   const signedIn = account.status === 'signedIn';
+  const profile = docs.find(isProfile);
+  const cvs = docs.filter((d) => !isProfile(d));
+
+  const newFromProfile = () => {
+    if (!profile) return;
+    const cv = cvFromProfile(profile);
+    repo.save(cv);
+    router.push(`/cv/${cv.id}`);
+  };
 
   const remove = (doc: ResumeDocument) => {
     repo.remove(doc.id);
@@ -165,7 +175,45 @@ export function MyCvs() {
         )}
       </Banner>
 
-      {docs.length === 0 ? (
+      {signedIn && (
+        <section
+          aria-labelledby="profile-h"
+          className="border-line bg-surface flex flex-wrap items-center justify-between gap-4 rounded-lg border p-5"
+          data-testid="profile-card"
+        >
+          <div className="flex items-start gap-3">
+            <span className="bg-primary-soft text-primary inline-flex size-11 shrink-0 items-center justify-center rounded-full">
+              <UserRound aria-hidden size={22} />
+            </span>
+            <div>
+              <h2 id="profile-h" className="font-semibold">
+                Career profile
+              </h2>
+              <p className="text-ink-muted text-sm">
+                {profile
+                  ? `Your master record · updated ${when(profile.updatedAt)}. New and tailored CVs start from it.`
+                  : 'Keep all your experience in one master record, then make a CV for each job from it.'}
+              </p>
+            </div>
+          </div>
+          {profile ? (
+            <div className="flex flex-wrap gap-2">
+              <ButtonLink href={`/cv/${profile.id}`} variant="secondary" size="sm">
+                Edit profile
+              </ButtonLink>
+              <Button size="sm" onClick={newFromProfile}>
+                New CV from profile
+              </Button>
+            </div>
+          ) : (
+            <ButtonLink href="/profile" variant="secondary" size="sm">
+              Set up your profile
+            </ButtonLink>
+          )}
+        </section>
+      )}
+
+      {cvs.length === 0 ? (
         <div className="border-line-strong bg-surface flex flex-col items-center gap-4 rounded-lg border border-dashed px-6 py-16 text-center">
           <span className="bg-primary-soft text-primary inline-flex size-14 items-center justify-center rounded-full">
             <FileText aria-hidden size={26} />
@@ -185,7 +233,7 @@ export function MyCvs() {
         </div>
       ) : (
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {docs.map((doc) => (
+          {cvs.map((doc) => (
             <li key={doc.id} className="flex flex-col gap-3">
               <Link
                 href={`/cv/${doc.id}`}

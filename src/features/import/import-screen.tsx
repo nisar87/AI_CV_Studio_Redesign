@@ -13,6 +13,8 @@ import { DocumentPreview } from '@/features/preview/document-preview';
 import type { ImportReport } from '@/modules/import/parse';
 import type { ResumeDocument, TemplateId } from '@/modules/resume/schema';
 import { getRepository } from '@/modules/storage/repository';
+import { isProfile, makeProfile } from '@/modules/resume/profile';
+import { CheckboxField } from '@/features/editor/fields';
 import { getTemplate, TEMPLATE_LIST } from '@/modules/templates/registry';
 
 type Result = { document: ResumeDocument; report: ImportReport; method?: 'ai' | 'rules' };
@@ -41,6 +43,14 @@ export function ImportScreen() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [templateId, setTemplateId] = useState<TemplateId | null>(null);
+  // Offer "use as my career profile" when the account has none yet.
+  const [asProfile, setAsProfile] = useState(false);
+  const hasProfile = useMemo(
+    () => typeof window !== 'undefined' && getRepository().list().some(isProfile),
+    // Re-check when a new import result arrives.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [result],
+  );
 
   const designs = useMemo(() => {
     const cat = new Map((ent?.designs ?? []).map((d) => [d.id, d]));
@@ -113,8 +123,9 @@ export function ImportScreen() {
   const open = () => {
     if (!preview) return;
     const now = new Date().toISOString();
-    getRepository().save({ ...preview, createdAt: now, updatedAt: now });
-    router.push(`/cv/${preview.id}`);
+    const doc = asProfile ? makeProfile(preview) : { ...preview, createdAt: now, updatedAt: now };
+    getRepository().save(doc);
+    router.push(`/cv/${doc.id}`);
   };
 
   // ---------- gates ----------
@@ -250,6 +261,13 @@ export function ImportScreen() {
             )}
           </div>
 
+          {account.status === 'signedIn' && !hasProfile && (
+            <CheckboxField
+              label="Use this as my career profile (the master record new CVs start from)"
+              checked={asProfile}
+              onChange={setAsProfile}
+            />
+          )}
           <div className="flex flex-wrap gap-3">
             <Button onClick={open} iconAfter={<ArrowRight aria-hidden size={18} />}>
               Open in the editor
