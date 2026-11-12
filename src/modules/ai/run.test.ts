@@ -199,6 +199,7 @@ describe('mock provider', () => {
       profile: profileDigest(F.driver).text,
       tone: 'warm',
     },
+    'linkedin.write': { profile: profileDigest(F.driver).text, target: 'transport planning' },
     'import.structure': {
       lines: [
         'Imran Qureshi',
@@ -404,5 +405,38 @@ describe('job tasks: section kinds', () => {
     expect(
       guardText('I hold a PhD.', buildSource([profile, digestKinds(profile)])).findings,
     ).toHaveLength(1);
+  });
+});
+
+describe('linkedin.write', () => {
+  it('keeps only real job IDs and skills copied from the CV; guards invented facts', async () => {
+    const { runTask } = await import('./run');
+    const profile = profileDigest(F.driver).text;
+    const provider = {
+      name: 'fake',
+      generate: async () => ({
+        text: JSON.stringify({
+          headline: 'Multi-drop Delivery Driver | Route planning | HGV Class 1',
+          about: 'I have nine years of multi-drop work.\n\nI won Driver of the Year 2021.',
+          experience: [
+            { job: 'J1', text: 'I deliver around 120 parcels a day.' },
+            { job: 'J9', text: 'Invented job.' },
+          ],
+          skills: ['Route planning', 'Forklift', 'Vehicle checks'],
+        }),
+        usage: { inputTokens: 1, outputTokens: 1 },
+      }),
+    };
+    const r = await runTask('linkedin.write', { profile }, 0, {
+      provider: provider as never,
+      models: { fast: 'f', smart: 's' },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.result.experience.map((e) => e.job)).toEqual(['J1']);
+    expect(r.result.skills).toEqual(['Route planning', 'Vehicle checks']);
+    expect(r.result.headline).toContain('{{?');
+    expect(r.result.about).toContain('{{?');
+    expect(r.result.experience[0]!.text).toBe('I deliver around 120 parcels a day.');
   });
 });

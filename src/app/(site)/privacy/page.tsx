@@ -31,8 +31,23 @@ export default function PrivacyPage() {
         <h2>When information leaves your device</h2>
         <ul>
           <li>
-            <strong>Downloading a PDF:</strong> your CV is sent to our server to create the file and
-            is not kept afterwards.
+            <strong>Downloading a PDF or Word file:</strong> your CV is sent to our server to create
+            the file and is not kept afterwards.
+          </li>
+          <li>
+            <strong>AI help, job match, cover letters and LinkedIn text:</strong> the CV text needed
+            for the task (and the job advert you pasted) is sent to Gemini to create a draft. It is
+            checked against your CV so nothing is added that you didn’t write.
+          </li>
+          <li>
+            <strong>Share links (only if you create one):</strong> anyone with the link can see that
+            CV, read-only, until you switch the link off or delete it. Share pages are hidden from
+            search engines. We count how many times a link is opened, nothing about who opened it.
+          </li>
+          <li>
+            <strong>Portfolio page (only if you publish one):</strong> the CV you choose becomes a
+            public web page anyone can find. Your email and phone number appear only if you tick
+            them. Unpublishing or deleting the page takes it down straight away.
           </li>
           <li>
             <strong>Importing a CV:</strong> the file is read on our server and not kept. Its text
@@ -40,8 +55,8 @@ export default function PrivacyPage() {
             nothing was added that isn’t in your file.
           </li>
           <li>
-            <strong>AI help:</strong> only the part you asked about (for example one job’s bullet
-            points) is sent to Gemini to create a suggestion.
+            <strong>Writing help in the editor:</strong> only the part you asked about (for example
+            one job’s bullet points) is sent to Gemini to create a suggestion.
           </li>
         </ul>
         <p>
@@ -51,8 +66,9 @@ export default function PrivacyPage() {
         </p>
         <h2>Deleting</h2>
         <p>
-          Deleting a CV removes it and all of its earlier versions from your account. On the Account
-          page you can delete your whole account, which removes everything above except payment
+          Deleting a CV removes it, all of its earlier versions and its share links from your
+          account. On the Account page you can delete your whole account, which removes everything
+          above, including your jobs, letters, share links and portfolio page, except payment
           records, which we keep for accounting with your email address removed. Signing out removes
           your account’s CVs from that device.
         </p>

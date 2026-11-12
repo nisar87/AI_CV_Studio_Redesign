@@ -45,6 +45,21 @@ export interface UserStore {
   /** Saves if the incoming edit is not older than the stored one; keeps the replaced version. */
   putDoc(uid: string, doc: ResumeDocument, maxDocs: number): Promise<PutResult>;
   deleteDoc(uid: string, id: string, at: string): Promise<void>;
+  // Read-only share links for CVs (R3). Deleted with the document and with the account.
+  createShare(share: Share): Promise<void>;
+  getShare(token: string): Promise<Share | null>;
+  listShares(uid: string): Promise<Share[]>;
+  updateShare(token: string, patch: Partial<Pick<Share, 'enabled'>>): Promise<void>;
+  deleteShare(token: string): Promise<void>;
+  /** Counts a visit (best effort). */
+  bumpShareViews(token: string, at: string): Promise<void>;
+  // Public portfolio page (R3): one per account, at /p/{slug}.
+  getPortfolio(slug: string): Promise<Portfolio | null>;
+  getPortfolioOf(uid: string): Promise<Portfolio | null>;
+  /** Saves the account's portfolio; false if the slug belongs to someone else. */
+  putPortfolio(p: Portfolio): Promise<boolean>;
+  deletePortfolioOf(uid: string): Promise<void>;
+  bumpPortfolioViews(slug: string): Promise<void>;
   listVersions(uid: string, id: string): Promise<{ savedAt: string; doc: ResumeDocument }[]>;
 
   // Billing (studio-master-plan §4.3) — written only by the server.
@@ -83,6 +98,30 @@ export interface UserStore {
     recent: { uid: string; email: string | null; lastSeenAt: string | null }[];
   }>;
 }
+
+/** A public web page made from one CV. Contact details show only if the owner chooses. */
+export type Portfolio = {
+  slug: string;
+  uid: string;
+  docId: string;
+  published: boolean;
+  showEmail: boolean;
+  showPhone: boolean;
+  createdAt: string;
+  updatedAt: string;
+  views: number;
+};
+
+/** A private, read-only link to the latest version of one CV. */
+export type Share = {
+  token: string;
+  uid: string;
+  docId: string;
+  enabled: boolean;
+  createdAt: string;
+  views: number;
+  lastViewedAt: string | null;
+};
 
 export type AuditEntry = {
   id: string;
