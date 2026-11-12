@@ -114,7 +114,22 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
               aria-labelledby={tabId('editor', panelTab)}
               className="px-4 pt-4 sm:px-5"
             >
-              {welcome && (
+              {doc.role === 'profile' && (
+                <Banner
+                  tone="info"
+                  title="This is your career profile"
+                  className="mb-4"
+                  action={
+                    <ButtonLink href="/cv" size="sm" variant="secondary">
+                      Make a CV from it
+                    </ButtonLink>
+                  }
+                >
+                  Keep all your experience here — even things you leave off some CVs. New and
+                  tailored CVs are copies of it, so update facts here first.
+                </Banner>
+              )}
+              {welcome && doc.role !== 'profile' && (
                 <Banner
                   tone="success"
                   title="Your CV is ready"

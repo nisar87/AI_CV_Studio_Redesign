@@ -10,6 +10,8 @@ export type DocumentSummary = Pick<
 > & {
   name: string;
   templateId: ResumeDocument['design']['templateId'];
+  role: 'cv' | 'profile';
+  jobId?: string;
 };
 
 export type RepositoryEvent = { type: 'save' | 'remove'; id: string };
@@ -88,6 +90,8 @@ export class BrowserDocumentRepository implements DocumentRepository {
         presetId: d.presetId,
         name: d.basics.name,
         templateId: d.design.templateId,
+        role: d.role ?? 'cv',
+        ...(d.jobId ? { jobId: d.jobId } : {}),
       }))
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
