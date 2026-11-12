@@ -530,11 +530,11 @@ Spec: `docs/product/complete-studio-spec.md` §6 and §16 (R5). Owner decisions 
 1. ~~Payments and sales~~: done on 2026-11-12.
 2. **Launch designs:** set Clarity, Chronicle and Heritage as free and the rest as Premium, if you want the recommended split.
 3. **Optional growth:** add a launch code (for example `LAUNCH20`) and switch on **Invite friends**.
-4. **Alerts:** Cloud Monitoring → Alerting → add an email notification channel to the "AI CV Studio production" policy.
-5. **Staging Google sign-in:** add the staging domain to Firebase Auth → Authorised domains.
-6. **Git tags:** run `git push origin --tags` from a local clone.
+4. ~~Alerts~~: done 2026-11-13 — email channel "AI CV Studio alerts" (aicvstudio.app@gmail.com) added to the production policy.
+5. ~~Staging Google sign-in~~: done 2026-11-13 — staging domain added to Firebase Auth authorised domains.
+6. ~~Git tags~~: done 2026-11-13 — created by the `Release tags` workflow from `.github/release-tags.txt`.
 7. **Buyer emails:** create the mailbox password secret (`firebase apphosting:secrets:set SMTP_PASSWORD`, then `firebase apphosting:secrets:grantaccess SMTP_PASSWORD --backend aicvstudio`), then uncomment the SMTP lines at the end of `apphosting.yaml` (set `SMTP_USER` to the mailbox). Then use Admin → Settings → "Send a test email to me".
-8. **Firestore rules:** merge `firestore.rules` into the project's rules (career-os shares the project) and publish them in the Firebase console.
+8. ~~Firestore rules~~: published 2026-11-13 (owner: this site is the only product in the project). They replaced the old Flutter app's rules, which let browsers write to `users` and `paymentRequests`; the old version stays in the console's rules history. The live site was checked afterwards.
 9. **Makeover acceptance with real CVs:** try 40 real CVs (10 Word, 10 PDFs from other builders, 10 two-column, 5 scans, 5 phone photos) on `/makeover` and note any wrong or missing text.
 10. **Later releases:** the 30-person design preference test (R7), an outside reviewer, and publishing the browser extension to the Chrome Web Store (R10).
 
