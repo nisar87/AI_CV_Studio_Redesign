@@ -27,8 +27,10 @@ export default defineConfig({
     },
     { name: 'mobile', testIgnore: /(admin|premium)\.spec\.ts/, use: { ...devices['Pixel 7'] } },
     {
-      // Admin tests change site-wide settings (maintenance, sign-ups), so they run alone, last.
+      // Admin and Premium tests change site-wide settings (maintenance, sign-ups, sales), so they
+      // run last, one file at a time (two files in parallel would overwrite each other's config).
       name: 'admin',
+      workers: 1,
       testMatch: /(admin|premium)\.spec\.ts/,
       dependencies: ['desktop', 'mobile'],
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },

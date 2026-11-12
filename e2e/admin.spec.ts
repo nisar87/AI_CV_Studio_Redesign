@@ -197,11 +197,14 @@ test('the AI page runs the live evaluation in batches and reports the pass mark'
 }) => {
   const { context, page } = await adminPage(browser);
   await page.goto('/admin/ai');
-  await page.getByRole('button', { name: /Run evaluation \(48 samples\)/ }).click();
+  const run = page.getByRole('button', { name: /Run evaluation \(\d+ samples\)/ });
+  const total = Number((await run.textContent())!.match(/\((\d+) samples\)/)![1]);
+  expect(total).toBeGreaterThanOrEqual(57);
+  await run.click();
   await expect(page.getByText('Passed: no invented facts reached the text.')).toBeVisible({
     timeout: 60_000,
   });
-  await expect(page.getByTestId('eval-summary')).toContainText('48 / 48');
+  await expect(page.getByTestId('eval-summary')).toContainText(`${total} / ${total}`);
   expect((await context.request.post('/api/admin/ai/eval', { data: {} })).ok()).toBe(true);
   await context.close();
 });
