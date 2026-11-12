@@ -282,6 +282,14 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
             </p>
           </div>
           {account.status === 'signedIn' && <SharePanel docId={doc.id} />}
+          {account.status === 'signedIn' && (
+            <Link
+              href={`/linkedin?doc=${encodeURIComponent(doc.id)}`}
+              className="text-primary inline-flex items-center gap-1.5 font-semibold"
+            >
+              Update your LinkedIn profile from this CV →
+            </Link>
+          )}
         </main>
         <section
           aria-label="Final preview"

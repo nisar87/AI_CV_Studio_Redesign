@@ -19,6 +19,7 @@ export const TASK_IDS = [
   'job.match',
   'job.tailor',
   'letter.write',
+  'linkedin.write',
 ] as const;
 export type TaskId = (typeof TASK_IDS)[number];
 
@@ -98,6 +99,11 @@ export const taskInputs = {
     name: z.string().max(120),
     profile: z.string().min(20).max(24_000),
     tone: z.enum(['warm', 'formal']).default('warm'),
+  }),
+  'linkedin.write': z.object({
+    profile: z.string().min(20).max(24_000),
+    /** The kind of role the person wants next (optional, their words). */
+    target: z.string().max(160).default(''),
   }),
 } satisfies Record<TaskId, z.ZodType>;
 
@@ -208,6 +214,12 @@ export const taskOutputs = {
     closing: z.string().max(80),
     /** A short covering email to send the CV and letter with. */
     email: z.object({ subject: z.string().max(160), body: z.string().max(1500) }),
+  }),
+  'linkedin.write': z.object({
+    headline: z.string().max(220),
+    about: z.string().max(2600),
+    experience: z.array(z.object({ job: z.string().max(12), text: z.string().max(2000) })).max(12),
+    skills: z.array(z.string().max(80)).max(15),
   }),
 } satisfies Record<TaskId, z.ZodType>;
 

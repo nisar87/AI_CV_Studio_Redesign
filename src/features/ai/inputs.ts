@@ -44,12 +44,15 @@ export function summaryInput(
         (s.kind === 'education' || s.kind === 'certifications' || s.kind === 'licences'),
     )
     .flatMap((s) =>
-      (s.items as Record<string, unknown>[]).map((i) =>
-        clean([
+      (s.items as Record<string, unknown>[]).map((i) => {
+        const line = clean([
           String(i.qualification ?? i.name ?? ''),
           String(i.institution ?? i.issuer ?? ''),
-        ]).join(', '),
-      ),
+        ]).join(', ');
+        // Say what kind of item it is, so "certification" for a listed certificate is not new.
+        const kind = { certifications: 'certificate', licences: 'licence' }[s.kind as string];
+        return line && kind ? `${line} (${kind})` : line;
+      }),
     )
     .filter(Boolean)
     .slice(0, 6);

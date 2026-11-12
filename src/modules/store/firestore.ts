@@ -14,6 +14,7 @@ import {
   type PaymentRequest,
   type PaymentStatus,
   type Share,
+  type Portfolio,
 } from './types';
 
 /**
@@ -24,6 +25,7 @@ import {
  *   passes/{uid}                             Pass (Premium access until expiresAt) + uid, email
  *   usage/{uid}_{yyyy-mm}                    { uid, month, 'pdf.download': n, ... }
  *   users/{uid}/jobs/{id}                    Job (tracker; deleted with the account)
+ *   portfolios/{slug}                        Portfolio (public page; one per account)
  *   shares/{token}                           Share (read-only CV link; deleted with the CV/account)
  *   paymentRequests/{auto}                   PaymentRequest (Premium purchase, manual payment)
  *   adminAudit/{auto}                        { at, by, action, target, detail }
@@ -97,12 +99,48 @@ export class FirestoreUserStore implements UserStore {
     await this.db.collection('passes').doc(uid).delete();
     const usage = await this.db.collection('usage').where('uid', '==', uid).get();
     const shares = await this.db.collection('shares').where('uid', '==', uid).get();
+    const portfolios = await this.db.collection('portfolios').where('uid', '==', uid).get();
     const payments = await this.db.collection('paymentRequests').where('uid', '==', uid).get();
     const batch = this.db.batch();
     usage.docs.forEach((d) => batch.delete(d.ref));
     shares.docs.forEach((d) => batch.delete(d.ref));
+    portfolios.docs.forEach((d) => batch.delete(d.ref));
     payments.docs.forEach((d) => batch.update(d.ref, { email: null }));
     await batch.commit();
+  }
+
+  private portfolios() {
+    return this.db.collection('portfolios');
+  }
+  async getPortfolio(slug: string) {
+    const s = await this.portfolios().doc(slug).get();
+    return s.exists ? (s.data() as Portfolio) : null;
+  }
+  async getPortfolioOf(uid: string) {
+    const snap = await this.portfolios().where('uid', '==', uid).limit(1).get();
+    return snap.empty ? null : (snap.docs[0]!.data() as Portfolio);
+  }
+  async putPortfolio(p: Portfolio) {
+    return this.db.runTransaction(async (tx) => {
+      const ref = this.portfolios().doc(p.slug);
+      const [taken, mine] = await Promise.all([
+        tx.get(ref),
+        tx.get(this.portfolios().where('uid', '==', p.uid)),
+      ]);
+      if (taken.exists && taken.get('uid') !== p.uid) return false;
+      mine.docs.filter((d) => d.id !== p.slug).forEach((d) => tx.delete(d.ref));
+      tx.set(ref, p);
+      return true;
+    });
+  }
+  async deletePortfolioOf(uid: string) {
+    const snap = await this.portfolios().where('uid', '==', uid).get();
+    await Promise.all(snap.docs.map((d) => d.ref.delete()));
+  }
+  async bumpPortfolioViews(slug: string) {
+    await this.portfolios()
+      .doc(slug)
+      .update({ views: FieldValue.increment(1) });
   }
 
   private shares() {

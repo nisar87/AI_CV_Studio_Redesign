@@ -185,6 +185,28 @@ function answer(task: TaskId, input: unknown, attempt: number): unknown {
         },
       };
     }
+    case 'linkedin.write': {
+      const i = input as ParsedInput<'linkedin.write'>;
+      const cv = digestLines(i.profile);
+      const headline = cv.find((l) => l.id === 'HEADLINE')?.text ?? 'Professional';
+      const skills = (cv.find((l) => l.id === 'SKILLS')?.text ?? '').split('; ').filter(Boolean);
+      const jobs = cv.filter((l) => /^[JV]\d+$/.test(l.id));
+      return {
+        headline: [headline, ...skills.slice(0, 2)].join(' | '),
+        about: [
+          cv.find((l) => l.id === 'SUMMARY')?.text ?? `I work as a ${headline}.`,
+          i.target ? `I am open to ${i.target} roles.` : 'I enjoy doing careful, reliable work.',
+        ].join('\n\n'),
+        experience: jobs.map((j) => ({
+          job: j.id,
+          text: cv
+            .filter((l) => l.id.startsWith(`${j.id}.B`))
+            .map((l) => `I ${l.text.charAt(0).toLowerCase()}${l.text.slice(1).replace(/\.$/, '')}.`)
+            .join(' '),
+        })),
+        skills: skills.slice(0, 10),
+      };
+    }
     case 'import.structure': {
       // The demo "model" is the rules-based parser, returned in the AI's shape.
       const i = input as ParsedInput<'import.structure'>;

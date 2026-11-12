@@ -53,9 +53,13 @@ export function evalSamples(): EvalSample[] {
     const education = doc.sections
       .filter((s) => s.kind === 'education' || s.kind === 'certifications' || s.kind === 'licences')
       .flatMap((s) =>
-        (s.items as Record<string, string>[]).map((i) =>
-          [i.qualification ?? i.name, i.institution ?? i.issuer].filter(Boolean).join(', '),
-        ),
+        (s.items as Record<string, string>[]).map((i) => {
+          const line = [i.qualification ?? i.name, i.institution ?? i.issuer]
+            .filter(Boolean)
+            .join(', ');
+          const kind = { certifications: 'certificate', licences: 'licence' }[s.kind as string];
+          return kind ? `${line} (${kind})` : line;
+        }),
       );
     const job = jobs.find((j) => j.bullets.length > 0);
     const jobsIn = jobs.slice(0, 6).map(({ role, organization, start, end, current, bullets }) => ({
@@ -225,6 +229,12 @@ export function evalSamples(): EvalSample[] {
       input: { advert, jobTitle, company, name: doc.basics.name, profile, tone: 'warm' },
       sourceTexts: src,
     });
+    samples.push({
+      name: `${doc.presetId}: LinkedIn profile`,
+      task: 'linkedin.write',
+      input: { profile, target: '' },
+      sourceTexts: [profile, digestKinds(profile)],
+    });
   }
 
   return samples;
@@ -239,6 +249,12 @@ function outputTexts(result: unknown): string[] {
     const email = r.email as { subject?: string; body?: string } | undefined;
     return [...(r.paragraphs as string[]), email?.subject ?? '', email?.body ?? ''];
   }
+  if (typeof r.about === 'string')
+    return [
+      String(r.headline ?? ''),
+      r.about,
+      ...((r.experience as { text: string }[] | undefined) ?? []).map((e) => e.text),
+    ];
   if (typeof r.summary === 'string' && 'order' in r) return [String(r.headline ?? ''), r.summary];
   return [];
 }

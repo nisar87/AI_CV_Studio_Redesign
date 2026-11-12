@@ -3,7 +3,17 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { Copy, Download, FileText, Pencil, Trash2, Upload, UserRound } from 'lucide-react';
+import {
+  Copy,
+  Download,
+  FileText,
+  Globe,
+  Pencil,
+  Sparkles,
+  Trash2,
+  Upload,
+  UserRound,
+} from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Menu } from '@/components/ui/menu';
@@ -211,6 +221,27 @@ export function MyCvs() {
             </ButtonLink>
           )}
         </section>
+      )}
+
+      {signedIn && cvs.length > 0 && (
+        <nav
+          aria-label="Your presence"
+          className="flex flex-wrap gap-3"
+          data-testid="presence-links"
+        >
+          <Link
+            href="/portfolio"
+            className="border-line bg-surface hover:border-primary inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold"
+          >
+            <Globe aria-hidden size={16} className="text-primary" /> Portfolio page
+          </Link>
+          <Link
+            href="/linkedin"
+            className="border-line bg-surface hover:border-primary inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold"
+          >
+            <Sparkles aria-hidden size={16} className="text-primary" /> LinkedIn profile writer
+          </Link>
+        </nav>
       )}
 
       {cvs.length === 0 ? (
