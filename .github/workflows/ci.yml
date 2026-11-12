@@ -26,6 +26,10 @@ jobs:
       - run: npm run typecheck
       - run: npm run format:check
       - run: npm test
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - name: Firestore rules (emulator)
         run: npm run test:rules
       - run: npm run build
