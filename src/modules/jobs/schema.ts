@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { letter } from '@/modules/letters/schema';
+import type { MatchResult } from './match';
 
 /** Job tracker (Release 2). Jobs live in the account (users/{uid}/jobs/{id}); server-side only. */
 export const JOB_STAGES = ['saved', 'applied', 'interview', 'offer', 'closed'] as const;
@@ -33,11 +35,15 @@ export const jobInput = z.object({
     .default(''),
   /** CVs (or letters) used for this application. */
   documentIds: z.array(z.string().max(64)).max(10).default([]),
+  /** Cover letter for this job (drafted with AI, edited by the person). */
+  letter: letter.optional(),
 });
 export type JobInput = z.input<typeof jobInput>;
 
 export const job = jobInput.extend({
   id: z.string().max(64),
+  /** Last CV-vs-advert check (written by the server only). */
+  match: z.custom<MatchResult>().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

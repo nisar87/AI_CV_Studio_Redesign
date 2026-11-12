@@ -2,16 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import {
-  ArrowLeft,
-  CircleCheck,
-  CircleDashed,
-  Crown,
-  Download,
-  FileJson,
-  LogIn,
-  Printer,
-} from 'lucide-react';
+import { ArrowLeft, Crown, Download, FileJson, LogIn, Printer } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { useAccount } from '@/features/account/account-context';
@@ -26,17 +17,7 @@ import { pdfFilename } from '@/modules/export/filename';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import { buildDocumentHtml } from '@/modules/templates/build-document';
 import { HealthPanel } from '@/features/quality/health-panel';
-
-function saveBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
-}
+import { saveBlob } from '@/lib/save-blob';
 
 type Blocked = {
   code: 'SIGN_IN_REQUIRED' | 'PREMIUM_REQUIRED' | 'LIMIT_REACHED' | 'DISABLED';

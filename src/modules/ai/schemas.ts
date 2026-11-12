@@ -16,6 +16,9 @@ export const TASK_IDS = [
   'write.fromNotes',
   'suggest.skills',
   'import.structure',
+  'job.match',
+  'job.tailor',
+  'letter.write',
 ] as const;
 export type TaskId = (typeof TASK_IDS)[number];
 
@@ -76,6 +79,25 @@ export const taskInputs = {
   }),
   'import.structure': z.object({
     lines: z.array(z.string().max(600)).min(1).max(400),
+  }),
+  'job.match': z.object({
+    advert: z.string().min(80).max(12_000),
+    /** The CV as numbered lines (see modules/jobs/digest.ts). */
+    profile: z.string().min(20).max(24_000),
+  }),
+  'job.tailor': z.object({
+    advert: z.string().min(80).max(12_000),
+    jobTitle: z.string().max(160),
+    company: z.string().max(160),
+    profile: z.string().min(20).max(24_000),
+  }),
+  'letter.write': z.object({
+    advert: z.string().min(80).max(12_000),
+    jobTitle: z.string().max(160),
+    company: z.string().max(160),
+    name: z.string().max(120),
+    profile: z.string().min(20).max(24_000),
+    tone: z.enum(['warm', 'formal']).default('warm'),
   }),
 } satisfies Record<TaskId, z.ZodType>;
 
@@ -152,6 +174,38 @@ export const taskOutputs = {
         }),
       )
       .max(30),
+  }),
+  'job.match': z.object({
+    requirements: z
+      .array(
+        z.object({
+          text: z.string().min(1).max(220),
+          importance: z.enum(['must', 'nice']),
+          status: z.enum(['met', 'partial', 'missing']),
+          /** Line ids from the CV (e.g. "J1.B2"); checked against the CV by the app. */
+          evidence: z.array(z.string().max(20)).max(4),
+          note: z.string().max(240),
+        }),
+      )
+      .min(1)
+      .max(15),
+    keywords: z.array(z.string().min(1).max(60)).max(20),
+    summary: z.string().max(500),
+  }),
+  'job.tailor': z.object({
+    headline: z.string().max(100),
+    summary: z.string().max(900),
+    /** Per job id, its bullet ids in the order that best fits this job. */
+    order: z
+      .array(z.object({ job: z.string().max(10), bullets: z.array(z.string().max(20)).max(40) }))
+      .max(30),
+    /** Skills from the CV, most relevant first. */
+    skills: z.array(z.string().max(80)).max(60),
+  }),
+  'letter.write': z.object({
+    greeting: z.string().max(80),
+    paragraphs: z.array(z.string().min(1).max(1200)).min(2).max(5),
+    closing: z.string().max(80),
   }),
 } satisfies Record<TaskId, z.ZodType>;
 

@@ -1,3 +1,5 @@
+import { profileDigest } from '@/modules/jobs/digest';
+import * as F from '@/modules/resume/fixtures';
 import { describe, expect, it, vi } from 'vitest';
 import { aiMode, aiModels } from './config';
 import { createAiLimiter } from './limits';
@@ -152,6 +154,9 @@ describe('runTask', () => {
   });
 });
 
+const ADVERT =
+  'We are looking for a reliable multi-drop van driver. A full UK driving licence is essential. You will deliver parcels to customers and keep accurate records.';
+
 describe('mock provider', () => {
   const mock = createMockProvider();
   const samples: Record<string, unknown> = {
@@ -179,6 +184,21 @@ describe('mock provider', () => {
       notes: 'drove the van. loaded parcels; checked tyres',
     },
     'suggest.skills': { presetId: 'driver', existing: ['Safe driving'] },
+    'job.match': { advert: ADVERT, profile: profileDigest(F.driver).text },
+    'job.tailor': {
+      advert: ADVERT,
+      jobTitle: 'Delivery Driver',
+      company: 'Swift',
+      profile: profileDigest(F.driver).text,
+    },
+    'letter.write': {
+      advert: ADVERT,
+      jobTitle: 'Delivery Driver',
+      company: 'Swift',
+      name: 'Imran Qureshi',
+      profile: profileDigest(F.driver).text,
+      tone: 'warm',
+    },
     'import.structure': {
       lines: [
         'Imran Qureshi',
