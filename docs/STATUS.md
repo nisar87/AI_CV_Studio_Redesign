@@ -18,7 +18,7 @@ _Last updated: 2026-11-12 (live on Firebase App Hosting at aicvstudio.app)_
 | R1 Paid CV Studio (R1.1–R1.6) | `r1/*` | ✅ Live on aicvstudio.app; sales open when the owner adds payment details |
 | R2 Job-ready | `r2/job-ready` | ✅ Live on aicvstudio.app (2026-11-12) |
 | R3 Professional presence | `r3/presence` | ✅ Live on aicvstudio.app (2026-11-12) |
-| R4 Growth | `r4/growth` | ✅ Merged 2026-11-12 (card gateway and Urdu deferred) |
+| R4 Growth | `r4/growth` | ✅ Live on aicvstudio.app (2026-11-12); card gateway and Urdu deferred |
 
 ## Phase 0 report
 
@@ -458,7 +458,13 @@ Also from the review: protected gap above the page number (+2.5 mm bottom space 
 - **Deferred:**
   - Card gateway: waits for business registration.
   - Urdu: waits for demand.
-- **Tests:** 170 unit tests; full e2e 270 passed, 0 failed.
+- **Tests:** 171 unit tests; full e2e 270 passed, 0 failed; CI green.
+- **Production verification (2026-11-12):**
+  - New routes live; quotes are refused while sales are closed; invites are hidden while off.
+  - Live interview samples: 3/3, no unmarked facts.
+  - Found and fixed:
+    - The invite link redirected to App Hosting's internal host; it now uses a relative redirect.
+    - Quoted questions in tips were flagged as names.
 
 ## Owner to-do (when you have time)
 
