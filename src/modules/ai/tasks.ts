@@ -606,9 +606,23 @@ RULES — follow all of them:
   },
 };
 
+/**
+ * "Delivering 120 Parcels Daily" → "Delivering 120 parcels daily": a Title Case title would make
+ * every word look like a name to the guard. Words written with a capital in the person's text stay.
+ */
+export function sentenceCase(title: string, personText: string): string {
+  const words = title.trim().split(/\s+/);
+  const caps = words.slice(1).filter((w) => /^\p{Lu}\p{Ll}/u.test(w)).length;
+  if (words.length < 3 || caps < Math.ceil((words.length - 1) * 0.6)) return title;
+  const kept = new Set(personText.match(/\b\p{Lu}[\p{L}'’-]*/gu) ?? []);
+  return words
+    .map((w, i) => (i === 0 || !/^\p{Lu}\p{Ll}/u.test(w) || kept.has(w) ? w : w.toLowerCase()))
+    .join(' ');
+}
+
 const storyDraft: TaskDef<'story.draft'> = {
   id: 'story.draft',
-  version: 'story@1',
+  version: 'story@2',
   tier: 'smart',
   temperature: 0.3,
   maxTokens: 2048,
@@ -616,7 +630,7 @@ const storyDraft: TaskDef<'story.draft'> = {
     `${TRUTH_RULES}
 
 TASK: Turn one point from the person's CV into a short achievement story they can tell in interviews, in the STAR shape. This story is spoken by the person, so "I" and "my" are fine here (this replaces rule 4's first-person ban; the cliché ban still applies).
-- title: 3 to 8 words naming what happened, e.g. "Kept deliveries on time after a depot closed".
+- title: 3 to 8 words naming what happened, in sentence case (only the first word and real names capitalised), e.g. "Kept deliveries on time after a depot closed".
 - situation: 1 or 2 sentences — where they were and what was going on, from the job line and the point.
 - task: 1 sentence — what they had to do.
 - action: 2 to 4 sentences — what they did themselves, from the point and their notes. This is the heart of the story.
@@ -636,7 +650,16 @@ Use the rest of the CV only to understand the context; the facts of the story co
   finalize: (i, o) => {
     // Facts may come from the point, its job line and the notes (the CV only for wording).
     const source = buildSource([i.point, i.role, i.notes, i.skills.join('; ')]);
-    const g = guardAll([o.title, o.situation, o.task, o.action, o.result], source);
+    const g = guardAll(
+      [
+        sentenceCase(o.title, [i.point, i.role, i.notes].join(' ')),
+        o.situation,
+        o.task,
+        o.action,
+        o.result,
+      ],
+      source,
+    );
     const known = new Map(i.skills.map((k) => [k.trim().toLowerCase(), k.trim()]));
     const skills = [
       ...new Set(o.skills.map((k) => known.get(k.trim().toLowerCase())).filter(Boolean)),

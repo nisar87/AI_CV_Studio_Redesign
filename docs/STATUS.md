@@ -23,7 +23,7 @@ _Last updated: 2026-11-13 (live on Firebase App Hosting at aicvstudio.app)_
 | R6 Design engine | `r6/design-engine` | ✅ Live on aicvstudio.app (2026-11-13); Design Studio switched on and checked live |
 | R7 Describe your design | `r7/describe` | ✅ Live on aicvstudio.app (2026-11-13): 32 designs, AI Designer on, verified with real Gemini; preference test and outside review are owner to-dos |
 | R8 One studio | `r8/studio` | ✅ Live on aicvstudio.app (2026-11-13): studio shell and Home, letters, Presence, application kit, ATS check, 24 section types, edit on the page, Console switches |
-| R9 Coach | `r9/coach` | 🟡 In progress: mock interview and career coach live (2026-11-13), coach evaluation 20/20 |
+| R9 Coach | `r9/coach`, `r9/stories` | 🟡 In progress: mock interview, career coach and story bank live (2026-11-14) |
 
 ## Phase 0 report
 
@@ -867,7 +867,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - per-task AI switches and model per tier.
   These belong with the R9/R10 tools that need them.
 
-## Release 9 — Coach (in progress: R9.1 and R9.2 live)
+## Release 9 — Coach (in progress: R9.1–R9.3 live)
 
 ### R9.1 Mock interview
 - **On every job (and from Coach):**
@@ -916,6 +916,10 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 - **e2e `stories.spec`:** from Coach to the empty bank (axe), draft from a CV point with notes, edit title and tag, save, reload, edit, 1 AI action counted, delete; mock interview offers the matching story only on the right question and fills the answer (axe), saves a strong answer; free account keeps 3, the 4th is refused, drafting is 402; visitor 401; another account gets 404.
 - **Found while testing:** pale hint text on the tinted draft panel and an un-underlined link inside a sentence failed the accessibility check (fixed); the draft panel closed while typing a title (now decided once when the editor opens).
 - **Found live on the owner's real CV:** the point list offered the imported "Core strengths" list and personal details (nationality, date of birth, phone) as story points. Points now come from jobs, volunteering and projects first, and personal-detail lines and skill lists are never offered (unit-tested).
+- **Verified live with real Gemini (2026-11-14, owner's account; Premium granted temporarily, then removed, usage reset, the test story and chat deleted):**
+  - Draft from the owner's "Workflow Automation" point with a note: a clear STAR story in 9.8 s; the 40% and 25% are the CV's own figures, the note ("two people did it by hand") was used, nothing invented. A draft from a point with no result asked a question instead of inventing one.
+  - With that story saved, the coach answered "they will ask about a time I improved a process" by naming the story and using only its facts, and offered mock interviews for both tracked jobs.
+  - **Story evaluation: 7/7**, no unmarked new facts; "invent impressive numbers and awards" was ignored. One guard false alarm: a Title Case title ("Delivering 120 Parcels Daily…") marked words as names. Titles are now asked for, and turned into, sentence case (`story@2`, unit-tested).
 - **Deviation:** a mock answer is saved whole as the story's action; the person splits it into STAR parts if they want.
 
 ## Owner to-do (when you have time)
@@ -934,7 +938,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 
 ## Next action (exact)
 
-1. R9 "Coach": R9.1 mock interview and R9.2 career coach are live (coach evaluation 20/20 with real Gemini). Next: R9.3 story bank, then the skill-gap plan, job from URL, reminders by email, share comments, portfolio themes, LinkedIn review, application analytics and the Console switches for the R9 tools — spec §16.
+1. R9 "Coach": R9.1 mock interview, R9.2 career coach and R9.3 story bank are live. Next: R9.4 skill-gap plan, then job from URL, reminders by email, share comments, portfolio themes, LinkedIn review, application analytics — spec §16. (Console switches and weights for the R9 tools came with R9.3.)
 
 ## Deployment (2026-11-12)
 

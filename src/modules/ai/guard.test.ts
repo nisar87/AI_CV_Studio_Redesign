@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildSource, derivedYears, guardText } from './guard';
+import { sentenceCase } from './tasks';
 
 const check = (source: string[], output: string, extra: number[] = []) =>
   guardText(output, buildSource(source, extra));
@@ -148,5 +149,26 @@ describe('truth guard: quoted sentences', () => {
     expect(guardText('Ask the panel: ‘What training is offered?’', src).findings).toEqual([]);
     expect(guardText('Ask them "How is the team organised?"', src).findings).toEqual([]);
     expect(guardText('Ask about ‘Riverside Trust’ plans', src).findings.length).toBe(1);
+  });
+});
+
+describe('story titles in Title Case (live story eval)', () => {
+  it("become sentence case, keeping names from the person's text", () => {
+    const point = 'Delivered 120 parcels a day across three postcodes for Swift Logistics';
+    expect(sentenceCase('Delivering 120 Parcels Daily Across Three Postcodes', point)).toBe(
+      'Delivering 120 parcels daily across three postcodes',
+    );
+    expect(sentenceCase('Kept Swift Logistics Deliveries On Time', point)).toBe(
+      'Kept Swift Logistics deliveries on time',
+    );
+    // Already sentence case: unchanged.
+    expect(sentenceCase('Kept deliveries on time for Swift Logistics', point)).toBe(
+      'Kept deliveries on time for Swift Logistics',
+    );
+    const src = buildSource([point]);
+    expect(
+      guardText(sentenceCase('Delivering 120 Parcels Daily Across Three Postcodes', point), src)
+        .findings,
+    ).toEqual([]);
   });
 });
