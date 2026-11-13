@@ -246,3 +246,26 @@ test('undo back to an earlier design updates the preview again', async ({ page, 
   await page.keyboard.press('Control+Shift+z');
   await expect(previewFrame(page).locator('html[data-template="vivid"]')).toHaveCount(1);
 });
+
+test('a change made just before Download is in the download page (no lost last edit)', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'Covered on desktop');
+  await page.goto('/cv/new?work=driver');
+  await page.getByLabel('Full name').fill('Imran Qureshi');
+  await page.waitForTimeout(600);
+  await page.goto(page.url().replace(/\/guided$/, ''));
+  await page.getByRole('tab', { name: 'Design' }).click();
+  // Switch design and leave at once (well inside the editor's save delay).
+  await page.getByRole('radio', { name: /^Bold & organised · Meridian/ }).click();
+  await page.getByRole('link', { name: 'Download' }).click();
+  await expect(page).toHaveURL(/\/download$/);
+  await expect(
+    page
+      .locator('iframe[data-active]')
+      .first()
+      .contentFrame()
+      .locator('html[data-template="meridian"]'),
+  ).toHaveCount(1);
+});

@@ -76,6 +76,9 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
   const download = (
     <ButtonLink
       href={`/cv/${doc.id}/download`}
+      // Save now: the download page reads this CV from storage before the editor unmounts, so
+      // a change made in the last moment would otherwise be missing from the PDF.
+      onClick={() => editor.flush()}
       size="sm"
       className="sm:h-11 sm:px-4"
       icon={<Download aria-hidden size={18} />}

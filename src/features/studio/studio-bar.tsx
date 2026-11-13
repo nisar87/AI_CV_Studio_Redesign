@@ -53,6 +53,8 @@ export function StudioBar({ editor, backHref, backLabel, action }: Props) {
     <header className="border-line bg-surface z-20 flex h-16 shrink-0 items-center gap-2 border-b px-2 sm:gap-3 sm:px-4">
       <Link
         href={backHref}
+        // Save now: the next page reads this CV from storage before this one unmounts.
+        onClick={() => editor.flush()}
         className="text-ink hover:bg-sunken inline-flex h-11 items-center gap-2 rounded-md px-2 text-[15px] font-semibold"
         aria-label={backLabel}
       >
