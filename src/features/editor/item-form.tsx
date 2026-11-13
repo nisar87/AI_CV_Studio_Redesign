@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { TextField } from '@/components/ui/field';
 import type { Preset } from '@/modules/resume/presets';
 import type { Section, SectionKind } from '@/modules/resume/schema';
@@ -87,16 +88,49 @@ export function ItemForm({ kind, item, preset, onChange }: Props) {
               </div>
             );
           }
-          case 'tags':
+          case 'select':
+            return (
+              <label key={f.key} className={`${span} flex flex-col gap-1.5 text-sm font-semibold`}>
+                {f.label}
+                <select
+                  className="border-line-strong bg-surface min-h-11 rounded-md border px-3 text-[15px] font-normal"
+                  value={String(values[f.key] ?? '')}
+                  onChange={(e) => onChange({ [f.key]: e.target.value || undefined }, key)}
+                >
+                  {f.options.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                {f.hint && <span className="text-ink-muted font-normal">{f.hint}</span>}
+              </label>
+            );
+          case 'tags': {
+            const tags = (values[f.key] as string[]) ?? [];
+            const levels = (values.levels as number[] | undefined) ?? [];
+            // Levels follow their keyword when keywords are added, removed or reordered.
+            const setTags = (v: string[]) => {
+              if (!f.levels || !levels.some((l) => l > 0)) return onChange({ [f.key]: v }, key);
+              const by = new Map(tags.map((t, i) => [t, levels[i] ?? 0]));
+              onChange({ [f.key]: v, levels: v.map((t) => by.get(t) ?? 0) }, key);
+            };
             return (
               <div key={f.key} className="col-span-2 flex flex-col gap-2">
                 <TagsField
                   label={f.label}
                   hint={f.hint}
-                  value={(values[f.key] as string[]) ?? []}
+                  value={tags}
                   suggestions={preset.suggestedSkills}
-                  onChange={(v) => onChange({ [f.key]: v }, key)}
+                  onChange={setTags}
                 />
+                {f.levels && tags.length > 0 && (
+                  <SkillLevels
+                    tags={tags}
+                    levels={levels}
+                    onChange={(l) => onChange({ levels: l }, `${key}.levels`)}
+                  />
+                )}
                 {kind === 'skills' && (
                   <SkillsAssist
                     existing={(values[f.key] as string[]) ?? []}
@@ -110,8 +144,61 @@ export function ItemForm({ kind, item, preset, onChange }: Props) {
                 )}
               </div>
             );
+          }
         }
       })}
+    </div>
+  );
+}
+
+/** Optional 1–5 level per skill: lets designs show bars or dots honestly. */
+function SkillLevels({
+  tags,
+  levels,
+  onChange,
+}: {
+  tags: string[];
+  levels: number[];
+  onChange: (levels: number[] | undefined) => void;
+}) {
+  const on = levels.some((l) => l > 0);
+  const [open, setOpen] = useState(on);
+  return (
+    <div className="flex flex-col gap-2">
+      <CheckboxField
+        label="Show a level for each skill (for bar or dot designs)"
+        checked={open}
+        onChange={(v) => {
+          setOpen(v);
+          if (!v) onChange(undefined);
+        }}
+      />
+      {open && (
+        <ul className="flex flex-col gap-1.5" aria-label="Skill levels">
+          {tags.map((t, i) => (
+            <li key={`${t}-${i}`} className="flex items-center justify-between gap-3 text-sm">
+              <span className="min-w-0 truncate">{t}</span>
+              <select
+                aria-label={`Level for ${t}`}
+                className="border-line-strong bg-surface min-h-10 rounded-md border px-2"
+                value={levels[i] ?? 0}
+                onChange={(e) => {
+                  const next = tags.map((_, j) => levels[j] ?? 0);
+                  next[i] = Number(e.target.value);
+                  onChange(next);
+                }}
+              >
+                <option value={0}>Not set</option>
+                <option value={1}>1 — Beginner</option>
+                <option value={2}>2</option>
+                <option value={3}>3 — Good</option>
+                <option value={4}>4</option>
+                <option value={5}>5 — Expert</option>
+              </select>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

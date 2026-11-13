@@ -793,11 +793,39 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - The three pieces show side by side as live thumbnails. "Download CV and letter" downloads both PDFs; "Copy email" copies the email.
   - The job remembers its kit (`kit.cvId`). Home's next step goes to `/jobs/{id}#kit` and stops asking once the kit exists.
 - **Tests:** unit tests for the read-back checks (good CV; lost contact, employer and order; columns) and keyword re-checking; e2e `ats.spec` (free twice a month then 402, the report, Show me, Premium keywords) and `kit.spec` (Home → kit, three pieces, 3 AI actions, two PDFs, free 402).
+- **Verified live on the owner's real CV** (Premium granted temporarily, then removed and usage reset). The first live run found three **false alarms**, all fixed in the next release:
+  - "only 40% read": we measured our parser's structure, not the words; readability now counts the words in the extracted text;
+  - "reading order": a section whose first item had no text matched the word "other" anywhere; probes are now ≥8 distinctive characters;
+  - bilingual headings ("EDUCATION / AUSBILDUNG"): the parser's heading list was used; the check now uses the same rule as the health check.
+  - Keywords: "tune", "validate" and "query optimisation" were called missing next to "tuning", "validation" and "Query Optimization"; matching now handles word forms and British/American spelling (`stem()`, tested).
+  - The kit with real Gemini: 3 AI actions, about 17 s, a tailored CV titled for the job, letter and email. One unknown number was marked for the owner to fill in.
+  - The kit made for the owner's saved Northwind job is kept (CV "Nisar Ahmad — Database Performance Engineer (Remote) (Northwind Telecom Services)"); the owner can delete it.
+  - Also found: once Premium ended, the job page hid the kit made earlier. Earlier kits now stay visible and downloadable (e2e).
 - **Deviations:**
   - Proofreading (`quality.proofread`) is not part of the Check tab yet; it is not in this release's list.
   - The kit downloads two PDFs rather than one merged file.
   - The job page keeps its single column with the kit first, not the Kit · Interview · Notes tabs; the anchors `#kit`, `#letter` and `#interview` jump to each part.
   - AI weights are fixed in code (kit = 3) until the Console gets AI weights in R8.7.
+
+### R8.5 Section types and levels
+- **14 new section types** (spec §9.2), so there are 24 in all: publications, courses and training, memberships, conferences and talks, patents, military service, internships, interests, key achievements, references, strengths, testimonials, personal details, and declaration.
+  - Most reuse an existing item shape (credential, job, skill group, custom). References, strengths, testimonials, personal details and the declaration have their own small shapes.
+  - Credentials gained an optional link (publications, talks).
+- **Every design supports them with no new template code.** `LAYOUT_KIND` lays each new type out like an existing one (publications like certifications, internships like work history, personal details like languages…). References, strengths, quotes and the declaration print as plain lines (`cv-plain`), without bullet markers.
+- **Levels:**
+  - Optional 1–5 level per skill keyword (kept with its keyword when skills are added, removed or reordered by tailoring).
+  - Optional language level (CEFR A1–C2 or Basic / Conversational / Fluent / Native).
+  - The composer draws them as bars or dots only when levels exist; otherwise tags and text, as before. `normalise` now allows bars and dots for a CV that has levels and still explains when it can't.
+- **Section library:** "Add a section" lists all types with a one-line example each, and has a search box.
+- **Job tools:** military service and internships count as jobs for match and tailoring; courses, memberships, publications, talks and patents count as credentials. Testimonials, references and personal details are never used as the person's facts.
+- **Tests:**
+  - unit: every new type renders in a hand-crafted and a composed design; bars and dots appear only with levels; normalise with and without levels;
+  - e2e `sections.spec`: search the library, add Personal details and References and see them in the preview; a skill level survives a reload.
+- **Deviations:**
+  - Strengths print as title plus line, not as cards.
+  - The declaration has no signature image yet.
+  - The importer doesn't detect the new types (they go to "Other" as before).
+  - Hand-crafted designs show levels as text (bars and dots are drawn by the composer).
 
 ## Owner to-do (when you have time)
 
@@ -815,7 +843,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 
 ## Next action (exact)
 
-1. R8.1–R8.4 are done. Next: R8.5 new section types, R8.6 edit-on-page, drag reorder, AI on a selection and sync back to the profile, R8.7 Console additions.
+1. R8.1–R8.5 are done. Next: R8.6 edit-on-page, drag reorder, AI on a selection and sync back to the profile, R8.7 Console additions.
 
 ## Deployment (2026-11-12)
 

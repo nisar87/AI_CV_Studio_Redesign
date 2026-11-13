@@ -43,10 +43,33 @@ export const skillGroupItem = z.object({
   id,
   label: text(80),
   keywords: z.array(z.string().max(160)).max(60).default([]),
+  /** Optional level 1–5 per keyword (same order; 0 = not set). Unlocks bars and dots honestly. */
+  levels: z.array(z.number().int().min(0).max(5).catch(0)).max(60).optional(),
 });
 
+/** CEFR or plain-language levels; '' = not set. */
+export const LANGUAGE_LEVELS = [
+  '',
+  'A1',
+  'A2',
+  'B1',
+  'B2',
+  'C1',
+  'C2',
+  'basic',
+  'conversational',
+  'fluent',
+  'native',
+] as const;
+export type LanguageLevel = (typeof LANGUAGE_LEVELS)[number];
+
 /** Fluency can be a sentence ("Fluent / professional working proficiency – …"); never cut on import. */
-export const languageItem = z.object({ id, language: text(80), fluency: text(240) });
+export const languageItem = z.object({
+  id,
+  language: text(80),
+  fluency: text(240),
+  level: z.enum(LANGUAGE_LEVELS).optional().catch(undefined),
+});
 
 export const credentialItem = z.object({
   id,
@@ -54,6 +77,28 @@ export const credentialItem = z.object({
   issuer: text(160),
   date: partialDate,
   detail: text(300),
+  /** Optional link (publications, talks). */
+  link: z.string().max(300).optional(),
+});
+
+/** R8 section types (complete-studio-spec §9.2). */
+export const referenceItem = z.object({
+  id,
+  name: text(120),
+  role: text(160),
+  organization: text(160),
+  /** Email or phone, or "Available on request". */
+  contact: text(200),
+});
+export const strengthItem = z.object({ id, title: text(120), text: text(300) });
+/** Must be supplied by the person (never generated). */
+export const testimonialItem = z.object({ id, quote: text(600), name: text(120), role: text(160) });
+export const detailItem = z.object({ id, label: text(60), value: text(200) });
+export const declarationItem = z.object({
+  id,
+  text: text(800),
+  place: text(120),
+  date: text(60),
 });
 
 export const projectItem = z.object({
@@ -88,6 +133,21 @@ export const section = z.discriminatedUnion('kind', [
   z.object({ ...sectionBase, kind: z.literal('awards'), items: items(credentialItem) }),
   z.object({ ...sectionBase, kind: z.literal('projects'), items: items(projectItem) }),
   z.object({ ...sectionBase, kind: z.literal('custom'), items: items(customItem) }),
+  // R8: 14 more kinds, most reusing an existing item shape (spec §9.2).
+  z.object({ ...sectionBase, kind: z.literal('publications'), items: items(credentialItem) }),
+  z.object({ ...sectionBase, kind: z.literal('courses'), items: items(credentialItem) }),
+  z.object({ ...sectionBase, kind: z.literal('memberships'), items: items(credentialItem) }),
+  z.object({ ...sectionBase, kind: z.literal('conferences'), items: items(credentialItem) }),
+  z.object({ ...sectionBase, kind: z.literal('patents'), items: items(credentialItem) }),
+  z.object({ ...sectionBase, kind: z.literal('military'), items: items(experienceItem) }),
+  z.object({ ...sectionBase, kind: z.literal('internships'), items: items(experienceItem) }),
+  z.object({ ...sectionBase, kind: z.literal('interests'), items: items(skillGroupItem) }),
+  z.object({ ...sectionBase, kind: z.literal('achievements'), items: items(customItem) }),
+  z.object({ ...sectionBase, kind: z.literal('references'), items: items(referenceItem) }),
+  z.object({ ...sectionBase, kind: z.literal('strengths'), items: items(strengthItem) }),
+  z.object({ ...sectionBase, kind: z.literal('testimonials'), items: items(testimonialItem) }),
+  z.object({ ...sectionBase, kind: z.literal('personalDetails'), items: items(detailItem) }),
+  z.object({ ...sectionBase, kind: z.literal('declaration'), items: items(declarationItem) }),
 ]);
 
 export const SECTION_KINDS = [
@@ -101,7 +161,52 @@ export const SECTION_KINDS = [
   'volunteering',
   'awards',
   'custom',
+  'publications',
+  'courses',
+  'memberships',
+  'conferences',
+  'patents',
+  'military',
+  'internships',
+  'interests',
+  'achievements',
+  'references',
+  'strengths',
+  'testimonials',
+  'personalDetails',
+  'declaration',
 ] as const;
+
+/**
+ * How each kind is laid out by the templates and the design engine: new kinds borrow an existing
+ * kind's layout (and side-column placement), so every design supports them without new code.
+ */
+export const LAYOUT_KIND: Record<(typeof SECTION_KINDS)[number], (typeof SECTION_KINDS)[number]> = {
+  experience: 'experience',
+  education: 'education',
+  skills: 'skills',
+  languages: 'languages',
+  certifications: 'certifications',
+  licences: 'licences',
+  projects: 'projects',
+  volunteering: 'volunteering',
+  awards: 'awards',
+  custom: 'custom',
+  publications: 'certifications',
+  courses: 'certifications',
+  memberships: 'certifications',
+  conferences: 'certifications',
+  patents: 'certifications',
+  military: 'experience',
+  internships: 'experience',
+  interests: 'skills',
+  achievements: 'custom',
+  references: 'custom',
+  strengths: 'custom',
+  testimonials: 'custom',
+  personalDetails: 'languages',
+  declaration: 'custom',
+};
 
 export {
   TEMPLATE_IDS,
@@ -183,6 +288,11 @@ export type LanguageItem = z.infer<typeof languageItem>;
 export type CredentialItem = z.infer<typeof credentialItem>;
 export type ProjectItem = z.infer<typeof projectItem>;
 export type CustomItem = z.infer<typeof customItem>;
+export type ReferenceItem = z.infer<typeof referenceItem>;
+export type StrengthItem = z.infer<typeof strengthItem>;
+export type TestimonialItem = z.infer<typeof testimonialItem>;
+export type DetailItem = z.infer<typeof detailItem>;
+export type DeclarationItem = z.infer<typeof declarationItem>;
 export type DesignSpec = z.infer<typeof designSpec>;
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
 /** Any catalogue design, hand-crafted or spec-only (R7). */

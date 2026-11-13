@@ -1,9 +1,10 @@
-import { coverage, COVERAGE_TARGET, documentText } from '@/modules/import/coverage';
+import { contentWords, COVERAGE_TARGET, documentText } from '@/modules/import/coverage';
 import { parseCv } from '@/modules/import/parse';
 import type { TaskOutput } from '@/modules/ai/schemas';
 import { migrateV1 } from '@/modules/design/catalogue';
 import { digestPlain, type Digest } from '@/modules/jobs/digest';
 import { cvHasTerm } from '@/modules/jobs/match';
+import { isStandardHeading } from './health';
 import type { ExperienceItem, ResumeDocument } from '@/modules/resume/schema';
 
 /**
@@ -68,8 +69,16 @@ export function assessReadBack(
     ? undefined
     : 'Turn on “ATS-safe version” in the Design tab before downloading for online applications. Your other choices come back when you turn it off.';
 
-  // 1. Readable: the person's words come back out of the PDF.
-  const cov = coverage(documentText(src).split('\n'), back);
+  // 1. Readable: the person's words come back out of the PDF as text (whatever the structure).
+  const have = new Set(contentWords(lines.join('\n')));
+  const srcLines = documentText(src).split('\n');
+  const want = new Set(srcLines.flatMap(contentWords));
+  let found = 0;
+  for (const w of want) if (have.has(w)) found++;
+  const cov = {
+    ratio: want.size ? found / want.size : 1,
+    missing: srcLines.filter((l) => contentWords(l).some((w) => !have.has(w))),
+  };
   checks.push(
     cov.ratio >= COVERAGE_TARGET
       ? {
@@ -153,13 +162,26 @@ export function assessReadBack(
     );
 
   // 4. Reading order: sections and jobs come back in the order you wrote them.
+  // Each section's first distinctive line (at least 8 characters, so common words don't match).
   const firsts = visible(src)
     .map((s) => {
       const first = s.items[0] as unknown as Record<string, unknown>;
-      const probe = String(
-        first.role || first.qualification || first.name || first.title || first.text || s.title,
-      );
-      return { title: s.title, at: joined.indexOf(norm(probe).slice(0, 40)) };
+      const list = (k: string) => (Array.isArray(first[k]) ? (first[k] as string[])[0] : '');
+      const probe = norm(
+        String(
+          first.role ||
+            first.qualification ||
+            first.name ||
+            first.title ||
+            first.language ||
+            first.label ||
+            first.text ||
+            list('bullets') ||
+            list('keywords') ||
+            '',
+        ),
+      ).slice(0, 40);
+      return { title: s.title, at: probe.length >= 8 ? joined.indexOf(probe) : -1 };
     })
     .filter((x) => x.at >= 0);
   const outOfOrder = firsts.find((x, i) => i > 0 && x.at < firsts[i - 1]!.at);
@@ -193,19 +215,8 @@ export function assessReadBack(
         },
   );
 
-  // 5. Section headings software recognises.
-  const KNOWN = new Set([
-    'experience',
-    'education',
-    'skills',
-    'languages',
-    'certifications',
-    'licences',
-    'projects',
-    'volunteering',
-  ]);
-  const backKinds = new Set(back.sections.map((s) => s.kind));
-  const odd = visible(src).filter((s) => KNOWN.has(s.kind) && !backKinds.has(s.kind));
+  // 5. Section headings software recognises (the same rule as the CV health check).
+  const odd = visible(src).filter((s) => !isStandardHeading(s.kind, s.title));
   checks.push(
     odd.length
       ? {

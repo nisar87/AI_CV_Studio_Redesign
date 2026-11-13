@@ -121,10 +121,17 @@ describe('normalise', () => {
     );
     expect(spec.placement.side).toEqual([]);
   });
-  it('never shows skill bars without levels, and says why', () => {
-    const r = normalise(parseSpec({ lists: { skills: { style: 'bars' } } }));
+  it('never shows skill bars without levels, and says why; keeps them when levels are set', () => {
+    const plain = structuredClone(FIXTURES.driver);
+    const r = normalise(parseSpec({ lists: { skills: { style: 'bars' } } }), plain);
     expect(r.spec.lists.skills.style).toBe('tags');
     expect(r.unmet.join(' ')).toMatch(/levels/);
+
+    const levelled = structuredClone(FIXTURES.driver);
+    for (const sec of levelled.sections)
+      if (sec.kind === 'skills') for (const g of sec.items) g.levels = g.keywords.map(() => 4);
+    const k = normalise(parseSpec({ lists: { skills: { style: 'dots' } } }), levelled);
+    expect(k.spec.lists.skills.style).toBe('dots');
   });
   it('moves long sections out of narrow columns', () => {
     const doc = structuredClone(FIXTURES.extreme);
@@ -229,5 +236,130 @@ describe('composer', () => {
       fonts,
     });
     expect(html).not.toContain('<script>alert');
+  });
+});
+
+describe('R8 section types and levels', () => {
+  it('renders every new section type in a composed design and a hand-crafted one', () => {
+    const doc = structuredClone(FIXTURES.driver);
+    const add = (kind: string, title: string, items: unknown[]) =>
+      doc.sections.push({ id: `s-${kind}`, kind, title, hidden: false, items } as never);
+    add('publications', 'Publications', [
+      {
+        id: 'p1',
+        name: 'Faster routing',
+        issuer: 'Logistics Weekly',
+        date: '2024',
+        detail: '',
+        link: 'example.com/routing',
+      },
+    ]);
+    add('courses', 'Courses', [
+      { id: 'c1', name: 'Excel for Business', issuer: 'Coursera', date: '2025', detail: '' },
+    ]);
+    add('memberships', 'Memberships', [
+      { id: 'm1', name: 'Member', issuer: 'Road Haulage Association', date: '', detail: '' },
+    ]);
+    add('conferences', 'Talks', [
+      { id: 'k1', name: 'Safe night driving', issuer: 'FleetCon', date: '2023', detail: '' },
+    ]);
+    add('patents', 'Patents', [
+      { id: 'pt1', name: 'Van shelf clip', issuer: 'GB1234567', date: '2022', detail: '' },
+    ]);
+    add('military', 'Military service', [
+      {
+        id: 'mi1',
+        role: 'Driver',
+        organization: 'Royal Logistic Corps',
+        location: '',
+        start: '2010',
+        end: '2013',
+        current: false,
+        bullets: ['Drove supply convoys'],
+      },
+    ]);
+    add('internships', 'Internships', [
+      {
+        id: 'in1',
+        role: 'Intern',
+        organization: 'City Council',
+        location: '',
+        start: '2009',
+        end: '2009',
+        current: false,
+        bullets: [],
+      },
+    ]);
+    add('interests', 'Interests', [{ id: 'i1', label: '', keywords: ['Cricket', 'Cooking'] }]);
+    add('achievements', 'Key achievements', [
+      { id: 'a1', title: 'Zero accidents in 9 years', subtitle: '', date: '', bullets: [] },
+    ]);
+    add('references', 'References', [
+      {
+        id: 'r1',
+        name: 'Sara Khan',
+        role: 'Depot manager',
+        organization: 'Swift',
+        contact: 'sara@example.com',
+      },
+    ]);
+    add('strengths', 'Strengths', [
+      { id: 'st1', title: 'Calm under pressure', text: 'Kept every slot on Black Friday' },
+    ]);
+    add('testimonials', 'What customers say', [
+      { id: 't1', quote: 'Always on time', name: 'A. Patel', role: 'Shop owner' },
+    ]);
+    add('personalDetails', 'Personal details', [
+      { id: 'pd1', label: 'Nationality', value: 'British' },
+    ]);
+    add('declaration', 'Declaration', [
+      { id: 'd1', text: 'I declare this is true.', place: 'Leicester', date: '13 November 2026' },
+    ]);
+    for (const spec of [undefined, parseSpec({ layout: { type: 'sidebar-left' } })]) {
+      const html = buildDocumentHtml(spec ? withSpec(doc, spec) : doc, { fonts });
+      for (const t of [
+        'Faster routing',
+        'Excel for Business',
+        'Road Haulage Association',
+        'Safe night driving',
+        'GB1234567',
+        'Royal Logistic Corps',
+        'City Council',
+        'Cricket',
+        'Zero accidents in 9 years',
+        'Sara Khan',
+        'Calm under pressure',
+        '“Always on time”',
+        'British',
+        'I declare this is true.',
+        'Leicester, 13 November 2026',
+      ])
+        expect(html, t).toContain(t);
+      expect(html).toContain('cv-plain');
+    }
+  });
+
+  it('draws skill and language levels as bars or dots only when set', () => {
+    const doc = structuredClone(FIXTURES.nurse);
+    expect(doc.sections.some((x) => x.kind === 'languages')).toBe(true);
+    for (const sec of doc.sections) {
+      if (sec.kind === 'skills')
+        for (const g of sec.items) g.levels = g.keywords.map((_, i) => (i % 5) + 1);
+      if (sec.kind === 'languages') for (const l of sec.items) l.level = 'fluent';
+    }
+    const html = buildDocumentHtml(
+      withSpec(
+        doc,
+        parseSpec({ lists: { skills: { style: 'dots' }, languages: { style: 'bars' } } }),
+      ),
+      { fonts },
+    );
+    expect(html).toContain('class="g-meter g-meter--dots"');
+    expect(html).toContain('class="g-meter g-meter--bars"');
+    const none = buildDocumentHtml(
+      withSpec(FIXTURES.driver, parseSpec({ lists: { skills: { style: 'dots' } } })),
+      { fonts },
+    );
+    expect(none).not.toContain('class="g-meter');
   });
 });

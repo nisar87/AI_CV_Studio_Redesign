@@ -49,9 +49,14 @@ export function profileDigest(doc: ResumeDocument): Digest {
   let o = 0;
   for (const s of doc.sections) {
     if (s.hidden) continue;
-    if (s.kind === 'experience' || s.kind === 'volunteering') {
+    if (
+      s.kind === 'experience' ||
+      s.kind === 'volunteering' ||
+      s.kind === 'internships' ||
+      s.kind === 'military'
+    ) {
       for (const it of s.items as ExperienceItem[]) {
-        const id = s.kind === 'experience' ? `J${++j}` : `V${++v}`;
+        const id = s.kind === 'volunteering' ? `V${++v}` : `J${++j}`;
         const ref = `${s.id}/${it.id}`;
         add(
           id,
@@ -85,7 +90,16 @@ export function profileDigest(doc: ResumeDocument): Digest {
         .map((l) => `${l.language}${l.fluency ? ` (${l.fluency})` : ''}`)
         .filter(Boolean);
       if (langs.length) add('LANG', langs.join('; '), `${s.id}/${s.items[0]?.id ?? ''}`);
-    } else if (s.kind === 'certifications' || s.kind === 'licences' || s.kind === 'awards') {
+    } else if (
+      s.kind === 'certifications' ||
+      s.kind === 'licences' ||
+      s.kind === 'awards' ||
+      s.kind === 'courses' ||
+      s.kind === 'memberships' ||
+      s.kind === 'publications' ||
+      s.kind === 'conferences' ||
+      s.kind === 'patents'
+    ) {
       for (const it of s.items as CredentialItem[])
         add(
           `CERT${++c}`,
@@ -99,7 +113,14 @@ export function profileDigest(doc: ResumeDocument): Digest {
         add(id, `${it.name}${it.role ? ` — ${it.role}` : ''}`, ref);
         it.bullets.forEach((t, i) => add(`${id}.B${i + 1}`, t, ref));
       }
-    } else if (s.kind === 'custom') {
+    } else if (s.kind === 'strengths') {
+      for (const it of s.items)
+        add(`OTHER${++o}`, [it.title, it.text].filter(Boolean).join(': '), `${s.id}/${it.id}`);
+    } else if (s.kind === 'interests') {
+      const all = s.items.flatMap((g) => g.keywords).filter(Boolean);
+      if (all.length)
+        add(`OTHER${++o}`, `Interests: ${all.join('; ')}`, `${s.id}/${s.items[0]!.id}`);
+    } else if (s.kind === 'custom' || s.kind === 'achievements') {
       for (const it of s.items) {
         const id = `OTHER${++o}`;
         const ref = `${s.id}/${it.id}`;

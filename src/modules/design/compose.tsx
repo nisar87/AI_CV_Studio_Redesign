@@ -217,10 +217,15 @@ function makeHooks(s: DesignSpecV2): TemplateHooks {
     },
     compactItem: (e, sec) =>
       sec.kind === 'languages' ? (
-        <p className="g-compact g-lang">
-          <strong>{e.title}</strong>
-          {e.label && <span className="g-muted">{e.label}</span>}
-        </p>
+        <div className="g-compact g-lang">
+          <p>
+            <strong>{e.title}</strong>
+            {e.label && <span className="g-muted"> {e.label}</span>}
+          </p>
+          {s.lists.languages.style !== 'text' && !!e.level && (
+            <Meter value={e.level} kind={s.lists.languages.style} label={e.title} />
+          )}
+        </div>
       ) : (
         <div className="g-compact">
           <p>
@@ -234,6 +239,21 @@ function makeHooks(s: DesignSpecV2): TemplateHooks {
       ),
     skills: (e) => {
       const style = s.lists.skills.style;
+      // Bars and dots only show levels the person gave; without levels they fall back to tags.
+      if ((style === 'bars' || style === 'dots') && e.levels)
+        return (
+          <div className="g-skills g-skills--levels">
+            {e.label && <p className="g-skill-label">{e.label}</p>}
+            <ul className="g-levels">
+              {e.tags.map((t, i) => (
+                <li key={i}>
+                  <span>{t}</span>
+                  {!!e.levels![i] && <Meter value={e.levels![i]!} kind={style} label={t} />}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
       if (style === 'inline')
         return (
           <p className="g-skills-inline">
@@ -253,6 +273,22 @@ function makeHooks(s: DesignSpecV2): TemplateHooks {
       );
     },
   };
+}
+
+/** A level from 1 to 5 as a bar or five dots; the number is in the text for screen readers and ATS. */
+function Meter({ value, kind, label }: { value: number; kind: 'bars' | 'dots'; label: string }) {
+  const v = Math.max(0, Math.min(5, value));
+  return (
+    <span className={`g-meter g-meter--${kind}`} role="img" aria-label={`${label}: ${v} of 5`}>
+      {kind === 'bars' ? (
+        <span className="g-bar">
+          <span style={{ width: `${v * 20}%` }} />
+        </span>
+      ) : (
+        [1, 2, 3, 4, 5].map((n) => <span key={n} className={n <= v ? 'on' : ''} />)
+      )}
+    </span>
+  );
 }
 
 // ---------------------------------------------------------------- header
@@ -572,7 +608,15 @@ ${s.entries.layout === 'dates-left' || s.entries.layout === 'timeline-dots' ? '.
 .g-list li{position:relative;padding-left:.9em;break-inside:avoid}
 .g-list li::before{content:'';position:absolute;left:.1em;top:calc(var(--lh) * .5em - .1em);width:.26em;height:.26em;border-radius:50%;background:var(--bullet)}
 .g-skills--grouped-list .g-list li{padding-left:0}
-.g-skills--grouped-list .g-list li::before{content:none}`);
+.g-skills--grouped-list .g-list li::before{content:none}
+.g-levels li{display:flex;align-items:center;justify-content:space-between;gap:.6em;break-inside:avoid}
+.g-levels li+li{margin-top:2pt}
+.g-meter{display:inline-flex;gap:2pt;flex:none;align-items:center}
+.g-bar{display:block;width:16mm;height:3pt;border-radius:2pt;background:var(--accent-soft);overflow:hidden}
+.g-bar span{display:block;height:100%;background:var(--accent)}
+.g-meter--dots span{width:4.5pt;height:4.5pt;border-radius:50%;border:.6pt solid var(--accent)}
+.g-meter--dots span.on{background:var(--accent)}
+.g-lang{align-items:center}`);
 
   // Extras and furniture
   out.push(`.g-end{padding-top:var(--section-gap);display:flex;align-items:center;gap:4mm;color:var(--ink-2);font-size:.95em}

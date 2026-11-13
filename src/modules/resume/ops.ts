@@ -68,7 +68,43 @@ export function emptyItem(kind: SectionKind): Item {
     case 'projects':
       return { id, name: '', role: '', link: '', start: '', end: '', bullets: [] };
     case 'custom':
+    case 'achievements':
       return { id, title: '', subtitle: '', date: '', bullets: [] };
+    case 'publications':
+    case 'courses':
+    case 'memberships':
+    case 'conferences':
+    case 'patents':
+      return { id, name: '', issuer: '', date: '', detail: '', link: '' };
+    case 'military':
+    case 'internships':
+      return {
+        id,
+        role: '',
+        organization: '',
+        location: '',
+        start: '',
+        end: '',
+        current: false,
+        bullets: [],
+      };
+    case 'interests':
+      return { id, label: '', keywords: [] };
+    case 'references':
+      return { id, name: '', role: '', organization: '', contact: '' };
+    case 'strengths':
+      return { id, title: '', text: '' };
+    case 'testimonials':
+      return { id, quote: '', name: '', role: '' };
+    case 'personalDetails':
+      return { id, label: '', value: '' };
+    case 'declaration':
+      return {
+        id,
+        text: 'I hereby declare that the information given above is true to the best of my knowledge.',
+        place: '',
+        date: '',
+      };
   }
 }
 

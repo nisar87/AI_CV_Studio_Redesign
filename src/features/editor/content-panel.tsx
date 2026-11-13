@@ -56,6 +56,7 @@ export const ContentPanel = forwardRef<ContentPanelHandle, { editor: DocumentEdi
     const preset = getPreset(doc.presetId);
     const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
     const [adding, setAdding] = useState(false);
+    const [filter, setFilter] = useState('');
 
     const toggle = (itemId: string, open?: boolean) =>
       setExpanded((s) => {
@@ -148,28 +149,48 @@ export const ContentPanel = forwardRef<ContentPanelHandle, { editor: DocumentEdi
             className="border-line-strong bg-surface rounded-lg border border-dashed p-4"
           >
             <p className="mb-3 font-semibold">What would you like to add?</p>
-            <ul className="grid gap-2">
+            <input
+              type="search"
+              aria-label="Find a section type"
+              placeholder="Find a section — e.g. references"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="border-line-strong bg-surface focus-visible:border-primary mb-3 h-11 w-full rounded-md border px-3 text-[15px]"
+            />
+            <ul className="grid gap-2" aria-label="Section types">
               {[
                 ...suggested.map((s) => ({ kind: s.kind, title: s.title })),
                 ...others.map((k) => ({ kind: k, title: KIND_INFO[k].title })),
-              ].map((opt) => (
-                <li key={`${opt.kind}-${opt.title}`}>
-                  <button
-                    type="button"
-                    onClick={() => addSection(opt.kind, opt.title)}
-                    className="border-line hover:border-primary hover:bg-primary-soft flex min-h-12 w-full flex-col items-start rounded-md border px-3 py-2 text-left"
-                  >
-                    <span className="font-semibold">{opt.title}</span>
-                    <span className="text-ink-muted text-sm">
-                      {KIND_INFO[opt.kind].description}
-                    </span>
-                  </button>
-                </li>
-              ))}
+              ]
+                .filter((opt) =>
+                  `${opt.title} ${KIND_INFO[opt.kind].description}`
+                    .toLowerCase()
+                    .includes(filter.trim().toLowerCase()),
+                )
+                .map((opt) => (
+                  <li key={`${opt.kind}-${opt.title}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addSection(opt.kind, opt.title);
+                        setFilter('');
+                      }}
+                      className="border-line hover:border-primary hover:bg-primary-soft flex min-h-12 w-full flex-col items-start rounded-md border px-3 py-2 text-left"
+                    >
+                      <span className="font-semibold">{opt.title}</span>
+                      <span className="text-ink-muted text-sm">
+                        {KIND_INFO[opt.kind].description}
+                      </span>
+                    </button>
+                  </li>
+                ))}
             </ul>
             <button
               type="button"
-              onClick={() => setAdding(false)}
+              onClick={() => {
+                setAdding(false);
+                setFilter('');
+              }}
               className="text-ink-muted hover:bg-sunken mt-3 min-h-11 rounded-md px-3 font-semibold"
             >
               Cancel

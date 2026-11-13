@@ -102,14 +102,21 @@ export function normalise(input: DesignSpecV2, doc?: ResumeDocument): Normalised
   if (H.photo.position === 'overlap' && (H.style !== 'band' || H.align === 'center'))
     H.photo.position = 'header-right';
 
-  // Bars and dots would show a level the person never gave.
-  if (s.lists.skills.style === 'bars' || s.lists.skills.style === 'dots') {
+  // Bars and dots would show a level the person never gave: allowed only when the CV has levels
+  // (R8 skill and language levels). Without a CV to look at, the composer falls back per entry.
+  const skillLevels = doc?.sections.some(
+    (x) => !x.hidden && x.kind === 'skills' && x.items.some((g) => g.levels?.some((l) => l > 0)),
+  );
+  const languageLevels = doc?.sections.some(
+    (x) => !x.hidden && x.kind === 'languages' && x.items.some((l) => !!l.level),
+  );
+  if (doc && !skillLevels && (s.lists.skills.style === 'bars' || s.lists.skills.style === 'dots')) {
     s.lists.skills.style = 'tags';
     unmet.push(
-      'Skill bars and dots need skill levels, which this CV does not have, so tags are used.',
+      'Skill bars and dots need skill levels, which this CV does not have, so tags are used. Add levels to your skills to use them.',
     );
   }
-  if (s.lists.languages.style !== 'text') {
+  if (doc && !languageLevels && s.lists.languages.style !== 'text') {
     s.lists.languages.style = 'text';
     unmet.push('Language bars and dots need levels, so languages are shown as text.');
   }

@@ -139,6 +139,19 @@ export function JobTools({ job, onJobChange }: { job: Job; onJobChange: (j: Job)
           See how well your CV fits this job, get a copy that puts your most relevant experience
           first, and a cover letter in the same design.
         </Banner>
+      ) : null}
+      {aiLocked ? (
+        // A kit made earlier (e.g. while Premium was active) stays yours to see and download.
+        job.kit && (
+          <KitSection
+            job={job}
+            disabled
+            loading={false}
+            onCreate={() => {}}
+            onProblem={setProblem}
+            refresh={refresh}
+          />
+        )
       ) : cvs.length === 0 ? (
         <p className="text-ink-muted text-sm">
           <Link href="/start" className="text-primary font-semibold">

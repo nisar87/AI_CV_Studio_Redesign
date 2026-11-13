@@ -97,3 +97,29 @@ describe('ATS keywords', () => {
     ]);
   });
 });
+
+describe('ATS check — real-CV regressions (owner’s CV, R8.4 live check)', () => {
+  it('reads words, not structure; bilingual headings pass like the health check', () => {
+    const doc = structuredClone(driver);
+    for (const s of doc.sections)
+      if (s.kind === 'experience') s.title = 'WORK HISTORY / BERUFSERFAHRUNG';
+    // A layout our rules parser can't structure, but whose words are all there.
+    const words = plainLines(doc).map((l) => l.toUpperCase());
+    const s = status(assessReadBack(doc, words, { pages: 1 }));
+    expect(s.readable).toBe('pass');
+    expect(s.headings).toBe('pass');
+  });
+});
+
+describe('keyword stems', () => {
+  it('matches spelling variants and word forms, not unrelated words', async () => {
+    const { cvHasTerm } = await import('@/modules/jobs/match');
+    const cv = 'Query Optimization; Performance Tuning; data validation; automated reporting';
+    expect(cvHasTerm(cv, 'query optimisation')).toBe(true);
+    expect(cvHasTerm(cv, 'tune')).toBe(true);
+    expect(cvHasTerm(cv, 'validate')).toBe(true);
+    expect(cvHasTerm(cv, 'automating reports')).toBe(true);
+    expect(cvHasTerm(cv, 'Kubernetes')).toBe(false);
+    expect(cvHasTerm(cv, 'data science')).toBe(false);
+  });
+});

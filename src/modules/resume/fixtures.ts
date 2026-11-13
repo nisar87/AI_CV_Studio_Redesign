@@ -65,19 +65,21 @@ function build(
 
 function defaultTitle(kind: Section['kind']): string {
   return (
-    {
-      experience: 'Work history',
-      education: 'Education',
-      skills: 'Skills',
-      languages: 'Languages',
-      certifications: 'Certifications',
-      licences: 'Licences',
-      projects: 'Projects',
-      volunteering: 'Volunteering',
-      awards: 'Awards',
-      custom: 'More',
-    } as const
-  )[kind];
+    (
+      {
+        experience: 'Work history',
+        education: 'Education',
+        skills: 'Skills',
+        languages: 'Languages',
+        certifications: 'Certifications',
+        licences: 'Licences',
+        projects: 'Projects',
+        volunteering: 'Volunteering',
+        awards: 'Awards',
+        custom: 'More',
+      } as Partial<Record<Section['kind'], string>>
+    )[kind] ?? kind
+  );
 }
 
 const exp = (

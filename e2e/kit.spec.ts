@@ -1,5 +1,6 @@
 import { expect, test } from './support/test';
 import { seedDocument } from './support/seed';
+import { setPremium } from './support/auth';
 import { driver } from '../src/modules/resume/fixtures';
 
 /** R8.4: the application kit — tailored CV, cover letter and email in one go. */
@@ -51,6 +52,15 @@ test('Premium: create the kit, see the three pieces together, download CV and le
   await kit.getByRole('button', { name: 'Download CV and letter' }).click();
   await expect.poll(() => downloads.length, { timeout: 30_000 }).toBe(2);
   expect(downloads.sort()).toEqual(['Imran-Qureshi-CV.pdf', 'Imran-Qureshi-Cover-Letter.pdf']);
+
+  // Without Premium the kit made earlier stays visible (and can't be remade).
+  await setPremium(page.request, false);
+  await page.reload();
+  await expect(page.getByTestId('kit').getByText('Tailored CV', { exact: true })).toBeVisible();
+  await expect(
+    page.getByTestId('kit').getByRole('button', { name: 'Make a new kit' }),
+  ).toBeDisabled();
+  await setPremium(page.request, true);
 
   // Home no longer asks for a kit for this job.
   await page.goto('/studio');

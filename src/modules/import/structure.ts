@@ -1,6 +1,12 @@
 import type { TaskOutput } from '@/modules/ai/schemas';
 import { newId } from '@/modules/resume/create';
-import { designSpec, type ResumeDocument, type Section } from '@/modules/resume/schema';
+import { IMPORT_KINDS } from '@/modules/ai/schemas';
+import {
+  designSpec,
+  LAYOUT_KIND,
+  type ResumeDocument,
+  type Section,
+} from '@/modules/resume/schema';
 import { headingOf, type ImportReport } from './parse';
 
 /**
@@ -285,69 +291,72 @@ export function docToStructure(d: ResumeDocument): Structure {
     location: d.basics.location,
     links: d.basics.links.map((l) => ({ label: l.label, url: l.url })),
     summary: d.basics.summary,
-    sections: d.sections.map((s) => ({
-      kind: s.kind,
-      title: s.title,
-      entries: s.items.map((it) => {
-        switch (s.kind) {
-          case 'experience':
-          case 'volunteering': {
-            const x = it as Extract<Section, { kind: 'experience' }>['items'][number];
-            return entry({
-              title: x.role,
-              subtitle: x.organization,
-              place: x.location,
-              start: x.start,
-              end: x.end,
-              current: x.current,
-              lines: x.bullets,
-            });
+    // Only the kinds the importer knows; R8 section types are not produced by import.
+    sections: d.sections
+      .filter((s) => s.kind === LAYOUT_KIND[s.kind])
+      .map((s) => ({
+        kind: s.kind as (typeof IMPORT_KINDS)[number],
+        title: s.title,
+        entries: s.items.map((it) => {
+          switch (s.kind) {
+            case 'experience':
+            case 'volunteering': {
+              const x = it as Extract<Section, { kind: 'experience' }>['items'][number];
+              return entry({
+                title: x.role,
+                subtitle: x.organization,
+                place: x.location,
+                start: x.start,
+                end: x.end,
+                current: x.current,
+                lines: x.bullets,
+              });
+            }
+            case 'education': {
+              const x = it as Extract<Section, { kind: 'education' }>['items'][number];
+              return entry({
+                title: x.qualification,
+                subtitle: x.institution,
+                place: x.location,
+                start: x.start,
+                end: x.end,
+                lines: x.details,
+              });
+            }
+            case 'projects': {
+              const x = it as Extract<Section, { kind: 'projects' }>['items'][number];
+              return entry({
+                title: x.name,
+                subtitle: x.role,
+                place: x.link,
+                start: x.start,
+                end: x.end,
+                lines: x.bullets,
+              });
+            }
+            case 'skills': {
+              const x = it as Extract<Section, { kind: 'skills' }>['items'][number];
+              return entry({ title: x.label, lines: x.keywords });
+            }
+            case 'languages': {
+              const x = it as Extract<Section, { kind: 'languages' }>['items'][number];
+              return entry({ title: x.language, subtitle: x.fluency });
+            }
+            case 'custom': {
+              const x = it as Extract<Section, { kind: 'custom' }>['items'][number];
+              return entry({ title: x.title, subtitle: x.subtitle, lines: x.bullets });
+            }
+            default: {
+              const x = it as Extract<Section, { kind: 'certifications' }>['items'][number];
+              return entry({
+                title: x.name,
+                subtitle: x.issuer,
+                end: x.date,
+                lines: x.detail ? [x.detail] : [],
+              });
+            }
           }
-          case 'education': {
-            const x = it as Extract<Section, { kind: 'education' }>['items'][number];
-            return entry({
-              title: x.qualification,
-              subtitle: x.institution,
-              place: x.location,
-              start: x.start,
-              end: x.end,
-              lines: x.details,
-            });
-          }
-          case 'projects': {
-            const x = it as Extract<Section, { kind: 'projects' }>['items'][number];
-            return entry({
-              title: x.name,
-              subtitle: x.role,
-              place: x.link,
-              start: x.start,
-              end: x.end,
-              lines: x.bullets,
-            });
-          }
-          case 'skills': {
-            const x = it as Extract<Section, { kind: 'skills' }>['items'][number];
-            return entry({ title: x.label, lines: x.keywords });
-          }
-          case 'languages': {
-            const x = it as Extract<Section, { kind: 'languages' }>['items'][number];
-            return entry({ title: x.language, subtitle: x.fluency });
-          }
-          case 'custom': {
-            const x = it as Extract<Section, { kind: 'custom' }>['items'][number];
-            return entry({ title: x.title, subtitle: x.subtitle, lines: x.bullets });
-          }
-          default: {
-            const x = it as Extract<Section, { kind: 'certifications' }>['items'][number];
-            return entry({
-              title: x.name,
-              subtitle: x.issuer,
-              end: x.date,
-              lines: x.detail ? [x.detail] : [],
-            });
-          }
-        }
-      }),
-    })),
+        }),
+      })),
   };
 }

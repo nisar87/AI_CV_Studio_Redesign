@@ -49,6 +49,7 @@ h1,h2,h3{text-wrap:balance}
 .cv-foot{position:absolute;right:var(--margin);bottom:calc(var(--margin) * 0.45);font-size:7.5pt;
   color:var(--ink-3);letter-spacing:.04em;font-variant-numeric:tabular-nums}
 .cv-bullets li{position:relative;padding-left:1.05em}
+.cv-bullets.cv-plain li{padding-left:0}.cv-bullets.cv-plain li::before{display:none}
 .cv-bullets li::before{content:'';position:absolute;left:.15em;top:calc(var(--lh) * 0.5em - 0.11em);
   width:.3em;height:.3em;border-radius:50%;background:var(--accent)}
 .cv-contacts-wrap{overflow:hidden}

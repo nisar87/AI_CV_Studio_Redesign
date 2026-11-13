@@ -55,9 +55,9 @@ export type TemplateHooks = {
   splitSkills?: boolean;
 };
 
-function Bullets({ items }: { items: string[] }) {
+function Bullets({ items, plain }: { items: string[]; plain?: boolean }) {
   return (
-    <ul className="cv-bullets">
+    <ul className={plain ? 'cv-bullets cv-plain' : 'cv-bullets'}>
       {items.map((b, i) => (
         <li key={i}>{b}</li>
       ))}
@@ -208,7 +208,7 @@ function sectionBlocksRaw(
         node: (
           <>
             {hooks.entryHead(e, section)}
-            {head.length > 0 && <Bullets items={head} />}
+            {head.length > 0 && <Bullets items={head} plain={e.plain} />}
           </>
         ),
       },
@@ -216,7 +216,7 @@ function sectionBlocksRaw(
         key: `${e.ref}-b${k}`,
         cls: 'b-bullet',
         keep: 'none' as Keep,
-        node: <Bullets items={[b]} />,
+        node: <Bullets items={[b]} plain={e.plain} />,
       })),
     ];
     const chars = e.bullets.reduce((n, b) => n + b.length, 0);

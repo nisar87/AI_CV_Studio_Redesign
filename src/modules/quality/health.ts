@@ -30,6 +30,12 @@ const PERSONAL_DETAILS =
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PLACEHOLDER = /\{\{\?[^}]*\}\}/;
 
+/** Is this heading one screening software recognises for the kind (any language variant)? */
+export function isStandardHeading(kind: string, title: string): boolean {
+  const re = STANDARD_HEADING[kind];
+  return !re || !title.trim() || re.test(title);
+}
+
 /** Words screening software expects in each section heading (any language variant we see). */
 const STANDARD_HEADING: Partial<Record<string, RegExp>> = {
   experience: /experience|employment|work|career|professional|berufserfahrung|positions?/i,
