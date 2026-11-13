@@ -696,7 +696,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - the 30-person blind preference test (target: ours preferred in 60% of pairings);
   - the outside reviewer's rubric scores for the 22 new designs (minimum 8.5 average).
 
-## Release 8 — One studio (in progress, 2026-11-13)
+## Release 8 — One studio (2026-11-13, live)
 
 ### R8.1 Studio shell and Home
 - **Signed-in shell** (spec §11.1):
