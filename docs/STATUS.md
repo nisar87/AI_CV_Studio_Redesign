@@ -23,6 +23,7 @@ _Last updated: 2026-11-13 (live on Firebase App Hosting at aicvstudio.app)_
 | R6 Design engine | `r6/design-engine` | ✅ Live on aicvstudio.app (2026-11-13); Design Studio switched on and checked live |
 | R7 Describe your design | `r7/describe` | ✅ Live on aicvstudio.app (2026-11-13): 32 designs, AI Designer on, verified with real Gemini; preference test and outside review are owner to-dos |
 | R8 One studio | `r8/studio` | ✅ Live on aicvstudio.app (2026-11-13): studio shell and Home, letters, Presence, application kit, ATS check, 24 section types, edit on the page, Console switches |
+| R9 Coach | `r9/coach` | 🟡 In progress: mock interview and career coach live (2026-11-13), coach evaluation 20/20 |
 
 ## Phase 0 report
 
@@ -919,7 +920,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 
 ## Next action (exact)
 
-1. R8 "One studio" is complete (R8.1–R8.7). Next: R9 per the master plan (career coach chat, mock interview, story bank, job from URL, reminders, skill-gap plan) — spec §16.
+1. R9 "Coach": R9.1 mock interview and R9.2 career coach are live (coach evaluation 20/20 with real Gemini). Next: R9.3 story bank, then the skill-gap plan, job from URL, reminders by email, share comments, portfolio themes, LinkedIn review, application analytics and the Console switches for the R9 tools — spec §16.
 
 ## Deployment (2026-11-12)
 
