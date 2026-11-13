@@ -1,5 +1,7 @@
 'use client';
 
+import { isSpecDesign } from '@/modules/design/designs';
+import { ops } from '@/modules/resume/ops';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { createDocument } from '@/modules/resume/create';
@@ -47,8 +49,10 @@ export function CreateDocument() {
       .trim()
       .slice(0, 120);
     if (title) doc.basics.headline = title;
-    getRepository().save(doc);
-    router.replace(`/cv/${doc.id}/guided`);
+    // A spec-only catalogue design (R7) from the gallery: applied after the colour and spacing.
+    const next = design && isSpecDesign(design) ? ops.useDesign(doc, design) : doc;
+    getRepository().save(next);
+    router.replace(`/cv/${next.id}/guided`);
   }, [params, router]);
 
   return <StudioLoading />;

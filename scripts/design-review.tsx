@@ -34,7 +34,9 @@ for (const id of ids) {
     const r = (await page.evaluate('window.__CV_READY__')) as { pages: number; overflow: number };
     const pages = await page.$$('.cv-page');
     for (let i = 0; i < pages.length; i++)
-      await pages[i]!.screenshot({ path: path.join(out, `${id}-${f}-p${i + 1}.png`) as `${string}.png` });
+      await pages[i]!.screenshot({
+        path: path.join(out, `${id}-${f}-p${i + 1}.png`) as `${string}.png`,
+      });
     console.log(id, f, JSON.stringify(r));
     await page.close();
   }

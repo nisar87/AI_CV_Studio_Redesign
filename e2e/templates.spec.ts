@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { expect, test } from './support/test';
 import { FIXTURES, PHOTO_FOR, withPhoto, type FixtureId } from '../src/modules/resume/fixtures';
-import { TEMPLATE_IDS, type PageSize } from '../src/modules/resume/schema';
+import { DESIGN_IDS, TEMPLATE_IDS, type PageSize } from '../src/modules/resume/schema';
 import { buildDocumentHtml } from '../src/modules/templates/build-document';
 
 const hasPoppler = (() => {
@@ -95,24 +95,53 @@ test.describe('template engine parity (desktop only)', () => {
   }
 });
 
-test('Designs page renders all three templates with real content', async ({ page }) => {
+test('Designs page shows all 32 designs with real content, filters and a page per design', async ({
+  page,
+}) => {
   await page.goto('/templates');
   const frames = page.locator('iframe[title*="design with an example"][data-active]');
   // Previews are built lazily: off-screen cards show their static thumbnail first.
-  const cards = page.locator('main ul > li');
-  await expect(cards).toHaveCount(TEMPLATE_IDS.length);
-  expect(await frames.count()).toBeLessThan(TEMPLATE_IDS.length);
-  for (let i = 0; i < TEMPLATE_IDS.length; i++) {
+  const cards = page.locator('main ul > li[data-design]');
+  await expect(cards).toHaveCount(DESIGN_IDS.length);
+  expect(await frames.count()).toBeLessThan(DESIGN_IDS.length);
+  for (const i of [0, 7, 15, 31]) {
     await cards.nth(i).scrollIntoViewIfNeeded();
     await expect(
       cards.nth(i).locator('iframe[data-active]').contentFrame().locator('html[data-cv-ready]'),
     ).toHaveCount(1);
   }
-  await expect(frames).toHaveCount(TEMPLATE_IDS.length);
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.getByRole('radio', { name: 'Driver' }).click();
+  await page.getByLabel('Show the designs with').selectOption('sample:driver');
   await expect(frames.first()).toHaveAttribute('title', /example driver CV/);
   await expect(frames.first().contentFrame().locator('.cv-page h1')).toContainText('Imran');
+  // Filters
+  await page
+    .getByRole('group', { name: 'Design families' })
+    .getByRole('button', { name: 'Timeline' })
+    .click();
+  await expect(cards).toHaveCount(4);
+  await page
+    .getByRole('group', { name: 'Design families' })
+    .getByRole('button', { name: 'All designs' })
+    .click();
+  await page.getByLabel('Best for online applications').check();
+  const online = await cards.count();
+  expect(online).toBeGreaterThan(8);
+  expect(online).toBeLessThan(DESIGN_IDS.length);
+  // A design page: two-page view, ATS-safe version, matching letter, "Use this design".
+  await page.getByRole('link', { name: 'Linea: see this design' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Linea');
+  await page.getByRole('tab', { name: 'ATS-safe version' }).click();
+  await expect(
+    page
+      .locator('iframe[title="Linea, ATS-safe version"][data-active]')
+      .contentFrame()
+      .locator('html[data-cv-ready]'),
+  ).toHaveCount(1);
+  await page.getByRole('tab', { name: 'Matching cover letter' }).click();
+  await expect(page.locator('iframe[title^="Cover letter in the Linea"]')).toBeVisible();
+  await page.getByTestId('use-design').click();
+  await expect(page).toHaveURL(/\/start\?design=linea/);
 });
 
 test('PDF API validates input and reports errors in the documented envelope', async ({

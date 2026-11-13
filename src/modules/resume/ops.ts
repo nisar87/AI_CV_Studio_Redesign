@@ -2,14 +2,7 @@ import { applyV1Change, designSpec, migrateV1, toV1 } from '@/modules/design/cat
 import { DESIGN_META, isSpecDesign } from '@/modules/design/designs';
 import type { DesignSpecV2 } from '@/modules/design/spec';
 import { newId } from './create';
-import type {
-  Basics,
-  DesignId,
-  DesignSpec,
-  ResumeDocument,
-  Section,
-  SectionKind,
-} from './schema';
+import type { Basics, DesignId, DesignSpec, ResumeDocument, Section, SectionKind } from './schema';
 
 /**
  * Pure document operations. Every edit in the UI goes through one of these, which keeps
@@ -178,8 +171,7 @@ export const ops = {
     // Picking a catalogue design re-attaches, also when the v1 id is unchanged (a spec-only or
     // custom design is stored with the v1 id of its family's hand-crafted design).
     const repick =
-      !!patch.templateId &&
-      (patch.templateId !== v1.templateId || !!v2.designId || !v2.baseId);
+      !!patch.templateId && (patch.templateId !== v1.templateId || !!v2.designId || !v2.baseId);
     const spec = repick ? migrateV1(next) : applyV1Change(v2, next, patch);
     return touch(doc, { design: { ...next, v2: spec } });
   },

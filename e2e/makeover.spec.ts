@@ -138,7 +138,12 @@ test.describe('visitor', () => {
       id: string;
     }[];
     const saved = await (await b.request.get(`/api/documents/${docs[0]!.id}`)).json();
-    expect(saved.doc.design.templateId).toBe(chosen);
+    // The chosen design (a spec-only design keeps its id in the v2 spec).
+    const d = saved.doc.design as {
+      templateId: string;
+      v2?: { designId?: string; baseId?: string };
+    };
+    expect(d.v2?.designId ?? d.v2?.baseId ?? d.templateId).toBe(chosen);
     await other.close();
   });
 

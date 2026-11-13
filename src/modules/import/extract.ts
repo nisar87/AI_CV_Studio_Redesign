@@ -119,12 +119,14 @@ export function tidyLines(lines: string[]): string[] {
 }
 
 function clean(s: string) {
-  return s
-    .replace(/[\u0000-\u0008\u000b-\u001f\u007f​-‍﻿]/g, '')
-    // Some fonts map the apostrophe to the modifier letter (U+02BC); read it as a plain one.
-    .replace(/\u02bc/g, '’')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return (
+    s
+      .replace(/[\u0000-\u0008\u000b-\u001f\u007f​-‍﻿]/g, '')
+      // Some fonts map the apostrophe to the modifier letter (U+02BC); read it as a plain one.
+      .replace(/\u02bc/g, '’')
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
 }
 
 type Item = { str: string; x: number; y: number; w: number; h: number };

@@ -6,6 +6,7 @@ import { Banner } from '@/components/ui/banner';
 import { Button } from '@/components/ui/button';
 import { AdminHeading } from './admin-shell';
 import { adminGet, adminSend } from './api';
+import { DesignerEval } from './designer-eval';
 
 type Sample = { index: number; name: string; task: string };
 type Result = {
@@ -159,6 +160,7 @@ export function AdminAi() {
           </li>
         ))}
       </ol>
+      <DesignerEval />
     </>
   );
 }

@@ -63,6 +63,12 @@ export default function PrivacyPage() {
             <strong>Writing help in the editor:</strong> only the part you asked about (for example
             one job’s bullet points) is sent to Gemini to create a suggestion.
           </li>
+          <li>
+            <strong>AI Designer (describe a design):</strong> your description and counts of your
+            CV’s length and sections are sent to Gemini — not the words of your CV. If you add a
+            picture of a CV you like, the picture is sent to Gemini to read its layout and colours,
+            then discarded; we don’t store it.
+          </li>
         </ul>
         <p>
           We use Gemini’s paid service, under which Google does not use your text to improve its

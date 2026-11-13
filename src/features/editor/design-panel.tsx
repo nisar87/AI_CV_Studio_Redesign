@@ -15,9 +15,16 @@ import { ACCENT_PALETTE } from '@/modules/templates/design';
 import { FONT_PAIRS } from '@/modules/templates/fonts';
 import { currentDesignId } from '@/modules/design/catalogue';
 import { getTemplate } from '@/modules/templates/registry';
-import { DESIGNS, DESIGN_META, FAMILIES, FAMILY_LABEL, type Family } from '@/modules/design/designs';
+import {
+  DESIGNS,
+  DESIGN_META,
+  FAMILIES,
+  FAMILY_LABEL,
+  type Family,
+} from '@/modules/design/designs';
 import type { DocumentEditor } from './use-document-editor';
 import { DesignStudio } from './design-studio';
+import { Designer } from './designer';
 import type { PreviewStatus } from '@/features/preview/document-preview';
 
 const FONT_DESCRIPTIONS: Record<(typeof FONT_PAIR_IDS)[number], string> = {
@@ -69,25 +76,28 @@ export function DesignPanel({
   const meta = current ? DESIGN_META[current] : null;
   const [family, setFamily] = useState<Family | 'all'>('all');
   const available = DESIGNS.filter(
-    (t) =>
-      t.id === current || !ent || ent.designs.find((x) => x.id === t.id)?.enabled !== false,
+    (t) => t.id === current || !ent || ent.designs.find((x) => x.id === t.id)?.enabled !== false,
   );
   const shown = family === 'all' ? available : available.filter((t) => t.family === family);
   const customLow = contrast(d.accent, '#ffffff') < 4.5;
 
   return (
     <div className="flex flex-col gap-8">
-      <StyleAssist
-        doc={doc}
-        onApply={(c) =>
-          set({
-            templateId: c.templateId,
-            accent: c.accent,
-            fontPair: c.fontPair,
-            density: c.density,
-          })
-        }
-      />
+      {ent?.features.designer ? (
+        <Designer editor={editor} />
+      ) : (
+        <StyleAssist
+          doc={doc}
+          onApply={(c) =>
+            set({
+              templateId: c.templateId,
+              accent: c.accent,
+              fontPair: c.fontPair,
+              density: c.density,
+            })
+          }
+        />
+      )}
       <Group title="Look" hint="Your words stay the same — only the design changes.">
         <div role="group" aria-label="Design families" className="flex flex-wrap gap-1.5">
           {(['all', ...FAMILIES] as const).map((f) => (

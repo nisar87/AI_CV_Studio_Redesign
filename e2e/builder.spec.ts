@@ -196,7 +196,7 @@ test('a photo can be added, shown in photo designs, hidden, and removed', async 
   await expect(page.getByRole('img', { name: 'Your photo' })).toHaveCount(0);
 });
 
-test('the design picker offers all ten designs with thumbnails', async ({ page, isMobile }) => {
+test('the design picker offers all 32 designs with thumbnails', async ({ page, isMobile }) => {
   test.skip(isMobile, 'Covered on desktop');
   await page.goto('/cv/new?work=driver');
   await page.getByLabel('Full name').fill('Imran Qureshi');
@@ -204,7 +204,7 @@ test('the design picker offers all ten designs with thumbnails', async ({ page, 
   await page.goto(page.url().replace(/\/guided$/, ''));
   await page.getByRole('tab', { name: 'Design' }).click();
   const options = page.getByRole('radiogroup', { name: 'Design' }).getByRole('radio');
-  await expect(options).toHaveCount(10);
+  await expect(options).toHaveCount(32);
   for (const name of [
     'Creative sidebar',
     'Bold editorial',
@@ -214,18 +214,17 @@ test('the design picker offers all ten designs with thumbnails', async ({ page, 
     'Editorial',
     'Friendly & fresh',
   ]) {
-    await page.getByRole('radio', { name: new RegExp(name) }).click();
-    await expect(page.getByRole('radio', { name: new RegExp(name) })).toHaveAttribute(
-      'aria-checked',
-      'true',
-    );
+    const radio = page.getByRole('radio', { name: new RegExp(`^${name} · `) });
+    await radio.click();
+    await expect(radio).toHaveAttribute('aria-checked', 'true');
   }
   await expect(previewFrame(page).locator('html[data-template="sprout"]')).toHaveCount(1);
   await expect(previewFrame(page).locator('.cv-page h1')).toHaveText('Imran Qureshi');
   const broken = await page.evaluate(
     () =>
       Array.from(document.querySelectorAll<HTMLImageElement>('img[src^="/templates/"]')).filter(
-        (i) => !i.complete || i.naturalWidth === 0,
+        // Loaded thumbnails must not be broken (off-screen lazy ones load on scroll).
+        (i) => i.complete && i.naturalWidth === 0,
       ).length,
   );
   expect(broken).toBe(0);

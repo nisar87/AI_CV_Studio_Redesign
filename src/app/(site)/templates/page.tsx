@@ -11,8 +11,9 @@ export default function TemplatesPage() {
         Designs
       </h1>
       <p className="text-ink-muted mt-3 max-w-2xl text-lg">
-        A few carefully made designs that look professional with any amount of experience. Every one
-        can be read by hiring software, and you can switch at any time without losing anything.
+        32 designs in 8 families, each shown with your own CV when you have one. Every design can be
+        read by hiring software and has a plain ATS-safe version, and you can switch at any time
+        without losing a word.
       </p>
       <div className="mt-8">
         <TemplateGallery />

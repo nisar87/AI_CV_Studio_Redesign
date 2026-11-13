@@ -62,7 +62,7 @@ export function useAi() {
   };
 }
 
-function deviceId(): string {
+export function deviceId(): string {
   try {
     let id = localStorage.getItem('cvstudio.device');
     if (!id) {
