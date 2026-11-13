@@ -240,6 +240,12 @@ describe('mock provider', () => {
       answer: 'When a van broke down I re-planned the route so that every parcel arrived on time.',
       remaining: 2,
     },
+    'coach.chat': {
+      profile: profileDigest(F.driver).text,
+      jobs: 'j1 | Delivery Driver | Swift | saved',
+      history: [],
+      message: 'Which of my skills should I lead with?',
+    },
     'linkedin.write': { profile: profileDigest(F.driver).text, target: 'transport planning' },
     'interview.prep': {
       advert: ADVERT,

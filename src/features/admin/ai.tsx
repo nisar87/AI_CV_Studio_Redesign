@@ -18,6 +18,7 @@ type Result = {
   output?: unknown;
   caught: string[];
   residual: string[];
+  problems?: string[];
   ms: number;
 };
 type Batch = {
@@ -69,6 +70,7 @@ export function AdminAi() {
   const failed = results.filter((r) => !r.ok).length;
   const caught = results.reduce((n, r) => n + r.caught.length, 0);
   const residual = results.reduce((n, r) => n + r.residual.length, 0);
+  const problems = results.reduce((n, r) => n + (r.problems?.length ?? 0), 0);
   const finished = !!samples && done === samples.length;
 
   return (
@@ -120,13 +122,15 @@ export function AdminAi() {
       )}
       {finished && (
         <Banner
-          tone={residual === 0 && failed === 0 ? 'success' : 'warning'}
+          tone={residual === 0 && failed === 0 && problems === 0 ? 'success' : 'warning'}
           title={
-            residual === 0 && failed === 0
+            residual === 0 && failed === 0 && problems === 0
               ? 'Passed: no invented facts reached the text.'
               : residual
                 ? `${residual} unmarked new fact(s) — review the samples marked below.`
-                : `${failed} call(s) failed — run again or check the provider.`
+                : problems
+                  ? `${problems} quality check(s) failed — review the samples marked below.`
+                  : `${failed} call(s) failed — run again or check the provider.`
           }
           className="mb-6"
         />
@@ -144,6 +148,11 @@ export function AdminAi() {
             {r.residual.length > 0 && (
               <p className="text-danger mt-1 font-semibold">
                 Unmarked new facts: {r.residual.join(', ')}
+              </p>
+            )}
+            {(r.problems?.length ?? 0) > 0 && (
+              <p className="text-danger mt-1 font-semibold">
+                Quality check: {r.problems!.join(', ')}
               </p>
             )}
             {r.caught.length > 0 && (

@@ -9,6 +9,7 @@ describe('live evaluation set (dry run with the demo provider)', () => {
     const mockProvider = createMockProvider();
     const n = evalSamples().length;
     expect(evalSamples().filter((s) => s.task === 'interview.turn')).toHaveLength(12);
+    expect(evalSamples().filter((s) => s.task === 'coach.chat')).toHaveLength(20);
     for (let i = 0; i < n; i++) {
       const r = await runEvalSample(i, {
         provider: mockProvider,
@@ -16,6 +17,7 @@ describe('live evaluation set (dry run with the demo provider)', () => {
       });
       expect(r.ok, `${r.name}: ${r.error}`).toBe(true);
       expect(r.residual, r.name).toEqual([]);
+      expect(r.problems, r.name).toEqual([]);
     }
   });
 });

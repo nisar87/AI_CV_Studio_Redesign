@@ -888,6 +888,15 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 - **e2e `mock.spec`:** 5 answers, feedback and verdicts, the quote, summary, 6 AI actions counted, kept after reload, practise again, and 402 for free accounts.
 - **Deviation:** answers and feedback are returned whole, not streamed token by token (each turn takes a few seconds).
 
+### R9.2 Career coach
+- **Coach page:** a chat at the top of Coach, with starter questions. The coach answers from the person's main CV and their tracked jobs; the conversation is kept (last 40 messages, `users/{uid}/coach/main`), and Clear removes it. Account deletion removes it too.
+- **Studio actions:** the coach can offer up to 3 buttons per reply — tailor a CV, application kit, cover letter, job match, mock interview, write a letter (by type), ATS check, add a job, change the design. Each button runs the normal route with its normal Premium checks; nothing runs without a click.
+- **Task `coach.chat`** (smart): the reply is fact-guarded; actions are checked server-side (`coach/thread.ts`, unit-tested) — only the person's own jobs, valid letter types, no duplicates. The model sees the last 12 messages.
+- **Cost:** each message is one AI action (`aiWeights.coachTurn`, default 1), Premium. Switch: `features.coach`.
+- **Evaluation:** 20 scripted coach tasks in the live evaluation (the right action and job for the request, never a job that isn't tracked, refusing off-topic and injected instructions). Results now list "problems" separately and count them against the pass mark.
+- **e2e `coach.spec`:** starter question → advice from the CV, accessibility check, tailor offered and run (3 AI actions counted), kept after reload, resignation letter button, clear; free account 402 and Premium banner; visitor 401.
+- **Fix found by the test:** new Chrome returns a Promise from `scrollIntoView`, which crashed the page when used as an effect's return value.
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.

@@ -6,12 +6,15 @@ import { Briefcase, MessagesSquare, Target } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/misc';
 import { useAccount } from '@/features/account/account-context';
+import { useEntitlements } from '@/features/account/entitlements';
 import { jobsApi } from '@/features/jobs/api';
+import { CoachChat } from './coach-chat';
 import type { Job } from '@/modules/jobs/schema';
 
 /** Coach (R8): the interview practice and job match tools that exist today, per job. */
 export function CoachHome() {
   const account = useAccount();
+  const { ent } = useEntitlements();
   const [jobs, setJobs] = useState<Job[] | null>(null);
   useEffect(() => {
     if (account.status !== 'signedIn') return;
@@ -20,6 +23,25 @@ export function CoachHome() {
       () => setJobs([]),
     );
   }, [account.status]);
+  return (
+    <div className="flex flex-col gap-8">
+      {account.status === 'signedIn' && jobs !== null && ent?.features.coach !== false && (
+        <CoachChat jobs={jobs} />
+      )}
+      <section aria-labelledby="practise-h" className="flex flex-col gap-4">
+        {account.status === 'signedIn' && (
+          <h2 id="practise-h" className="text-xl font-semibold">
+            Practise for your jobs
+          </h2>
+        )}
+        <CoachJobs jobs={jobs} />
+      </section>
+    </div>
+  );
+}
+
+function CoachJobs({ jobs }: { jobs: Job[] | null }) {
+  const account = useAccount();
 
   if (account.status === 'signedOut')
     return (

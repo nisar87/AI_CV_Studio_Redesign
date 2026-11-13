@@ -1,5 +1,6 @@
 import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
+import type { CoachThread } from '@/modules/coach/thread';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import {
   MAX_VERSIONS,
@@ -57,6 +58,18 @@ export class MemoryUserStore implements UserStore {
     this.jobBucket(uid).delete(id);
   }
 
+  private coach = new Map<string, CoachThread>();
+  async getCoachThread(uid: string) {
+    const t = this.coach.get(uid);
+    return t ? structuredClone(t) : null;
+  }
+  async putCoachThread(uid: string, t: CoachThread) {
+    this.coach.set(uid, structuredClone(t));
+  }
+  async deleteCoachThread(uid: string) {
+    this.coach.delete(uid);
+  }
+
   private letters = new Map<string, Map<string, SavedLetter>>();
   private letterBucket(uid: string) {
     let b = this.letters.get(uid);
@@ -104,6 +117,7 @@ export class MemoryUserStore implements UserStore {
     this.passes.delete(uid);
     this.jobs.delete(uid);
     this.letters.delete(uid);
+    this.coach.delete(uid);
     this.designs.delete(uid);
     for (const [t, sh] of this.shares) if (sh.uid === uid) this.shares.delete(t);
     for (const [k, v] of this.portfolios) if (v.uid === uid) this.portfolios.delete(k);

@@ -20,6 +20,7 @@ const INTERNAL = new Set<string>([
   'letter.generic',
   'quality.atsKeywords',
   'interview.turn',
+  'coach.chat',
 ]);
 const limiter = sharedAiLimiter();
 

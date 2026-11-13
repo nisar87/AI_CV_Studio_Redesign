@@ -15,6 +15,20 @@ import { FIELDS, FIELD_NAMES, type FieldDef } from '@/modules/design/vocab';
  * Inputs carry only the fields a task needs (docs/engineering/ai-architecture.md → Privacy).
  */
 
+/** Studio actions the coach may offer (an allow-list; each maps to an existing screen or API route). */
+export const COACH_TOOLS = [
+  'tailor_cv',
+  'application_kit',
+  'cover_letter',
+  'job_match',
+  'mock_interview',
+  'write_letter',
+  'ats_check',
+  'add_job',
+  'design',
+] as const;
+export type CoachTool = (typeof COACH_TOOLS)[number];
+
 export const TASK_IDS = [
   'intake.interpret',
   'design.interpret',
@@ -32,6 +46,7 @@ export const TASK_IDS = [
   'linkedin.write',
   'interview.prep',
   'interview.turn',
+  'coach.chat',
   'import.transcribe',
   'makeover.diagnose',
   'design.compose',
@@ -224,6 +239,17 @@ export const taskInputs = {
     answer: z.string().max(3000).default(''),
     /** Questions still to ask after this turn (0 = finish with a summary). */
     remaining: z.number().int().min(0).max(10),
+  }),
+  /** Career coach (R9): one chat turn with optional studio actions to offer. */
+  'coach.chat': z.object({
+    profile: z.string().min(20).max(24_000),
+    /** The person's tracked jobs, one per line: "<id> | title | company | stage". */
+    jobs: z.string().max(4000).default(''),
+    history: z
+      .array(z.object({ role: z.enum(['user', 'coach']), text: z.string().max(4000) }))
+      .max(16)
+      .default([]),
+    message: z.string().trim().min(1).max(2000),
   }),
   'linkedin.write': z.object({
     profile: z.string().min(20).max(24_000),
@@ -439,6 +465,19 @@ export const taskOutputs = {
       kind: z.enum(['experience', 'skills', 'situation', 'motivation', 'gap']),
     }),
     summary: z.string().max(900),
+  }),
+  'coach.chat': z.object({
+    reply: z.string().min(1).max(2400),
+    /** Studio actions to offer as buttons (the person decides; each goes through the usual checks). */
+    actions: z
+      .array(
+        z.object({
+          tool: z.enum(COACH_TOOLS),
+          /** Job id for job tools, letter type for write_letter, otherwise "". */
+          arg: z.string().max(80),
+        }),
+      )
+      .max(3),
   }),
   'linkedin.write': z.object({
     headline: z.string().max(220),

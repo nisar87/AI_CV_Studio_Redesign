@@ -2,6 +2,7 @@ import 'server-only';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
+import type { CoachThread } from '@/modules/coach/thread';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import {
   MAX_VERSIONS,
@@ -28,6 +29,7 @@ import {
  *   usage/{uid}_{yyyy-mm}                    { uid, month, 'pdf.download': n, ... }
  *   users/{uid}/jobs/{id}                    Job (tracker; deleted with the account)
  *   users/{uid}/letters/{id}                 SavedLetter (letter library; deleted with the account)
+ *   users/{uid}/coach/main                   CoachThread (career coach; deleted with the account)
  *   portfolios/{slug}                        Portfolio (public page; one per account)
  *   referralCodes/{code}                     { uid }  (invite link; users/{uid}.referralCode, .referredBy)
  *   shares/{token}                           Share (read-only CV link; deleted with the CV/account)
@@ -66,6 +68,20 @@ export class FirestoreUserStore implements UserStore {
   }
   async deleteJob(uid: string, id: string) {
     await this.jobsCol(uid).doc(id).delete();
+  }
+
+  private coachDoc(uid: string) {
+    return this.db.collection('users').doc(uid).collection('coach').doc('main');
+  }
+  async getCoachThread(uid: string) {
+    const s = await this.coachDoc(uid).get();
+    return s.exists ? (s.data() as CoachThread) : null;
+  }
+  async putCoachThread(uid: string, t: CoachThread) {
+    await this.coachDoc(uid).set(t);
+  }
+  async deleteCoachThread(uid: string) {
+    await this.coachDoc(uid).delete();
   }
 
   private lettersCol(uid: string) {

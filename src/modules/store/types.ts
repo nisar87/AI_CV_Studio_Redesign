@@ -1,5 +1,6 @@
 import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
+import type { CoachThread } from '@/modules/coach/thread';
 import type { ResumeDocument } from '@/modules/resume/schema';
 
 /**
@@ -33,6 +34,11 @@ export interface UserStore {
   getJob(uid: string, id: string): Promise<Job | null>;
   putJob(uid: string, job: Job): Promise<void>;
   deleteJob(uid: string, id: string): Promise<void>;
+
+  // Career coach (R9): one conversation per account.
+  getCoachThread(uid: string): Promise<CoachThread | null>;
+  putCoachThread(uid: string, t: CoachThread): Promise<void>;
+  deleteCoachThread(uid: string): Promise<void>;
 
   // Letter library (R8.2)
   listLetters(uid: string): Promise<SavedLetter[]>;

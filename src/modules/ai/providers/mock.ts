@@ -234,6 +234,61 @@ function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] =
       const firstBullet = digestLines(i.profile).find((l) => /\.B\d+$/.test(l.id))?.id ?? '';
       return { terms: terms.map((term, n) => ({ term, line: n === 0 ? firstBullet : '' })) };
     }
+    case 'coach.chat': {
+      const i = input as ParsedInput<'coach.chat'>;
+      // Deterministic keyword routing (the demo stands in for the model's judgement).
+      const m = i.message.toLowerCase();
+      const rows = i.jobs
+        .split('\n')
+        .map((l) => l.split('|').map((x) => x.trim()))
+        .filter((r) => r.length >= 3 && r[0]);
+      const job =
+        rows.find((r) =>
+          [r[1], r[2]].some(
+            (x) => x && x !== '-' && m.includes(x.toLowerCase().split(' ')[0] ?? '~'),
+          ),
+        )?.[0] ?? '';
+      type Tool =
+        | 'tailor_cv'
+        | 'application_kit'
+        | 'cover_letter'
+        | 'job_match'
+        | 'mock_interview'
+        | 'write_letter'
+        | 'ats_check'
+        | 'add_job'
+        | 'design';
+      const actions: { tool: Tool; arg: string }[] = [];
+      const on = (re: RegExp, tool: Tool, arg = '') => {
+        if (re.test(m)) actions.push({ tool, arg });
+      };
+      if (job) {
+        on(/get everything ready|application kit/, 'application_kit', job);
+        if (!actions.length) on(/tailor|make me a cv/, 'tailor_cv', job);
+        on(/cover letter/, 'cover_letter', job);
+        on(/how well|fit the/, 'job_match', job);
+        on(/practi[sc]e/, 'mock_interview', job);
+      }
+      on(/resign/, 'write_letter', 'resignation');
+      on(/referee|reference/, 'write_letter', 'reference');
+      on(/thank/, 'write_letter', 'thank-you');
+      on(/heard nothing|follow up/, 'write_letter', 'follow-up');
+      on(/offered me|accept/, 'write_letter', 'offer-accept');
+      on(/salary/, 'write_letter', 'salary');
+      on(/screening software/, 'ats_check');
+      on(/save it|new job/, 'add_job');
+      on(/looks boring|how it looks/, 'design');
+      const skills = (digestLines(i.profile).find((l) => l.id === 'SKILLS')?.text ?? '')
+        .split('; ')
+        .slice(0, 2);
+      return {
+        reply:
+          skills.length && skills[0]
+            ? `Lead with what you already do well: ${skills.join(' and ')}. Keep each point specific.`
+            : 'Start with your most recent job and the result you are proudest of.',
+        actions,
+      };
+    }
     case 'interview.turn': {
       const i = input as ParsedInput<'interview.turn'>;
       const a = i.answer.trim();
