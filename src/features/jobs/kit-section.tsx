@@ -27,7 +27,9 @@ export function KitSection({
   onCreate,
   onProblem,
   refresh,
+  weight = 3,
 }: {
+  weight?: number;
   job: Job;
   disabled: boolean;
   loading: boolean;
@@ -105,7 +107,7 @@ export function KitSection({
         </h3>
         <p className="text-ink-muted text-sm">
           A CV tailored to this job, a cover letter and a covering email — made together, from your
-          own facts. Uses 3 AI actions.
+          own facts. Uses {weight} AI action{weight === 1 ? '' : 's'}.
         </p>
       </div>
 

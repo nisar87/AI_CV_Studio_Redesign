@@ -9,6 +9,7 @@ import { TextArea, TextField } from '@/components/ui/field';
 import { useToast } from '@/components/ui/toast';
 import { CheckboxField } from '@/features/editor/fields';
 import { METERED, PLAN_IDS, type BusinessConfig, type Metered } from '@/modules/billing/config';
+import { LETTER_TYPES } from '@/modules/letters/types';
 import { AdminHeading } from './admin-shell';
 import { adminGet, adminSend } from './api';
 
@@ -627,6 +628,63 @@ export function AdminSettings() {
             checked={draft.features.atsCheck}
             onChange={(v) => edit((c) => void (c.features.atsCheck = v))}
           />
+          <CheckboxField
+            label="Letter library (resignation, reference request, thank-you…)"
+            checked={draft.features.letters}
+            onChange={(v) => edit((c) => void (c.features.letters = v))}
+          />
+          <CheckboxField
+            label="Application kit on jobs (tailored CV, letter and email together)"
+            checked={draft.features.kit}
+            onChange={(v) => edit((c) => void (c.features.kit = v))}
+          />
+        </Section>
+
+        <Section
+          title="AI action weights"
+          hint="How many AI actions bigger tasks count as against a plan’s monthly allowance."
+        >
+          <label className="flex items-center gap-3 text-sm font-semibold">
+            Application kit
+            <input
+              type="number"
+              min={1}
+              max={10}
+              aria-label="AI actions per application kit"
+              className="border-line-strong bg-surface h-10 w-24 rounded-sm border px-2"
+              value={draft.aiWeights.kit}
+              onChange={(e) =>
+                edit(
+                  (c) =>
+                    void (c.aiWeights.kit = Math.min(
+                      10,
+                      Math.max(1, Math.floor(Number(e.target.value) || 1)),
+                    )),
+                )
+              }
+            />
+          </label>
+        </Section>
+
+        <Section
+          title="Letter types"
+          hint="Untick a type to stop offering it. Letters already written stay."
+        >
+          {LETTER_TYPES.map((t) => (
+            <CheckboxField
+              key={t.id}
+              label={t.title}
+              checked={!draft.content.hiddenLetterTypes.includes(t.id)}
+              onChange={(v) =>
+                edit((c) => {
+                  const h = new Set(c.content.hiddenLetterTypes);
+                  if (v) h.delete(t.id);
+                  else h.add(t.id);
+                  c.content.hiddenLetterTypes = [...h];
+                })
+              }
+            />
+          ))}
         </Section>
 
         <Section

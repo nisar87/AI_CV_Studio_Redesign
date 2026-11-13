@@ -28,6 +28,7 @@ export function NewLetter() {
   const params = useSearchParams();
   const type = params.get('type');
   const account = useAccount();
+  const { ent } = useEntitlements();
   if (account.status === 'signedOut')
     return (
       <Card className="flex flex-col items-start gap-3 p-6">
@@ -43,10 +44,14 @@ export function NewLetter() {
         </ButtonLink>
       </Card>
     );
-  if (isLetterType(type)) return <LetterForm key={type} type={LETTER_TYPE[type]} />;
+  const hidden = new Set(ent?.hiddenLetterTypes ?? []);
+  if (ent && !ent.features.letters)
+    return <Banner tone="info" title="Letters are switched off right now." />;
+  if (isLetterType(type) && !hidden.has(type))
+    return <LetterForm key={type} type={LETTER_TYPE[type]} />;
   return (
     <ul className="grid gap-3 sm:grid-cols-2" aria-label="Letter types">
-      {LETTER_TYPES.map((t) => (
+      {LETTER_TYPES.filter((t) => !hidden.has(t.id)).map((t) => (
         <li key={t.id}>
           <Link
             href={`/letters/new?type=${t.id}`}

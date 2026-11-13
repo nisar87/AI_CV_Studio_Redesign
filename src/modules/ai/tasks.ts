@@ -208,6 +208,34 @@ Return {"bullets": ["...", "..."]}.`,
   },
 };
 
+const REWRITE: Record<string, string> = {
+  improve: 'Make it clearer and stronger: active verbs, specific, no filler.',
+  shorten: 'Make it shorter — about half the words — keeping every fact.',
+  expand:
+    'Make it a little fuller and clearer, using only what the text and the field already say. Add no new facts, numbers, tools or results.',
+  grammar: 'Fix only spelling, grammar and punctuation. Change nothing else.',
+};
+const rewrite: TaskDef<'write.rewrite'> = {
+  id: 'write.rewrite',
+  version: 'rewrite@1',
+  tier: 'fast',
+  temperature: 0.3,
+  maxTokens: 1024,
+  thinking: 'minimal',
+  system: (i) =>
+    `${TRUTH_RULES}
+
+TASK: Rewrite only the selected text from a CV. ${i.mode === 'tone' ? `Change its tone to ${i.tone === 'friendly' ? 'warm and friendly, still professional' : 'formal and professional'}, keeping every fact.` : REWRITE[i.mode]}
+It replaces the selection inside the field, so keep it the same kind of text (a phrase stays a phrase, a sentence a sentence) and do not repeat the rest of the field.
+Return {"text": "..."}.`,
+  user: (i) => [wrap('field', i.context || i.text), wrap('selected text', i.text)].join('\n\n'),
+  finalize: (i, o) => {
+    const source = buildSource([i.text, i.context]);
+    const r = guardAll([o.text.trim()], source);
+    return { output: { text: r.texts[0]! }, findings: r.findings };
+  },
+};
+
 const fromNotes: TaskDef<'write.fromNotes'> = {
   id: 'write.fromNotes',
   version: 'notes@1',
@@ -734,6 +762,7 @@ export const TASKS = {
   'write.summary': summary,
   'write.improveBullets': improve,
   'write.fromNotes': fromNotes,
+  'write.rewrite': rewrite,
   'suggest.skills': skills,
   'import.structure': importStructure,
   'job.match': jobMatch,

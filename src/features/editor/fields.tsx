@@ -3,6 +3,7 @@
 import { useId, useState, type KeyboardEvent } from 'react';
 import { Chip } from '@/components/ui/chip';
 import { cn } from '@/lib/cn';
+import { useSelectionAssist } from '@/features/ai/selection-assist';
 
 const control =
   'h-11 w-full rounded-sm border border-line-strong bg-surface px-3 text-base text-ink focus-visible:border-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary/25 disabled:bg-sunken disabled:text-ink-subtle';
@@ -103,6 +104,7 @@ export function LinesField({
   const auto = useId();
   const id = givenId ?? auto;
   const rows = Math.min(10, Math.max(3, value.length + 1));
+  const assist = useSelectionAssist(value.join('\n'), (next) => onChange(next.split('\n')));
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-ink text-sm font-semibold">
@@ -115,8 +117,12 @@ export function LinesField({
         value={value.join('\n')}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value.split('\n'))}
+        onSelect={assist.onSelect}
+        onMouseUp={assist.onMouseUp}
+        onKeyUp={assist.onKeyUp}
         className="border-line-strong bg-surface text-ink placeholder:text-ink-subtle focus-visible:border-primary focus-visible:ring-primary/25 min-h-24 w-full resize-y rounded-sm border px-3 py-2.5 text-base leading-6 focus-visible:ring-3 focus-visible:outline-none"
       />
+      {assist.toolbar}
       <p id={`${id}-hint`} className="text-ink-muted text-sm">
         {hint}
       </p>

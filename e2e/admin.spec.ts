@@ -193,6 +193,33 @@ test('maintenance mode pauses downloads and shows a notice', async ({ page, requ
   await expect(page.getByRole('status').filter({ hasText: 'being updated' })).toBeVisible();
 });
 
+test('R8 switches: letters off, a hidden letter type, the kit off', async ({ page, request }) => {
+  await setConfig(request, {
+    ...BASE,
+    features: { ...BASE.features, kit: false },
+    content: { hiddenLetterTypes: ['salary'] },
+  });
+  expect(
+    (await request.post('/api/letters', { data: { type: 'salary', answers: {} } })).status(),
+  ).toBe(403);
+  expect(
+    (await request.post('/api/letters', { data: { type: 'resignation', answers: {} } })).ok(),
+  ).toBe(true);
+  await page.goto('/letters/new');
+  await expect(page.getByRole('link', { name: /Resignation letter/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Salary negotiation/ })).toHaveCount(0);
+  const job = await request.post('/api/jobs', {
+    data: { title: 'Driver', advert: 'x'.repeat(100) },
+  });
+  const id = ((await job.json()) as { job: { id: string } }).job.id;
+  expect((await request.post(`/api/jobs/${id}/kit`, { data: { document: driver } })).status()).toBe(
+    403,
+  );
+  await setConfig(request, { ...BASE, features: { ...BASE.features, letters: false } });
+  await page.goto('/letters/new');
+  await expect(page.getByText('Letters are switched off right now.')).toBeVisible();
+});
+
 test('the AI page runs the live evaluation in batches and reports the pass mark', async ({
   browser,
 }) => {

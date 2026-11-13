@@ -3,7 +3,7 @@ import { apiError, readJson } from '@/lib/http';
 import { aiModels, getAiProvider } from '@/modules/ai/config';
 import { sharedAiLimiter } from '@/modules/ai/limits';
 import { runTask } from '@/modules/ai/run';
-import { denialCode, reserve } from '@/modules/billing/server';
+import { denialCode, getBusinessConfig, reserve } from '@/modules/billing/server';
 import { profileDigest } from '@/modules/jobs/digest';
 import type { SavedLetter } from '@/modules/letters/schema';
 import { loadLetter, type LetterCtx } from '@/modules/letters/server';
@@ -33,6 +33,8 @@ export async function POST(req: Request, ctx: LetterCtx) {
   const doc = resumeDocument.safeParse(body.document);
   if (!doc.success) return apiError('INVALID_INPUT', 'Choose a CV to use.', rid);
   const tone = body.tone === 'formal' ? 'formal' : 'warm';
+  if (!(await getBusinessConfig()).value.features.letters)
+    return apiError('DISABLED', 'Letters are switched off right now.', rid, { reason: 'disabled' });
   const { provider } = getAiProvider();
   if (!provider) return apiError('AI_UNAVAILABLE', 'AI help is switched off right now.', rid);
   const gate = await reserve(user, 'ai.action');

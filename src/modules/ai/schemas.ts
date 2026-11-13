@@ -21,6 +21,7 @@ export const TASK_IDS = [
   'write.summary',
   'write.improveBullets',
   'write.fromNotes',
+  'write.rewrite',
   'suggest.skills',
   'import.structure',
   'job.match',
@@ -125,6 +126,14 @@ export const taskInputs = {
     organization: short(160).default(''),
     bullets: lines(12).min(1),
     instruction: z.enum(['clearer', 'shorter', 'professional']),
+  }),
+  /** AI on a selection (R8.6): rewrite the selected words only. */
+  'write.rewrite': z.object({
+    text: z.string().trim().min(2).max(1500),
+    mode: z.enum(['improve', 'shorten', 'expand', 'grammar', 'tone']),
+    tone: z.enum(['formal', 'friendly']).default('formal'),
+    /** The whole field the selection is in (facts may come from it too). */
+    context: z.string().max(3000).default(''),
   }),
   'write.fromNotes': z.object({
     presetId: z.enum(PRESET_IDS),
@@ -272,6 +281,7 @@ export const taskOutputs = {
   'write.summary': z.object({ text: z.string().min(1).max(700) }),
   'write.improveBullets': z.object({ bullets: z.array(z.string().min(1).max(260)).min(1).max(12) }),
   'write.fromNotes': z.object({ bullets: z.array(z.string().min(1).max(260)).min(1).max(8) }),
+  'write.rewrite': z.object({ text: z.string().min(1).max(2000) }),
   'suggest.skills': z.object({ skills: z.array(z.string().min(1).max(60)).min(1).max(12) }),
   'import.transcribe': z.object({
     lines: z.array(z.string().max(600)).max(600),

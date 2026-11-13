@@ -182,14 +182,17 @@ export function JobTools({ job, onJobChange }: { job: Job; onJobChange: (j: Job)
             </Banner>
           )}
 
-          <KitSection
-            job={job}
-            disabled={advertShort || !source || busy !== null}
-            loading={busy === 'kit'}
-            onCreate={makeKit}
-            onProblem={setProblem}
-            refresh={refresh}
-          />
+          {ent?.features.kit !== false && (
+            <KitSection
+              job={job}
+              weight={ent?.aiWeights.kit}
+              disabled={advertShort || !source || busy !== null}
+              loading={busy === 'kit'}
+              onCreate={makeKit}
+              onProblem={setProblem}
+              refresh={refresh}
+            />
+          )}
 
           <div className="flex flex-wrap gap-2">
             <Button

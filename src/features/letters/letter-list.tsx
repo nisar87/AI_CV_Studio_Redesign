@@ -7,6 +7,7 @@ import { Banner } from '@/components/ui/banner';
 import { ButtonLink } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/misc';
 import { useAccount } from '@/features/account/account-context';
+import { useEntitlements } from '@/features/account/entitlements';
 import { jobsApi } from '@/features/jobs/api';
 import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
@@ -28,6 +29,7 @@ const when = (iso: string) =>
 /** Letters in the Documents hub: library letters and the cover letters written on jobs. */
 export function LetterList({ jobId }: { jobId?: string }) {
   const account = useAccount();
+  const { ent } = useEntitlements();
   const [data, setData] = useState<{ letters: SavedLetter[]; jobs: Job[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -101,9 +103,9 @@ export function LetterList({ jobId }: { jobId?: string }) {
           {jobId ? 'No letters for this job yet.' : 'No letters yet. Pick one to start:'}
         </p>
       )}
-      {!jobId && (
+      {!jobId && ent?.features.letters !== false && (
         <ul className="flex flex-wrap gap-2" aria-label="Start a letter">
-          {LETTER_TYPES.map((t) => (
+          {LETTER_TYPES.filter((t) => !ent?.hiddenLetterTypes.includes(t.id)).map((t) => (
             <li key={t.id}>
               <Link
                 href={`/letters/new?type=${t.id}`}

@@ -68,18 +68,26 @@ export function useDocumentEditor(initial: ResumeDocument): DocumentEditor {
     [apply, schedule],
   );
 
+  // Undo and redo are new edits for saving and sync: without a fresh time stamp, the account's
+  // newer copy (the edit being undone) would win the next sync and bring the change back.
+  const restamp = (n: History<ResumeDocument>) => ({
+    ...n,
+    present: { ...n.present, updatedAt: new Date().toISOString() },
+  });
   const undo = useCallback(() => {
     const h = historyRef.current;
-    const n = undoH(h);
-    if (n === h) return;
+    const u = undoH(h);
+    if (u === h) return;
+    const n = restamp(u);
     apply(n);
     schedule(n.present);
   }, [apply, schedule]);
 
   const redo = useCallback(() => {
     const h = historyRef.current;
-    const n = redoH(h);
-    if (n === h) return;
+    const r = redoH(h);
+    if (r === h) return;
+    const n = restamp(r);
     apply(n);
     schedule(n.present);
   }, [apply, schedule]);

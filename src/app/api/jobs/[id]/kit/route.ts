@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { apiError } from '@/lib/http';
+import { apiError, requestId } from '@/lib/http';
+import { getBusinessConfig } from '@/modules/billing/server';
 import { runTask } from '@/modules/ai/run';
 import { prepareJobAi } from '@/modules/jobs/ai-route';
 import { profileDigest } from '@/modules/jobs/digest';
@@ -10,16 +11,19 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 90;
 
-/** The application kit costs three AI actions (tailored CV, letter, email) — spec §14. */
-const KIT_WEIGHT = 3;
-
 /**
  * POST { document, tone } → { document, job } — the application kit in one call (spec §10): a CV
  * tailored to the job, a cover letter and a covering email. The tailored CV is returned for the
  * browser to save like any CV (so it syncs); the letter and email are saved on the job.
  */
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const p = await prepareJobAi(req, ctx, KIT_WEIGHT);
+  // The kit costs several AI actions (tailored CV, letter, email): Console → AI weights (spec §14).
+  const { value: cfg } = await getBusinessConfig();
+  if (!cfg.features.kit)
+    return apiError('DISABLED', 'The application kit is switched off right now.', requestId(), {
+      reason: 'disabled',
+    });
+  const p = await prepareJobAi(req, ctx, cfg.aiWeights.kit);
   if ('error' in p) return p.error;
   const tone = p.body.tone === 'formal' ? 'formal' : 'warm';
   const digest = profileDigest(p.doc);

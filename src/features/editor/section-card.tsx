@@ -1,6 +1,16 @@
 'use client';
 
-import { ArrowDown, ArrowUp, ChevronDown, Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { IconButton } from '@/components/ui/icon-button';
 import { Menu } from '@/components/ui/menu';
@@ -29,6 +39,10 @@ export function SectionCard({ editor, section, index, count, preset, expanded, t
   const info = KIND_INFO[section.kind];
   const [renaming, setRenaming] = useState(false);
   const titleId = `section-${section.id}-title`;
+  // Drag to reorder (pointer); the arrow buttons stay as the keyboard and screen-reader path.
+  const [over, setOver] = useState<'section' | number | null>(null);
+  const SECTION_MIME = 'application/x-cv-section';
+  const ITEM_MIME = `application/x-cv-item-${section.id.toLowerCase()}`;
 
   const removeSection = () => {
     let removed: { doc: ResumeDocument } | null = null;
@@ -54,12 +68,39 @@ export function SectionCard({ editor, section, index, count, preset, expanded, t
     <section
       aria-labelledby={titleId}
       data-section={section.id}
+      onDragOver={(e) => {
+        if (!e.dataTransfer.types.includes(SECTION_MIME)) return;
+        e.preventDefault();
+        setOver('section');
+      }}
+      onDragLeave={() => setOver(null)}
+      onDrop={(e) => {
+        const id = e.dataTransfer.getData(SECTION_MIME);
+        setOver(null);
+        if (!id || id === section.id) return;
+        e.preventDefault();
+        update((d) => ops.moveSectionTo(d, id, index));
+      }}
       className={cn(
         'border-line bg-surface shadow-1 rounded-lg border',
         section.hidden && 'opacity-70',
+        over === 'section' && 'ring-primary ring-2',
       )}
     >
-      <header className="border-line flex items-center gap-1 border-b py-1 pr-1 pl-4">
+      <header className="border-line flex items-center gap-1 border-b py-1 pr-1 pl-1">
+        <span
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.setData(SECTION_MIME, section.id);
+            e.dataTransfer.effectAllowed = 'move';
+          }}
+          title="Drag to move this section"
+          aria-hidden
+          data-drag-section={section.id}
+          className="text-ink-subtle hover:text-ink inline-flex h-10 w-7 shrink-0 cursor-grab items-center justify-center"
+        >
+          <GripVertical size={18} />
+        </span>
         {renaming ? (
           <input
             autoFocus
@@ -133,9 +174,42 @@ export function SectionCard({ editor, section, index, count, preset, expanded, t
             <li
               key={item.id}
               id={`item-${item.id}`}
-              className="border-line border-b last:border-b-0"
+              onDragOver={(e) => {
+                if (!e.dataTransfer.types.includes(ITEM_MIME)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                setOver(i);
+              }}
+              onDragLeave={() => setOver(null)}
+              onDrop={(e) => {
+                const id = e.dataTransfer.getData(ITEM_MIME);
+                setOver(null);
+                if (!id) return;
+                e.preventDefault();
+                e.stopPropagation();
+                update((d) => ops.moveItemTo(d, section.id, id, i));
+              }}
+              className={cn(
+                'border-line border-b last:border-b-0',
+                over === i && 'bg-primary-soft/50',
+              )}
             >
               <div className="flex items-center gap-1 pr-1">
+                {section.items.length > 1 && (
+                  <span
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData(ITEM_MIME, item.id);
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    title="Drag to reorder"
+                    aria-hidden
+                    data-drag-item={item.id}
+                    className="text-ink-subtle hover:text-ink -mr-2 ml-1 inline-flex h-10 w-6 shrink-0 cursor-grab items-center justify-center"
+                  >
+                    <GripVertical size={16} />
+                  </span>
+                )}
                 <button
                   type="button"
                   aria-expanded={open}

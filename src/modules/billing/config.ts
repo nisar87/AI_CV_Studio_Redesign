@@ -1,3 +1,4 @@
+import { LETTER_TYPE_IDS } from '@/modules/letters/types';
 import { z } from 'zod';
 import { DESIGN_IDS } from '@/modules/resume/schema';
 
@@ -91,7 +92,20 @@ export const businessConfig = z.object({
     designer: z.boolean().default(false),
     /** R8 ATS check in the editor's Check tab. */
     atsCheck: z.boolean().default(true),
+    /** R8 letter library (resignation, reference request…). */
+    letters: z.boolean().default(true),
+    /** R8 application kit on jobs. */
+    kit: z.boolean().default(true),
   }),
+  /** AI actions that cost more than one (complete-studio-spec §14: weights are config data). */
+  aiWeights: z.object({ kit: z.number().int().min(1).max(10).default(3) }).default({ kit: 3 }),
+  /** Content the owner can change without a deploy (spec §15). */
+  content: z
+    .object({
+      /** Letter types not offered (all are on by default). */
+      hiddenLetterTypes: z.array(z.enum(LETTER_TYPE_IDS)).max(20).default([]),
+    })
+    .default({ hiddenLetterTypes: [] }),
   announcement: z.object({ enabled: z.boolean(), text: z.string().max(240) }),
   /** How to pay for a pass (manual payments, R1.4). Shown on /premium when sales are on. */
   payments: z
@@ -208,7 +222,11 @@ export const DEFAULT_CONFIG: BusinessConfig = {
     designStudio: false,
     designer: false,
     atsCheck: true,
+    letters: true,
+    kit: true,
   },
+  aiWeights: { kit: 3 },
+  content: { hiddenLetterTypes: [] },
   announcement: { enabled: false, text: '' },
   support: { email: '' },
   coupons: [],

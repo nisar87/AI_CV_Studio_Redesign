@@ -22,6 +22,7 @@ _Last updated: 2026-11-13 (live on Firebase App Hosting at aicvstudio.app)_
 | R5 Instant Makeover | `r5/makeover` | ✅ Live on aicvstudio.app (2026-11-13), verified with real Gemini |
 | R6 Design engine | `r6/design-engine` | ✅ Live on aicvstudio.app (2026-11-13); Design Studio switched on and checked live |
 | R7 Describe your design | `r7/describe` | ✅ Live on aicvstudio.app (2026-11-13): 32 designs, AI Designer on, verified with real Gemini; preference test and outside review are owner to-dos |
+| R8 One studio | `r8/studio` | ✅ Live on aicvstudio.app (2026-11-13): studio shell and Home, letters, Presence, application kit, ATS check, 24 section types, edit on the page, Console switches |
 
 ## Phase 0 report
 
@@ -827,6 +828,44 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - The importer doesn't detect the new types (they go to "Other" as before).
   - Hand-crafted designs show levels as text (bars and dots are drawn by the composer).
 
+### R8.6 Editing: on the page, drag, AI on a selection, profile sync
+- **Edit on the page:**
+  - Click text in the preview: when it is exactly one field (a name, job title, employer, a bullet point, a skill…), it becomes editable right there. Enter or clicking away saves it as one undo step; Escape cancels.
+  - Text built from several fields (date ranges, "Employer · Town") still jumps to the form.
+  - Mapping: `resume/inline-edit.ts` (unit-tested). Protocol: `cv:select` carries the clicked text; `cv:edit` and `cv:edit-done` in the iframe runtime.
+- **Drag to reorder:** sections and entries have a grip in the form. The arrow buttons stay as the keyboard and screen-reader path (`ops.moveSectionTo` / `moveItemTo`).
+- **AI on a selection:**
+  - Select words in a points box or the profile, and a small toolbar offers Improve · Shorten · Expand · Fix grammar · More formal.
+  - The new task `write.rewrite` (guarded against the selection and its field) returns a before → after card. "Replace the selection" swaps only those words.
+  - It uses the existing Premium AI allowance.
+- **"Update your career profile too?":** in a CV made from the profile, once the person pauses after changing a fact the profile still has as before, a banner offers "Update profile" or "Only this CV".
+  - Facts covered: name, email, phone, town, job and qualification fields, and a point edited in place (matched by its old text).
+  - Never synced: order, tailored summary or headline, hidden sections, design (`resume/profile-sync.ts`, unit-tested).
+- **Bugs found while testing, fixed:**
+  - **Undo after a signed-in edit could come back:** undo restored a snapshot with an older time stamp, so the account's newer copy won the next sync. Undo and redo now save with a fresh time.
+  - **An edited preview frame could be reused for an identical document** (after undo), showing the edited text. Such a frame is no longer reused.
+- **Tests:** unit tests for inline-edit and profile-sync; e2e `editing.spec` (edit on the page with form check, undo and Escape; drag a section; Premium rewrite of a selection; profile sync).
+- **Deviations:**
+  - The form updates when the on-page edit is finished (Enter or click away), not on every keystroke, so the page isn't rebuilt under the cursor.
+  - Dragging on the page itself and touch dragging are not built; phones use the arrows.
+  - Adding or removing whole entries is not offered to the profile.
+
+### R8.7 Console additions and the R8 acceptance journey
+- **Admin → Settings:**
+  - **Switches** for the letter library and the application kit, next to the ATS check and the AI Designer.
+  - **AI action weights:** the application kit counts as N AI actions (default 3; the kit route reads it).
+  - **Letter types:** untick a type to stop offering it.
+  - All three are enforced on the server: a refused letter type or a switched-off tool returns 403. Older saved settings get the defaults automatically.
+- **Acceptance (spec §16, R8):**
+  - e2e `journey.spec`: a new account goes Home → upload → CV → Home suggests a job → add the job with its advert → Create the kit, all checked to finish in under 10 minutes (seconds with the test AI).
+  - Every destination (Home, Documents, Jobs, Presence, Coach) shows a next action for a new free account.
+- **Not built (recorded):**
+  - Console content for Help FAQ, offer wording, example prompts and next-step texts;
+  - the email templates area;
+  - AI cost in rupees on the dashboard;
+  - per-task AI switches and model per tier.
+  These belong with the R9/R10 tools that need them.
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.
@@ -843,7 +882,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 
 ## Next action (exact)
 
-1. R8.1–R8.5 are done. Next: R8.6 edit-on-page, drag reorder, AI on a selection and sync back to the profile, R8.7 Console additions.
+1. R8 "One studio" is complete (R8.1–R8.7). Next: R9 per the master plan (career coach chat, mock interview, story bank, job from URL, reminders, skill-gap plan) — spec §16.
 
 ## Deployment (2026-11-12)
 

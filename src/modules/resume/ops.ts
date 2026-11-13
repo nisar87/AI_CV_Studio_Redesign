@@ -153,6 +153,14 @@ export const ops = {
     const i = doc.sections.findIndex((s) => s.id === sectionId);
     return touch(doc, { sections: move(doc.sections, i, i + delta) });
   },
+  /** Drag and drop: move a section to a position (0-based). */
+  moveSectionTo(doc: ResumeDocument, sectionId: string, to: number) {
+    const i = doc.sections.findIndex((s) => s.id === sectionId);
+    if (i < 0 || to === i) return doc;
+    return touch(doc, {
+      sections: move(doc.sections, i, Math.max(0, Math.min(to, doc.sections.length - 1))),
+    });
+  },
   renameSection(doc: ResumeDocument, sectionId: string, title: string) {
     return mapSection(doc, sectionId, (s) => ({ ...s, title }));
   },
@@ -191,6 +199,16 @@ export const ops = {
       sectionId,
       (s) => ({ ...s, items: s.items.filter((it) => it.id !== itemId) }) as Section,
     );
+  },
+  moveItemTo(doc: ResumeDocument, sectionId: string, itemId: string, to: number) {
+    return mapSection(doc, sectionId, (s) => {
+      const i = s.items.findIndex((it) => it.id === itemId);
+      if (i < 0 || i === to) return s;
+      return {
+        ...s,
+        items: move(s.items as Item[], i, Math.max(0, Math.min(to, s.items.length - 1))),
+      } as Section;
+    });
   },
   moveItem(doc: ResumeDocument, sectionId: string, itemId: string, delta: -1 | 1) {
     return mapSection(doc, sectionId, (s) => {

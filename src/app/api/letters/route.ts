@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { apiError, readJson, requestId } from '@/lib/http';
+import { getBusinessConfig } from '@/modules/billing/server';
 import { currentUser } from '@/modules/identity/session';
 import { MAX_LETTERS, savedLetterInput, type SavedLetter } from '@/modules/letters/schema';
 import { getUserStore } from '@/modules/store';
@@ -28,6 +29,11 @@ export async function POST(req: Request) {
   const parsed = savedLetterInput.safeParse(body.value);
   if (!parsed.success)
     return apiError('INVALID_INPUT', parsed.error.issues[0]?.message ?? 'Invalid letter.', rid);
+  const { value: cfg } = await getBusinessConfig();
+  if (!cfg.features.letters || cfg.content.hiddenLetterTypes.includes(parsed.data.type))
+    return apiError('DISABLED', 'This letter type isn’t available right now.', rid, {
+      reason: 'disabled',
+    });
   const store = getUserStore();
   if ((await store.listLetters(user.uid)).length >= MAX_LETTERS)
     return apiError(

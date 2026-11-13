@@ -224,6 +224,12 @@ describe('mock provider', () => {
       tone: 'formal',
     },
     'quality.atsKeywords': { advert: ADVERT, profile: profileDigest(F.driver).text },
+    'write.rewrite': {
+      text: 'delivered parcels to costumers',
+      mode: 'grammar',
+      tone: 'formal',
+      context: 'delivered parcels to costumers across Leicester',
+    },
     'linkedin.write': { profile: profileDigest(F.driver).text, target: 'transport planning' },
     'interview.prep': {
       advert: ADVERT,

@@ -15,6 +15,8 @@ import type { ResumeDocument } from '@/modules/resume/schema';
 import { ContentPanel, type ContentPanelHandle } from './content-panel';
 import { DesignPanel } from './design-panel';
 import { CheckPanel } from '@/features/quality/check-panel';
+import { findInlineField, inlinePatch } from '@/modules/resume/inline-edit';
+import { ProfileSyncBanner } from './profile-sync-banner';
 import { useDocumentEditor } from './use-document-editor';
 
 type View = 'content' | 'design' | 'check' | 'preview';
@@ -65,9 +67,24 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
   const content = useRef<ContentPanelHandle>(null);
   const panelTab = view === 'preview' ? 'content' : view;
 
-  const onSelect = (ref: string) => {
+  const onSelect = (ref: string, text?: string) => {
+    // Text that is one field is edited right there on the page (keep the focus in the preview).
+    if (text && findInlineField(doc, ref, text)) return;
     setView('content');
     content.current?.reveal(ref);
+  };
+  const inlineEdit = {
+    can: (ref: string, text: string) => !!findInlineField(doc, ref, text),
+    commit: (ref: string, original: string, text: string) => {
+      update((d) => {
+        const f = findInlineField(d, ref, original);
+        const p = f && inlinePatch(d, f, text);
+        if (!p) return d;
+        return 'basics' in p
+          ? ops.updateBasics(d, p.basics)
+          : ops.updateItem(d, p.sectionId, p.itemId, p.patch);
+      }, `inline.${ref}.${Date.now()}`);
+    },
   };
   const compact = () => update((d) => ops.setDesign(d, { density: 'compact' }));
   // Links from the CV check open the editor at a field: /cv/:id?focus=<sectionId>/<itemId>.
@@ -143,6 +160,7 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
                   tailored CVs are copies of it, so update facts here first.
                 </Banner>
               )}
+              <ProfileSyncBanner doc={doc} />
               {welcome && doc.role !== 'profile' && (
                 <Banner
                   tone="success"
@@ -188,6 +206,7 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
                 doc={doc}
                 onStatus={setStatus}
                 onSelect={onSelect}
+                inlineEdit={inlineEdit}
                 title="Preview of your CV. Click any part to edit it."
               />
             </div>

@@ -162,7 +162,11 @@ export async function entitlementsFor(user: SessionUser | null) {
       designStudio: cfg.features.designStudio,
       designer: cfg.features.designer,
       atsCheck: cfg.features.atsCheck,
+      letters: cfg.features.letters,
+      kit: cfg.features.kit,
     },
+    aiWeights: cfg.aiWeights,
+    hiddenLetterTypes: cfg.content.hiddenLetterTypes,
     announcement: cfg.announcement.enabled ? cfg.announcement.text : null,
   };
 }

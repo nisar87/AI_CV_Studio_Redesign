@@ -1,5 +1,6 @@
 'use client';
 
+import { useSelectionAssist } from '@/features/ai/selection-assist';
 import { forwardRef, useImperativeHandle, useState } from 'react';
 import { ChevronDown, Plus } from 'lucide-react';
 import { TextArea } from '@/components/ui/field';
@@ -57,6 +58,9 @@ export const ContentPanel = forwardRef<ContentPanelHandle, { editor: DocumentEdi
     const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
     const [adding, setAdding] = useState(false);
     const [filter, setFilter] = useState('');
+    const summaryAssist = useSelectionAssist(doc.basics.summary, (summary) =>
+      update((d) => ops.updateBasics(d, { summary }), `basics.summary.ai.${Date.now()}`),
+    );
 
     const toggle = (itemId: string, open?: boolean) =>
       setExpanded((s) => {
@@ -117,8 +121,12 @@ export const ContentPanel = forwardRef<ContentPanelHandle, { editor: DocumentEdi
             onChange={(e) =>
               update((d) => ops.updateBasics(d, { summary: e.target.value }), 'basics.summary')
             }
+            onSelect={summaryAssist.onSelect}
+            onMouseUp={summaryAssist.onMouseUp}
+            onKeyUp={summaryAssist.onKeyUp}
           />
           <div className="mt-2 flex flex-col gap-2">
+            {summaryAssist.toolbar}
             <NeedsInputHint texts={[doc.basics.summary]} />
             <SummaryAssist
               summary={doc.basics.summary}

@@ -100,6 +100,20 @@ function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] =
         bullets: i.bullets.filter((b) => b.trim()).map((b) => tidy(b, i.instruction === 'shorter')),
       };
     }
+    case 'write.rewrite': {
+      const i = input as ParsedInput<'write.rewrite'>;
+      const t = i.text.trim();
+      if (i.mode === 'shorten')
+        return {
+          text: t
+            .split(/\s+/)
+            .slice(0, Math.max(2, Math.ceil(t.split(/\s+/).length / 2)))
+            .join(' '),
+        };
+      if (i.mode === 'grammar')
+        return { text: t.replace(/\bi\b/g, 'I').replace(/^./, (c) => c.toUpperCase()) };
+      return { text: `${t.replace(/^./, (c) => c.toUpperCase()).replace(/\.$/, '')} (${i.mode})` };
+    }
     case 'write.fromNotes': {
       const i = input as ParsedInput<'write.fromNotes'>;
       const bullets = i.notes

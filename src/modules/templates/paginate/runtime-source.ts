@@ -317,13 +317,68 @@ export const RUNTIME_JS = String.raw`(function (planPages) {
     } catch (e) {}
   }
 
+  // Click: jump to the field. The clicked element's own text goes with it, so the editor can offer
+  // to edit it in place (cv:edit) when that text is exactly one field.
+  var editSeq = 0;
   document.addEventListener('click', function (ev) {
     var t = ev.target;
     if (t && t.closest && t.closest('a')) ev.preventDefault();
+    if (t && t.isContentEditable) return;
     var ref = t && t.closest ? t.closest('[data-ref]') : null;
     if (ref && window.parent !== window) {
-      window.parent.postMessage({ type: 'cv:select', ref: ref.getAttribute('data-ref') }, '*');
+      var leaf = t && t.nodeType === 1 && !t.querySelector('p,li,div,h1,h2,h3') ? t : null;
+      var token = '';
+      if (leaf) {
+        token = 'e' + ++editSeq;
+        leaf.setAttribute('data-cv-edit', token);
+      }
+      window.parent.postMessage(
+        {
+          type: 'cv:select',
+          ref: ref.getAttribute('data-ref'),
+          text: leaf ? leaf.textContent : '',
+          token: token
+        },
+        '*'
+      );
     }
+  });
+  window.addEventListener('message', function (ev) {
+    var d = ev.data;
+    if (ev.source !== window.parent || !d || d.type !== 'cv:edit') return;
+    var el = document.querySelector('[data-cv-edit="' + d.token + '"]');
+    if (!el) return;
+    var original = el.textContent;
+    try { el.contentEditable = 'plaintext-only'; } catch (e) { el.contentEditable = 'true'; }
+    if (el.contentEditable !== 'plaintext-only') el.contentEditable = 'true';
+    el.setAttribute('role', 'textbox');
+    el.setAttribute('aria-label', 'Edit this text');
+    el.style.outline = '2px solid #1e5a55';
+    el.style.outlineOffset = '2px';
+    el.style.borderRadius = '2px';
+    el.focus();
+    var range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    var sel = window.getSelection();
+    if (sel) { sel.removeAllRanges(); sel.addRange(range); }
+    var done = false;
+    function finish(keep) {
+      if (done) return;
+      done = true;
+      var text = keep ? el.textContent : original;
+      if (!keep) el.textContent = original;
+      el.removeAttribute('contenteditable');
+      el.removeAttribute('role');
+      el.removeAttribute('aria-label');
+      el.style.outline = '';
+      window.parent.postMessage({ type: 'cv:edit-done', ref: d.ref, original: original, text: text, changed: keep && text !== original }, '*');
+    }
+    el.addEventListener('keydown', function (k) {
+      if (k.key === 'Enter' && !k.shiftKey) { k.preventDefault(); el.blur(); }
+      else if (k.key === 'Escape') { k.preventDefault(); finish(false); el.blur(); }
+    });
+    el.addEventListener('blur', function () { finish(true); }, { once: true });
   });
 
   window.__CV_PAGINATE__ = paginate;

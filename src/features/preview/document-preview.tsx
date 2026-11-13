@@ -17,7 +17,16 @@ type Props = {
   /** Debounce for rebuilding the document after changes (ms). */
   debounceMs?: number;
   onStatus?: (s: PreviewStatus) => void;
-  onSelect?: (ref: string) => void;
+  /** A click on the page. `text` is the clicked element's own text (for edit on the page). */
+  onSelect?: (ref: string, text?: string) => void;
+  /**
+   * Edit on the page: `can` says whether the clicked text is one field the person can edit in
+   * place; `commit` receives the change when they press Enter or click away.
+   */
+  inlineEdit?: {
+    can: (ref: string, text: string) => boolean;
+    commit: (ref: string, original: string, text: string) => void;
+  };
   className?: string;
   title?: string;
   /** Illustration only (gallery, thumbnails): hidden from assistive tech and not focusable. */
@@ -41,6 +50,7 @@ export function DocumentPreview({
   debounceMs = 150,
   onStatus,
   onSelect,
+  inlineEdit,
   className,
   title = 'CV preview',
   decorative = false,
@@ -78,9 +88,9 @@ export function DocumentPreview({
   // re-activated without reloading (e.g. undo back to the previous version).
   const slotResult = useRef<[PreviewStatus | null, PreviewStatus | null]>([null, null]);
   const [pages, setPages] = useState(1);
-  const cbs = useRef({ onStatus, onSelect });
+  const cbs = useRef({ onStatus, onSelect, inlineEdit });
   useEffect(() => {
-    cbs.current = { onStatus, onSelect };
+    cbs.current = { onStatus, onSelect, inlineEdit };
   });
 
   const page = PAGE_DIMENSIONS[doc.design.pageSize];
@@ -143,7 +153,23 @@ export function DocumentPreview({
         setActive(idx);
         cbs.current.onStatus?.(result);
       } else if (e.data.type === 'cv:select' && typeof e.data.ref === 'string') {
-        cbs.current.onSelect?.(e.data.ref);
+        const text = typeof e.data.text === 'string' ? e.data.text : '';
+        const edit = cbs.current.inlineEdit;
+        if (edit && e.data.token && text && edit.can(e.data.ref, text))
+          frames.current[idx]?.contentWindow?.postMessage(
+            { type: 'cv:edit', token: e.data.token, ref: e.data.ref },
+            '*',
+          );
+        cbs.current.onSelect?.(e.data.ref, text);
+      } else if (e.data.type === 'cv:edit-done' && e.data.changed) {
+        // That frame's page was edited in place, so it no longer matches its HTML: never reuse it.
+        const s = slotsRef.current;
+        s[idx] = s[idx] === null ? null : `${s[idx]}<!-- edited -->`;
+        cbs.current.inlineEdit?.commit(
+          String(e.data.ref),
+          String(e.data.original ?? ''),
+          String(e.data.text ?? ''),
+        );
       }
     }
     window.addEventListener('message', onMessage);
