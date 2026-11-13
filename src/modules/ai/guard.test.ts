@@ -124,6 +124,14 @@ describe('truth guard: word families and compounds (live eval false alarms)', ()
   });
 });
 
+describe('truth guard: first-person contractions (live coach eval)', () => {
+  it("never flags I'm, I'd, I'll or I've mid-sentence", () => {
+    const src = buildSource(['Delivery driver']);
+    const text = "Sure, I'm here, I’d help, I'll check and I've seen it.";
+    expect(guardText(text, src).findings).toEqual([]);
+  });
+});
+
 describe('truth guard: generic compound endings', () => {
   it('accepts "AWS-based" when AWS is in the CV, but not an unknown name', () => {
     const src = buildSource(['AWS Certified Solutions Architect']);

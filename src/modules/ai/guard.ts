@@ -131,7 +131,7 @@ const partsKnown = (w: string, source: Source) =>
 const OPENERS = new Set(['a', 'an', 'the', 'my', 'our', 'this', 'as', 'in', 'at', 'with', 'for']);
 
 /** Capitalised words that are not names (still checked if they carry a number). */
-const ALLOW_CAPITALISED = new Set(['i', 'cv', 'ok']);
+const ALLOW_CAPITALISED = new Set(['i', "i'm", "i'd", "i'll", "i've", 'cv', 'ok']);
 
 const normalise = (s: string) => s.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
@@ -278,7 +278,7 @@ function guardSegment(text: string, source: Source, before: string) {
     const sentenceStart = prefix.trim() === '' || SENTENCE_BREAK.test(prefix);
     const acronym = /^\p{Lu}{2,}/u.test(raw) || /\p{Ll}\p{Lu}/u.test(raw);
     const nameLike = capitalised && (!sentenceStart || acronym || (run !== null && !known));
-    if (nameLike && !known && !ALLOW_CAPITALISED.has(w)) {
+    if (nameLike && !known && !ALLOW_CAPITALISED.has(w.replace(/’/g, "'"))) {
       // "Amazon Flex …" at the start of a sentence: include the first word too, unless it
       // looks like a verb ("Delivered Amazon …").
       if (!run && pending && /^\s+$/.test(text.slice(pending.end, start))) {

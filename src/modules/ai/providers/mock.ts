@@ -277,6 +277,9 @@ function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] =
       on(/salary/, 'write_letter', 'salary');
       on(/screening software/, 'ats_check');
       on(/save it|new job/, 'add_job');
+      // Named a job ("the X job") that isn't tracked: offer to add it.
+      if (!job && /\bthe \w+ job\b/.test(m) && !actions.length)
+        actions.push({ tool: 'add_job', arg: '' });
       on(/looks boring|how it looks/, 'design');
       const skills = (digestLines(i.profile).find((l) => l.id === 'SKILLS')?.text ?? '')
         .split('; ')

@@ -896,6 +896,10 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 - **Evaluation:** 20 scripted coach tasks in the live evaluation (the right action and job for the request, never a job that isn't tracked, refusing off-topic and injected instructions). Results now list "problems" separately and count them against the pass mark.
 - **e2e `coach.spec`:** starter question → advice from the CV, accessibility check, tailor offered and run (3 AI actions counted), kept after reload, resignation letter button, clear; free account 402 and Premium banner; visitor 401.
 - **Fix found by the test:** new Chrome returns a Promise from `scrollIntoView`, which crashed the page when used as an effect's return value.
+- **Verified live with real Gemini (2026-11-13, owner's account; Premium granted temporarily, then removed, usage reset and the chat cleared):**
+  - "Which of my skills should I lead with?" on the owner's real CV: a specific answer (.NET/C# backend, SQL Server tuning, workflow automation, telecom clients from the CV), with tailor buttons for both tracked jobs and the ATS check; the ATS button opened the Check tab on the right CV.
+  - **Coach evaluation: 19/20 on the first run**, average about 5 s, no unmarked new facts. Every action named the right tool and a tracked job; letter types matched the situation; the injection was declined.
+  - Found and fixed: the guard marked "I'm" and "I'd" as unknown names (now never flagged, unit-tested); for an untracked "Google job" the coach should offer **Add a job** (the check now requires that; an offer for a tracked job is fine); the reply no longer names tools ("the add job tool"), it points to the button (`coach@2`).
 
 ## Owner to-do (when you have time)
 
