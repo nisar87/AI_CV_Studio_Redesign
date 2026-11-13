@@ -21,13 +21,15 @@ async function on(request: APIRequestContext, value = true) {
 
 /** data-template of the visible preview document. */
 async function previewTemplate(page: Page) {
-  return page
-    // The main preview (picker cards and candidates have previews of their own).
-    .frameLocator('iframe[data-active][title^="Preview of your CV"]')
-    .first()
-    .locator('html[data-cv-ready]')
-    .getAttribute('data-template', { timeout: 10_000 })
-    .catch(() => null);
+  return (
+    page
+      // The main preview (picker cards and candidates have previews of their own).
+      .frameLocator('iframe[data-active][title^="Preview of your CV"]')
+      .first()
+      .locator('html[data-cv-ready]')
+      .getAttribute('data-template', { timeout: 10_000 })
+      .catch(() => null)
+  );
 }
 
 async function openDesign(page: Page, doc: ResumeDocument) {
