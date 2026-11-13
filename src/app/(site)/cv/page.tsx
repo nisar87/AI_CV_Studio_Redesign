@@ -1,20 +1,6 @@
-import type { Metadata } from 'next';
-import { ButtonLink } from '@/components/ui/button';
-import { Container } from '@/components/ui/misc';
-import { MyCvsClient } from '@/features/library/client';
+import { permanentRedirect } from 'next/navigation';
 
-export const metadata: Metadata = { title: 'My CVs' };
-
+/** /cv became Documents in R8 (complete-studio-spec §11.1). */
 export default function MyCvsPage() {
-  return (
-    <Container className="py-10 md:py-14">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-[32px] leading-tight font-semibold tracking-tight sm:text-4xl">
-          My CVs
-        </h1>
-        <ButtonLink href="/start">Create a new CV</ButtonLink>
-      </div>
-      <MyCvsClient />
-    </Container>
-  );
+  permanentRedirect('/documents');
 }

@@ -163,7 +163,7 @@ export function GuidedScreen({ initial }: { initial: ResumeDocument }) {
   return (
     <AiDocProvider value={doc}>
       <div className="bg-paper flex min-h-dvh flex-col">
-        <StudioBar editor={editor} backHref="/cv" backLabel="Save and go to My CVs" />
+        <StudioBar editor={editor} backHref="/documents" backLabel="Save and go to Documents" />
         <div className="flex flex-1">
           <main
             id="main"

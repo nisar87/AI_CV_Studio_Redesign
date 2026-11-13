@@ -695,6 +695,31 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - the 30-person blind preference test (target: ours preferred in 60% of pairings);
   - the outside reviewer's rubric scores for the 22 new designs (minimum 8.5 average).
 
+## Release 8 — One studio (in progress, 2026-11-13)
+
+### R8.1 Studio shell and Home
+- **Signed-in shell** (spec §11.1):
+  - a left rail on desktop and a bottom bar on phones, with exactly five destinations: Home `/studio`, Documents `/documents`, Jobs, Presence `/presence` and Coach `/coach`;
+  - a Create button that opens one sheet: Upload a CV, New CV, Cover letter, Add a job, Portfolio;
+  - a profile menu with Career profile, My designs, Plan, Settings, Help, and Admin for admins;
+  - Ctrl/Cmd+K: a command palette for pages, actions and documents by name.
+- **Visitor top bar:** Templates · Features · Pricing · Sign in · Upload my CV · Start from scratch.
+- **Inside a document:** the editor keeps its slim studio bar, with no shell.
+- **One page tree for both chromes.** When sign-in finishes loading, the page stays mounted and keeps its state. The first version remounted the page, which lost a makeover upload made during loading; the e2e suite caught it.
+- **Studio Home** (spec §11.2): Continue card, next best step, documents row, jobs pipeline, profile strength ring and Explore tiles.
+  - The next best step comes from one pure function, `nextAction()` in `src/modules/studio/next-action.ts`, which has tests.
+  - Every profile-strength item is a one-click fix link.
+- **Moved routes:**
+  - `/cv` redirects to `/documents`.
+  - Sign-in now lands on `/studio`.
+  - The editor's back link reads "Back to Documents".
+  - `/jobs?new=1` opens the Add-a-job form; `/cv/{id}?tab=design` opens the Design tab.
+- **Pages without empty screens:**
+  - Presence links the portfolio and LinkedIn tools.
+  - Coach lists your jobs with "Practise interview" and "Check my match", or asks you to add a job (the coach chat comes in R9).
+- **Fixed bars and toasts** (job detail, admin settings) sit clear of the rail and the phone bottom bar, using `--shell-left` and `--shell-bottom`.
+- **Deviation:** the spec's "Letter" entry in the Create sheet waits for R8.2, when the letter library exists. The Cover letter entry goes to Jobs, where letters are made today.
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.
@@ -711,7 +736,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 
 ## Next action (exact)
 
-1. R7 is live and verified. Next: R8 "One studio" (spec §11, §16): studio shell and Home, Documents and Presence hubs, application kit, ATS check, letter library, new section types, edit-on-page, drag reorder, AI on selection, sync back to profile, Console additions.
+1. R8.1 (studio shell and Home) is done. Next: R8.2, the Documents hub and letter library. Remaining in R8 "One studio" (spec §11, §16): studio shell and Home, Documents and Presence hubs, application kit, ATS check, letter library, new section types, edit-on-page, drag reorder, AI on selection, sync back to profile, Console additions.
 
 ## Deployment (2026-11-12)
 

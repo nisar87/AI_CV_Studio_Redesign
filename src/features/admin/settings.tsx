@@ -651,7 +651,7 @@ export function AdminSettings() {
         </Section>
       </div>
 
-      <div className="border-line bg-surface/95 fixed inset-x-0 bottom-0 z-20 border-t backdrop-blur">
+      <div className="border-line bg-surface/95 fixed right-0 bottom-[var(--shell-bottom,0px)] left-[var(--shell-left,0px)] z-20 border-t backdrop-blur">
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-end gap-3 px-4 py-3 md:px-8">
           {error && (
             <p role="alert" className="text-danger mr-auto text-sm">

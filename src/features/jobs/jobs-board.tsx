@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Briefcase, Lock, Plus, X } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
@@ -23,7 +24,16 @@ export function JobsBoard() {
   const toast = useToast();
   const [data, setData] = useState<{ jobs: Job[]; max: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
+  const [opened, setOpened] = useState(false);
+  // The Create sheet and Studio Home link here with ?new=1 to open the form straight away.
+  const params = useSearchParams();
+  const router = useRouter();
+  const wantsNew = params.get('new') === '1';
+  const adding = opened || wantsNew;
+  const setAdding = (v: boolean) => {
+    setOpened(v);
+    if (!v && wantsNew) router.replace('/jobs', { scroll: false });
+  };
 
   const load = useCallback(() => {
     jobsApi.list().then(setData, (e: Error) => setError(e.message));

@@ -41,7 +41,7 @@ export function MissingDocument() {
         see the CVs saved to your account.
       </p>
       <div className="flex gap-3">
-        <ButtonLink href="/cv">My CVs</ButtonLink>
+        <ButtonLink href="/documents">Documents</ButtonLink>
         <ButtonLink href="/start" variant="secondary">
           Create a CV
         </ButtonLink>

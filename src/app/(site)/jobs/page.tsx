@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { Container } from '@/components/ui/misc';
 import { JobsBoard } from '@/features/jobs/jobs-board';
 
@@ -15,7 +16,9 @@ export default function JobsPage() {
           Every job you’re going for, where you are with it, and which CV you sent.
         </p>
       </div>
-      <JobsBoard />
+      <Suspense>
+        <JobsBoard />
+      </Suspense>
     </Container>
   );
 }

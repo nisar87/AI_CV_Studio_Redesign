@@ -116,3 +116,15 @@
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
 }
+
+/* Studio shell (R8): fixed bars and toasts sit clear of the phone bottom bar and the desktop rail. */
+:root:has([data-shell='studio']) {
+  --shell-bottom: 4rem;
+  --shell-left: 0px;
+}
+@media (min-width: 48rem) {
+  :root:has([data-shell='studio']) {
+    --shell-bottom: 0px;
+    --shell-left: 15rem;
+  }
+}

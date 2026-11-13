@@ -14,8 +14,8 @@ export default function NotFound() {
       </p>
       <div className="flex gap-3">
         <ButtonLink href="/">Go to the home page</ButtonLink>
-        <ButtonLink href="/cv" variant="secondary">
-          My CVs
+        <ButtonLink href="/documents" variant="secondary">
+          Documents
         </ButtonLink>
       </div>
     </main>

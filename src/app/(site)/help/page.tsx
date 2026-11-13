@@ -36,7 +36,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: 'How do I delete my CV or my account?',
-    a: 'Delete a CV from “My CVs” — it is removed from your account with all its earlier versions. To delete your whole account, open the Account page and choose “Delete my account”.',
+    a: 'Delete a CV from Documents — it is removed from your account with all its earlier versions. To delete your whole account, open the Account page and choose “Delete my account”.',
   },
   {
     q: 'My CV runs onto a second page. Is that bad?',

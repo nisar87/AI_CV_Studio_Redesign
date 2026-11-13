@@ -4,7 +4,10 @@ import { expect, test } from './support/test';
 const PAGES = [
   { path: '/', heading: /see it transformed/i },
   { path: '/start', heading: /What kind of work do you do/i },
-  { path: '/cv', heading: /My CVs/i },
+  { path: '/documents', heading: /Documents/i },
+  { path: '/studio', heading: /Your studio/i },
+  { path: '/presence', heading: /Presence/i },
+  { path: '/coach', heading: /Coach/i },
   { path: '/templates', heading: /Designs/i },
   { path: '/help', heading: /Help/i },
   { path: '/privacy', heading: /Privacy/i },
@@ -50,6 +53,33 @@ for (const { path, heading } of PAGES) {
   });
 }
 
+test('/cv now goes to Documents', async ({ page }) => {
+  await page.goto('/cv');
+  await expect(page).toHaveURL(/\/documents$/);
+});
+
+test.describe('visitor', () => {
+  test.use({ as: 'visitor' });
+  test('visitor top bar: Templates, Features, Pricing, Sign in, Upload my CV', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'Desktop bar');
+    await page.goto('/');
+    const bar = page.getByRole('banner');
+    for (const name of [
+      'Templates',
+      'Features',
+      'Pricing',
+      'Sign in',
+      'Upload my CV',
+      'Start from scratch',
+    ])
+      await expect(bar.getByRole('link', { name, exact: true })).toBeVisible();
+    await expect(page.locator('[data-shell="studio"]')).toHaveCount(0);
+  });
+});
+
 test('home → start → choose a profession navigates to the builder', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Create my CV' }).first().click();
@@ -58,24 +88,30 @@ test('home → start → choose a profession navigates to the builder', async ({
   await expect(page).toHaveURL(/\/cv\/new\?work=driver/);
 });
 
-test('keyboard users can skip to content and see focus', async ({ page, isMobile }) => {
-  test.skip(isMobile, 'Keyboard flow checked on desktop');
-  await page.goto('/');
-  await page.keyboard.press('Tab');
-  const skip = page.getByRole('link', { name: 'Skip to content' });
-  await expect(skip).toBeFocused();
-  await page.keyboard.press('Tab');
-  const outline = await page.evaluate(
-    () => getComputedStyle(document.activeElement as Element).outlineStyle,
-  );
-  expect(outline).not.toBe('none');
+test.describe('visitor keyboard', () => {
+  test.use({ as: 'visitor' });
+  test('keyboard users can skip to content and see focus', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Keyboard flow checked on desktop');
+    await page.goto('/');
+    await page.keyboard.press('Tab');
+    const skip = page.getByRole('link', { name: 'Skip to content' });
+    await expect(skip).toBeFocused();
+    await page.keyboard.press('Tab');
+    const outline = await page.evaluate(
+      () => getComputedStyle(document.activeElement as Element).outlineStyle,
+    );
+    expect(outline).not.toBe('none');
+  });
 });
 
-test('mobile menu opens and closes with Escape', async ({ page, isMobile }) => {
-  test.skip(!isMobile, 'Mobile only');
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Open menu' }).click();
-  await expect(page.locator('#mobile-menu')).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(page.locator('#mobile-menu')).toBeHidden();
+test.describe('visitor menu', () => {
+  test.use({ as: 'visitor' });
+  test('mobile menu opens and closes with Escape', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'Mobile only');
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Open menu' }).click();
+    await expect(page.locator('#mobile-menu')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#mobile-menu')).toBeHidden();
+  });
 });

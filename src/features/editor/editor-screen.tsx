@@ -55,7 +55,10 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
   const { doc, update } = editor;
   const params = useSearchParams();
   const [welcome, setWelcome] = useState(params.get('welcome') === '1');
-  const [view, setView] = useState<View>('content');
+  // ?tab=design opens the Look panel straight away (Studio Home and next-best-step links).
+  const [view, setView] = useState<View>(() =>
+    params.get('tab') === 'design' ? 'design' : 'content',
+  );
   const [status, setStatus] = useState<PreviewStatus | null>(null);
   const content = useRef<ContentPanelHandle>(null);
   const panelTab = view === 'preview' ? 'content' : view;
@@ -90,7 +93,12 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
   return (
     <AiDocProvider value={doc}>
       <div className="bg-paper flex h-dvh flex-col">
-        <StudioBar editor={editor} backHref="/cv" backLabel="Back to My CVs" action={download} />
+        <StudioBar
+          editor={editor}
+          backHref="/documents"
+          backLabel="Back to Documents"
+          action={download}
+        />
         <div className="flex min-h-0 flex-1">
           <main
             id="main"
@@ -123,7 +131,7 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
                   title="This is your career profile"
                   className="mb-4"
                   action={
-                    <ButtonLink href="/cv" size="sm" variant="secondary">
+                    <ButtonLink href="/documents" size="sm" variant="secondary">
                       Make a CV from it
                     </ButtonLink>
                   }

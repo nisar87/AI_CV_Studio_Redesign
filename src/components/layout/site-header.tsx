@@ -11,11 +11,11 @@ import { Logo } from './logo';
 import { useAccount } from '@/features/account/account-context';
 import { CircleUserRound } from 'lucide-react';
 
+/** Visitor (marketing) top bar, complete-studio-spec §11.1. Signed-in people get the studio shell. */
 const NAV = [
-  { href: '/cv', label: 'My CVs' },
-  { href: '/jobs', label: 'Jobs' },
-  { href: '/templates', label: 'Designs' },
-  { href: '/help', label: 'Help' },
+  { href: '/templates', label: 'Templates' },
+  { href: '/#how', label: 'Features' },
+  { href: '/premium', label: 'Pricing' },
 ];
 
 export function SiteHeader() {
@@ -86,8 +86,17 @@ export function SiteHeader() {
               {accountLabel}
             </Link>
           )}
-          <ButtonLink href="/start" size="sm" className="sm:h-11 sm:px-4 sm:text-[15px]">
-            Create a CV
+          <ButtonLink
+            href="/start"
+            size="sm"
+            variant="secondary"
+            className="max-sm:hidden sm:h-11 sm:px-4 sm:text-[15px]"
+          >
+            Start from scratch
+          </ButtonLink>
+          <ButtonLink href="/makeover" size="sm" className="sm:h-11 sm:px-4 sm:text-[15px]">
+            <span className="sm:hidden">Upload CV</span>
+            <span className="hidden sm:inline">Upload my CV</span>
           </ButtonLink>
           <button
             ref={menuButton}
@@ -123,6 +132,12 @@ export function SiteHeader() {
               className="text-ink hover:bg-sunken rounded-md px-3 py-3 text-base font-semibold"
             >
               {accountLabel}
+            </Link>
+            <Link
+              href="/start"
+              className="text-ink hover:bg-sunken rounded-md px-3 py-3 text-base font-semibold"
+            >
+              Start from scratch
             </Link>
           </Container>
         </nav>

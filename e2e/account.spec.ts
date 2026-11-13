@@ -21,7 +21,7 @@ async function axeClean(page: Page) {
   expect(serious, JSON.stringify(serious.map((v) => v.id))).toEqual([]);
 }
 
-async function signUp(page: Page, email: string, next = '/cv') {
+async function signUp(page: Page, email: string, next = '/documents') {
   await page.goto(`/signin?mode=signup&next=${encodeURIComponent(next)}`);
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
@@ -31,7 +31,7 @@ async function signUp(page: Page, email: string, next = '/cv') {
   await expect(page).toHaveURL(new RegExp(`${next.replace(/\//g, '\\/')}$`));
 }
 
-async function signIn(page: Page, email: string, next = '/cv') {
+async function signIn(page: Page, email: string, next = '/documents') {
   await page.goto(`/signin?next=${encodeURIComponent(next)}`);
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD);

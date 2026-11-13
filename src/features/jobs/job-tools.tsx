@@ -399,8 +399,9 @@ function InterviewPrepSection({
 
   return (
     <section
+      id="interview"
       aria-label="Interview preparation"
-      className="border-line flex flex-col gap-4 border-t pt-5"
+      className="border-line flex scroll-mt-20 flex-col gap-4 border-t pt-5"
     >
       <h3 className="flex items-center gap-2 font-semibold">
         <MessagesSquare aria-hidden size={18} /> Interview preparation

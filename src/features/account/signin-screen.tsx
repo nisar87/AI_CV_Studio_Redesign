@@ -22,7 +22,7 @@ import {
 type Mode = 'signin' | 'signup' | 'reset';
 
 function safeNext(raw: string | null): string {
-  return raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : '/cv';
+  return raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : '/studio';
 }
 
 function GoogleMark() {

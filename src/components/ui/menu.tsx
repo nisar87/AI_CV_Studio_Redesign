@@ -13,6 +13,7 @@ export function Menu({
   className,
   trigger,
   align = 'right',
+  above = false,
 }: {
   label: string;
   items: MenuItem[];
@@ -20,6 +21,8 @@ export function Menu({
   /** Visible trigger content and classes (default: an icon-only "more" button). */
   trigger?: { content: ReactNode; className: string };
   align?: 'left' | 'right';
+  /** Open upwards (for triggers near the bottom of the screen). */
+  above?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const id = useId();
@@ -66,7 +69,8 @@ export function Menu({
           role="menu"
           aria-label={label}
           className={cn(
-            'border-line bg-surface shadow-2 absolute top-full z-30 mt-1 min-w-48 rounded-md border p-1',
+            'border-line bg-surface shadow-2 absolute z-30 min-w-48 rounded-md border p-1',
+            above ? 'bottom-full mb-1' : 'top-full mt-1',
             align === 'right' ? 'right-0' : 'left-0',
           )}
           onKeyDown={(e) => {

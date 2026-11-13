@@ -197,8 +197,8 @@ export function AccountScreen() {
       {ent && ent.plan !== 'visitor' && <InviteCard />}
 
       <section className="flex flex-wrap gap-3" aria-label="Account actions">
-        <ButtonLink href="/cv" variant="secondary">
-          My CVs
+        <ButtonLink href="/documents" variant="secondary">
+          Documents
         </ButtonLink>
         <Button
           variant="ghost"
