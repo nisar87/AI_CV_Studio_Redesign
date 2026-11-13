@@ -21,6 +21,7 @@ _Last updated: 2026-11-13 (live on Firebase App Hosting at aicvstudio.app)_
 | R4 Growth | `r4/growth` | ✅ Live on aicvstudio.app (2026-11-12); card gateway and Urdu deferred |
 | R5 Instant Makeover | `r5/makeover` | ✅ Live on aicvstudio.app (2026-11-13), verified with real Gemini |
 | R6 Design engine | `r6/design-engine` | ✅ Live on aicvstudio.app (2026-11-13); Design Studio switched on and checked live |
+| R7 Describe your design | `r7/describe` | ✅ Live on aicvstudio.app (2026-11-13): 32 designs, AI Designer on, verified with real Gemini; preference test and outside review are owner to-dos |
 
 ## Phase 0 report
 
@@ -628,6 +629,68 @@ The match check found 8 of 9 requirements met. German was correctly marked "part
 - A very narrow rail with long language fluency text reads as a tall thin column; acceptable, but R7's gallery should prefer wider rails for wordy side sections.
 - Test data left in the owner's account: CVs `k7rEckoI5a` (import), `Ht7QLfWwmE` and `abnIDQ_E21` (tailored), two test jobs, the old `verify-r3-…` doc and a "My CV (copy from this device)" duplicate. The owner can delete them from My CVs and Jobs.
 
+## Release 7 — Describe your design (2026-11-13)
+
+Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7).
+
+- **Catalogue: 32 designs in 8 families of 4** (`src/modules/design/designs.ts`).
+  - The 10 hand-crafted designs plus 22 new designs written as pure Design Specs.
+  - Families: Clean, Classic, Sidebar, Editorial, Timeline, Bold, Portrait, Compact grid.
+  - Designs in a family differ in layout, header, headings or decoration, never only in colour (unit-tested).
+  - Each design has a family, columns, photo support and the kinds of work it suits (this drives the makeover ranking, which now covers all 32).
+  - A spec design stays itself while only colour, font, spacing, paper or photo change (`designId`). A custom design remembers the design it started from ("Back to …").
+  - Settings saved before R7 gain the new designs hidden and Premium, so nothing appears until switched on.
+  - **Production:** all 22 switched on and marked new, with one free design per family (owner decision): Clarity, Heritage, Harbor, Column, Chronicle, Spark, Lens and Grid. Every design can still be changed in Admin → Settings → Designs (now showing each design's family).
+- **Download rule** (`tierDesignId`, shared by the server and the download page): a catalogue design, or its ATS-safe version, follows that design's tier; a custom design needs Premium.
+- **AI Designer** (switch: Admin → Settings → AI Designer).
+  - **Design Studio level 1, "Describe the CV you imagine":**
+    - example prompts per kind of work, and an optional picture of a CV you like;
+    - three live designs of the person's own CV, with the fit-check repairs from spec §7.4 (side narrower and inline skills, then compact spacing and full width; a design that still overflows is replaced by the nearest catalogue design);
+    - "Use this" is one undo step;
+    - "Change something…" refines in words.
+  - **`design.compose` and `design.refine`** work through one flat vocabulary (`design/vocab.ts`, 50 fields, each mapped to one spec path), used for the prompt, the output schema and refine patches. A patch can only change the fields it names (unit-tested over 500 random specs and patches).
+  - Only content statistics go to the model, never CV text. Pictures are checked by their bytes and limited to 4 MB.
+  - **Allowance `design.ai`:** Free gets one compose to try (designs made with it preview but need Premium to download); Premium gets 40 a month; refines are not counted. Designer calls count towards the daily AI budget.
+  - The privacy page says what the Designer sends.
+- **Gallery (`/templates`):** all 32 shown with your own CV, or a sample. Filters: family, columns, photo, kind of work, and "best for online applications". Each design has its own page (`/templates/[id]`) with all pages, the ATS-safe version, the matching cover letter and "Use this design".
+- **Catalogue gates (`npm run gates:catalogue`, in CI):** every design × 8 fixtures in print-mode Chromium (256 renders), 0 failures. Checks:
+  - zero overflow, and PDF page count equal to the layout;
+  - fonts embedded, no Type 3;
+  - top-third rule;
+  - round trip through our own import: at least 97% coverage and the right employer for every job;
+  - position-sorted extraction (`pdftotext -layout`) for single-column designs and every design's ATS-safe version.
+  - The contrast gate (all text/background pairs at least 4.5:1, palette plus extreme colours, over every value of every field) is a unit test.
+- **Real problems the new gates found, all fixed:**
+  - arrow, chevron and tick bullets embedded a Type 3 font; they are now drawn shapes;
+  - wide letter-spacing in Clarity's and Heritage's headings, and Chrome's fake small capitals, split words in text extraction ("W O R K", "W ork history");
+  - the ATS-safe version's headings split words too;
+  - the importer stole the previous job's last bullet when dates come first;
+  - narrow three-column gaps joined columns on import;
+  - "ʼ" apostrophes;
+  - accent and second colours were too light on cream paper or tinted columns;
+  - band headlines were too light; muted text was too light on solid side columns;
+  - "filled" and "tinted" headings clashed (white text on a pale tint);
+  - side fills touched the main column; an overlapping photo covered a centred name.
+- **Another real bug found while testing:** a change made in the last 0.4 s before clicking Download was missing from the download page and the PDF. The page read the CV before the editor saved. Download and back now save first (regression test).
+- **Verified on production (2026-11-13), real Gemini:**
+  - **Designer evaluation** (Admin → AI, 69 samples):
+    - 60/60 descriptions gave at least 2 valid designs;
+    - 58/60 first designs matched every automatic check (97%; the bar is 85%);
+    - refine 8/8 changed only the named settings, and the impossible request changed nothing;
+    - the injection sample was ignored, giving a normal design and no HTML.
+  - **Editor on the owner's CV:**
+    - "Two columns, navy, skills on the left, square bullets" gave three navy two-column designs; "Use this" made it "Your own design, started from Harbor";
+    - "make the sidebar narrower and the headings in coloured boxes" changed only those two settings (5.1 s).
+- **Speed:** the first live median for a compose was 13.6 s, above the 8 s target. Design tasks now ask Gemini for minimal thinking (they pick from fixed values). **Re-measured on production after deploy: median compose 4.1 s, 90% within 5.6 s; with 1–2 s to draw the three previews, compose plus render is under 8 s.** Same run: 60/60 gave 2+ valid designs, 59/60 first designs matched every check (98%), refine 8/8 in 1.6–3.6 s, injection ignored. The misses were bullets the model mentioned but didn't set; the prompt now requires every requested detail in the choices (one such miss remains).
+- **Deviations (recorded):**
+  - Top-third rule: Vivid, Halo, Folio and Sprout (hand-crafted, outside-reviewed) reach 41–45% with the longer samples because of their signature portrait or two-tone headers; the gate allows them 46%. All other 28 designs meet 40%.
+  - Label-margin designs (Ledger, Column, Press) count as multi-column for the position-sorted extraction check; their ATS-safe versions pass it.
+  - The Design-tab picker shows static thumbnails of the 32 designs, filtered by family. The gallery shows them with the person's own CV.
+  - Not built: sharing user designs in a Community shelf (R10, as planned).
+- **Owner to-do for R7:**
+  - the 30-person blind preference test (target: ours preferred in 60% of pairings);
+  - the outside reviewer's rubric scores for the 22 new designs (minimum 8.5 average).
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.
@@ -639,11 +702,12 @@ The match check found 8 of 9 requirements met. German was correctly marked "part
 7. ~~Buyer emails~~: on since 2026-11-13 — sent from support@aicvstudio.app (Namecheap Private Email; password in the Secret Manager secret `SMTP_PASSWORD`, set by the owner). A test email was accepted by the mail server.
 8. ~~Firestore rules~~: published 2026-11-13 (owner: this site is the only product in the project). They replaced the old Flutter app's rules, which let browsers write to `users` and `paymentRequests`; the old version stays in the console's rules history. The live site was checked afterwards.
 9. **Makeover acceptance with real CVs:** try 40 real CVs (10 Word, 10 PDFs from other builders, 10 two-column, 5 scans, 5 phone photos) on `/makeover` and note any wrong or missing text.
-10. **Later releases:** the 30-person design preference test (R7), an outside reviewer, and publishing the browser extension to the Chrome Web Store (R10).
+10. **R7 human checks:** the 30-person blind design preference test (target 60%) and an outside reviewer's rubric scores for the 22 new designs (minimum 8.5).
+11. **Later:** publishing the browser extension to the Chrome Web Store (R10).
 
 ## Next action (exact)
 
-1. R6 is built and tested. Next: R7 "Describe your design" (spec §7.4, §8, §16): `design.compose` / `design.refine`, reference image, Design Studio level 1, catalogue to 32 designs in 8 families, the new gallery and gates.
+1. R7 is live and verified. Next: R8 "One studio" (spec §11, §16): studio shell and Home, Documents and Presence hubs, application kit, ATS check, letter library, new section types, edit-on-page, drag reorder, AI on selection, sync back to profile, Console additions.
 
 ## Deployment (2026-11-12)
 
