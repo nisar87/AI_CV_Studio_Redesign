@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { BookOpen, Briefcase, MessagesSquare, Target } from 'lucide-react';
+import { BookOpen, Briefcase, GraduationCap, MessagesSquare, Target } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/misc';
 import { useAccount } from '@/features/account/account-context';
@@ -53,6 +53,26 @@ export function CoachHome() {
           </div>
           <ButtonLink href="/stories" variant="secondary">
             Open my stories
+          </ButtonLink>
+        </section>
+      )}
+      {account.status === 'signedIn' && ent?.features.skillGap !== false && (
+        <section
+          aria-labelledby="skills-h"
+          className="border-line bg-surface flex flex-wrap items-center gap-4 rounded-xl border p-5"
+        >
+          <GraduationCap aria-hidden size={26} className="text-primary" />
+          <div className="min-w-0 flex-1">
+            <h2 id="skills-h" className="font-semibold">
+              Skill plan
+            </h2>
+            <p className="text-ink-muted text-sm">
+              For a job you want: the skills your CV already shows, what’s missing, and what to
+              learn first.
+            </p>
+          </div>
+          <ButtonLink href="/skills" variant="secondary">
+            Plan my skills
           </ButtonLink>
         </section>
       )}

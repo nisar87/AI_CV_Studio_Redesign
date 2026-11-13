@@ -1,6 +1,7 @@
 import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
 import type { Story } from '@/modules/stories/schema';
+import type { SkillPlan } from '@/modules/skills/gap';
 import type { CoachThread } from '@/modules/coach/thread';
 import type { ResumeDocument } from '@/modules/resume/schema';
 
@@ -51,6 +52,11 @@ export interface UserStore {
   getStory(uid: string, id: string): Promise<Story | null>;
   putStory(uid: string, story: Story): Promise<void>;
   deleteStory(uid: string, id: string): Promise<void>;
+  // Skill gap plans (R9.4)
+  listSkillPlans(uid: string): Promise<SkillPlan[]>;
+  getSkillPlan(uid: string, id: string): Promise<SkillPlan | null>;
+  putSkillPlan(uid: string, plan: SkillPlan): Promise<void>;
+  deleteSkillPlan(uid: string, id: string): Promise<void>;
   /** Adds to today's event counters (metrics/{yyyy-mm-dd}); names are [a-z0-9_]. */
   bumpMetrics(day: string, counts: Record<string, number>): Promise<void>;
   /** Daily counters for days in [from, to] (inclusive, yyyy-mm-dd), oldest first. */

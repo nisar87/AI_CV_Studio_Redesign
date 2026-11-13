@@ -16,6 +16,7 @@ const AI_WEIGHTS = [
   ['mockTurn', 'Mock interview turn'],
   ['coachTurn', 'Coach chat turn'],
   ['storyDraft', 'Story draft'],
+  ['skillGap', 'Skill gap plan'],
 ] as const;
 import { AdminHeading } from './admin-shell';
 import { adminGet, adminSend } from './api';
@@ -677,6 +678,11 @@ export function AdminSettings() {
             label="Story bank (achievement stories for interviews and letters)"
             checked={draft.features.stories}
             onChange={(v) => edit((c) => void (c.features.stories = v))}
+          />
+          <CheckboxField
+            label="Skill gap and learning plan"
+            checked={draft.features.skillGap}
+            onChange={(v) => edit((c) => void (c.features.skillGap = v))}
           />
         </Section>
 

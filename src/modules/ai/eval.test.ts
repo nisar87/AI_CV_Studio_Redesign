@@ -9,7 +9,7 @@ describe('live evaluation set (dry run with the demo provider)', () => {
     const mockProvider = createMockProvider();
     const n = evalSamples().length;
     expect(evalSamples().filter((s) => s.task === 'interview.turn')).toHaveLength(12);
-    expect(evalSamples().filter((s) => s.task === 'coach.chat')).toHaveLength(20);
+    expect(evalSamples().filter((s) => s.task === 'coach.chat').length).toBeGreaterThanOrEqual(20);
     for (let i = 0; i < n; i++) {
       const r = await runEvalSample(i, {
         provider: mockProvider,

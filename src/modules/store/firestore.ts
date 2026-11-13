@@ -3,6 +3,7 @@ import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
 import type { Story } from '@/modules/stories/schema';
+import type { SkillPlan } from '@/modules/skills/gap';
 import type { CoachThread } from '@/modules/coach/thread';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import {
@@ -31,6 +32,7 @@ import {
  *   users/{uid}/jobs/{id}                    Job (tracker; deleted with the account)
  *   users/{uid}/letters/{id}                 SavedLetter (letter library; deleted with the account)
  *   users/{uid}/stories/{id}                 Story (story bank; deleted with the account)
+ *   users/{uid}/skillPlans/{id}              SkillPlan (skill gap plans; deleted with the account)
  *   users/{uid}/coach/main                   CoachThread (career coach; deleted with the account)
  *   portfolios/{slug}                        Portfolio (public page; one per account)
  *   referralCodes/{code}                     { uid }  (invite link; users/{uid}.referralCode, .referredBy)
@@ -120,6 +122,24 @@ export class FirestoreUserStore implements UserStore {
   }
   async deleteStory(uid: string, id: string) {
     await this.storiesCol(uid).doc(id).delete();
+  }
+
+  private plansCol(uid: string) {
+    return this.db.collection('users').doc(uid).collection('skillPlans');
+  }
+  async listSkillPlans(uid: string) {
+    const snap = await this.plansCol(uid).orderBy('updatedAt', 'desc').limit(100).get();
+    return snap.docs.map((d) => d.data() as SkillPlan);
+  }
+  async getSkillPlan(uid: string, id: string) {
+    const s = await this.plansCol(uid).doc(id).get();
+    return s.exists ? (s.data() as SkillPlan) : null;
+  }
+  async putSkillPlan(uid: string, plan: SkillPlan) {
+    await this.plansCol(uid).doc(plan.id).set(plan);
+  }
+  async deleteSkillPlan(uid: string, id: string) {
+    await this.plansCol(uid).doc(id).delete();
   }
 
   async bumpMetrics(day: string, counts: Record<string, number>) {

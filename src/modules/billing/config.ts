@@ -106,6 +106,8 @@ export const businessConfig = z.object({
     coach: z.boolean().default(true),
     /** R9 story bank. */
     stories: z.boolean().default(true),
+    /** R9 skill gap and learning plan. */
+    skillGap: z.boolean().default(true),
   }),
   /** AI actions that cost more than one (complete-studio-spec §14: weights are config data). */
   aiWeights: z
@@ -114,8 +116,9 @@ export const businessConfig = z.object({
       mockTurn: z.number().int().min(1).max(10).default(1),
       coachTurn: z.number().int().min(1).max(10).default(1),
       storyDraft: z.number().int().min(1).max(10).default(1),
+      skillGap: z.number().int().min(1).max(10).default(1),
     })
-    .default({ kit: 3, mockTurn: 1, coachTurn: 1, storyDraft: 1 }),
+    .default({ kit: 3, mockTurn: 1, coachTurn: 1, storyDraft: 1, skillGap: 1 }),
   /** Content the owner can change without a deploy (spec §15). */
   content: z
     .object({
@@ -247,8 +250,9 @@ export const DEFAULT_CONFIG: BusinessConfig = {
     mockInterview: true,
     coach: true,
     stories: true,
+    skillGap: true,
   },
-  aiWeights: { kit: 3, mockTurn: 1, coachTurn: 1, storyDraft: 1 },
+  aiWeights: { kit: 3, mockTurn: 1, coachTurn: 1, storyDraft: 1, skillGap: 1 },
   content: { hiddenLetterTypes: [] },
   announcement: { enabled: false, text: '' },
   support: { email: '' },

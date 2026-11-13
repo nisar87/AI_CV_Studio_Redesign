@@ -32,15 +32,24 @@ export function checkActions(
   jobIds: Set<string>,
 ): CoachAction[] {
   const seen = new Set<string>();
-  return actions
-    .map((a) => ({ tool: a.tool, arg: a.arg.trim() }))
-    .filter((a) => {
-      if (JOB_TOOLS.has(a.tool)) return jobIds.has(a.arg);
-      if (a.tool === 'write_letter') return isLetterType(a.arg);
-      return true;
-    })
-    .map((a) => (JOB_TOOLS.has(a.tool) || a.tool === 'write_letter' ? a : { ...a, arg: '' }))
-    .filter((a) => !seen.has(`${a.tool}:${a.arg}`) && seen.add(`${a.tool}:${a.arg}`));
+  return (
+    actions
+      .map((a) => ({ tool: a.tool, arg: a.arg.trim() }))
+      .filter((a) => {
+        if (JOB_TOOLS.has(a.tool)) return jobIds.has(a.arg);
+        if (a.tool === 'write_letter') return isLetterType(a.arg);
+        return true;
+      })
+      // A learning plan may be for one of their jobs, or for a role in general ('').
+      .map((a) =>
+        JOB_TOOLS.has(a.tool) || a.tool === 'write_letter'
+          ? a
+          : a.tool === 'skill_gap' && jobIds.has(a.arg)
+            ? a
+            : { ...a, arg: '' },
+      )
+      .filter((a) => !seen.has(`${a.tool}:${a.arg}`) && seen.add(`${a.tool}:${a.arg}`))
+  );
 }
 
 /** The thread with a new exchange added, keeping the last MAX_MESSAGES. */

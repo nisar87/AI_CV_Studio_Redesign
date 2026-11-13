@@ -234,6 +234,14 @@ export function JobTools({ job, onJobChange }: { job: Job; onJobChange: (j: Job)
           )}
 
           {job.match && <MatchView match={job.match} cvId={sourceId} />}
+          {job.match && ent?.features.skillGap !== false && (
+            <p className="text-sm">
+              Missing some of it?{' '}
+              <Link href={`/skills?job=${job.id}`} className="text-primary font-semibold underline">
+                Make a learning plan for this job
+              </Link>
+            </p>
+          )}
 
           <LetterEditor
             key={`letter:${job.letter?.updatedAt ?? 'none'}`}

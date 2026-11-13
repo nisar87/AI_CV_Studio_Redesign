@@ -21,6 +21,21 @@ describe('coach thread', () => {
     ]);
   });
 
+  it('a learning plan keeps their own job, otherwise becomes a general plan', () => {
+    const a = checkActions(
+      [
+        { tool: 'skill_gap', arg: 'job1' },
+        { tool: 'skill_gap', arg: 'someone-elses-job' },
+        { tool: 'skill_gap', arg: '' },
+      ],
+      new Set(['job1']),
+    );
+    expect(a).toEqual([
+      { tool: 'skill_gap', arg: 'job1' },
+      { tool: 'skill_gap', arg: '' },
+    ]);
+  });
+
   it('appends exchanges and keeps the last messages', () => {
     let t = null as ReturnType<typeof append> | null;
     for (let i = 0; i < 30; i++) t = append(t, `q${i}`, { reply: `a${i}`, actions: [] });

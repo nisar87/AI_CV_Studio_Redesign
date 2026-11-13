@@ -48,6 +48,8 @@ function label(a: CoachAction, jobs: Job[]): string {
       return 'Add a job I want';
     case 'design':
       return 'Change my CV’s design';
+    case 'skill_gap':
+      return at ? `Make a learning plan for ${at}` : 'Make a learning plan for the role I want';
   }
 }
 
@@ -161,6 +163,9 @@ export function CoachChat({ jobs }: { jobs: Job[] }) {
           break;
         case 'design':
           router.push(source ? `/cv/${source.id}?tab=design` : '/documents');
+          break;
+        case 'skill_gap':
+          router.push(a.arg ? `/skills?job=${a.arg}` : '/skills');
           break;
       }
       refresh();

@@ -52,7 +52,9 @@ export default function PrivacyPage() {
             <strong>Story bank, mock interviews and the coach:</strong> the stories you write are
             kept in your account and deleted with it. When you use a mock interview, the coach or an
             AI letter, your finished stories are sent to Gemini with your CV so the advice can use
-            them as your own facts. Drafting a story sends the chosen CV point and your notes.
+            them as your own facts. Drafting a story sends the chosen CV point and your notes. A
+            skill plan sends your CV and the role you typed, or the job’s advert; plans are kept in
+            your account and deleted with it.
           </li>
           <li>
             <strong>Share links (only if you create one):</strong> anyone with the link can see that
@@ -92,9 +94,9 @@ export default function PrivacyPage() {
         <p>
           Deleting a CV removes it, all of its earlier versions and its share links from your
           account. On the Account page you can delete your whole account, which removes everything
-          above, including your jobs, letters, stories, share links and portfolio page, except
-          payment records, which we keep for accounting with your email address removed. Signing out
-          removes your account’s CVs from that device.
+          above, including your jobs, letters, stories, skill plans, share links and portfolio page,
+          except payment records, which we keep for accounting with your email address removed.
+          Signing out removes your account’s CVs from that device.
         </p>
         <h2>What we measure</h2>
         <p>

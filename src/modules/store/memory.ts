@@ -1,6 +1,7 @@
 import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
 import type { Story } from '@/modules/stories/schema';
+import type { SkillPlan } from '@/modules/skills/gap';
 import type { CoachThread } from '@/modules/coach/thread';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import {
@@ -115,6 +116,28 @@ export class MemoryUserStore implements UserStore {
     this.storyBucket(uid).delete(id);
   }
 
+  private skillPlans = new Map<string, Map<string, SkillPlan>>();
+  private planBucket(uid: string) {
+    let b = this.skillPlans.get(uid);
+    if (!b) this.skillPlans.set(uid, (b = new Map()));
+    return b;
+  }
+  async listSkillPlans(uid: string) {
+    return structuredClone([...this.planBucket(uid).values()]).sort((a, b) =>
+      b.updatedAt.localeCompare(a.updatedAt),
+    );
+  }
+  async getSkillPlan(uid: string, id: string) {
+    const p = this.planBucket(uid).get(id);
+    return p ? structuredClone(p) : null;
+  }
+  async putSkillPlan(uid: string, plan: SkillPlan) {
+    this.planBucket(uid).set(plan.id, structuredClone(plan));
+  }
+  async deleteSkillPlan(uid: string, id: string) {
+    this.planBucket(uid).delete(id);
+  }
+
   private metrics = new Map<string, Record<string, number>>();
   async bumpMetrics(day: string, counts: Record<string, number>) {
     const m = this.metrics.get(day) ?? {};
@@ -141,6 +164,7 @@ export class MemoryUserStore implements UserStore {
     this.jobs.delete(uid);
     this.letters.delete(uid);
     this.stories.delete(uid);
+    this.skillPlans.delete(uid);
     this.coach.delete(uid);
     this.designs.delete(uid);
     for (const [t, sh] of this.shares) if (sh.uid === uid) this.shares.delete(t);

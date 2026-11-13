@@ -22,6 +22,7 @@ const INTERNAL = new Set<string>([
   'interview.turn',
   'coach.chat',
   'story.draft',
+  'skills.gap',
 ]);
 const limiter = sharedAiLimiter();
 

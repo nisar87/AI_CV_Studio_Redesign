@@ -26,6 +26,7 @@ export const COACH_TOOLS = [
   'ats_check',
   'add_job',
   'design',
+  'skill_gap',
 ] as const;
 export type CoachTool = (typeof COACH_TOOLS)[number];
 
@@ -48,6 +49,7 @@ export const TASK_IDS = [
   'interview.turn',
   'coach.chat',
   'story.draft',
+  'skills.gap',
   'import.transcribe',
   'makeover.diagnose',
   'design.compose',
@@ -268,6 +270,14 @@ export const taskInputs = {
     notes: z.string().max(2000).default(''),
     /** The person's skills; tags are chosen from these. */
     skills: z.array(z.string().max(60)).max(60).default([]),
+  }),
+  /** Skill gap and learning plan (R9.4) for a target role or a tracked job's advert. */
+  'skills.gap': z.object({
+    profile: z.string().min(20).max(24_000),
+    /** The role the person wants (their words, or the tracked job's title). */
+    role: z.string().trim().min(2).max(160),
+    /** The job advert when the target is a tracked job ('' for a typed role). */
+    advert: z.string().max(12_000).default(''),
   }),
   'linkedin.write': z.object({
     profile: z.string().min(20).max(24_000),
@@ -496,6 +506,34 @@ export const taskOutputs = {
         }),
       )
       .max(3),
+  }),
+  'skills.gap': z.object({
+    skills: z
+      .array(
+        z.object({
+          name: z.string().min(1).max(60),
+          importance: z.enum(['core', 'useful']),
+          status: z.enum(['have', 'partly', 'missing']),
+          /** CV line ids (e.g. "J1.B2"); checked against the CV by the app. */
+          evidence: z.array(z.string().max(20)).max(4),
+          note: z.string().max(240),
+        }),
+      )
+      .min(1)
+      .max(14),
+    /** What to learn first, most useful first. */
+    plan: z
+      .array(
+        z.object({
+          skill: z.string().min(1).max(60),
+          why: z.string().max(240),
+          how: z.string().max(400),
+          proof: z.string().max(240),
+          weeks: z.number().int().min(1).max(52),
+        }),
+      )
+      .max(5),
+    summary: z.string().max(500),
   }),
   'story.draft': z.object({
     title: z.string().min(1).max(120),

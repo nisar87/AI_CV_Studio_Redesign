@@ -18,7 +18,7 @@ export const DESTINATIONS: { href: string; label: string; icon: LucideIcon; also
   { href: '/documents', label: 'Documents', icon: FileText, also: ['/cv', '/profile', '/letters'] },
   { href: '/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/presence', label: 'Presence', icon: Globe, also: ['/portfolio', '/linkedin'] },
-  { href: '/coach', label: 'Coach', icon: MessagesSquare, also: ['/stories'] },
+  { href: '/coach', label: 'Coach', icon: MessagesSquare, also: ['/stories', '/skills'] },
 ];
 
 /** The Create sheet: one place to start anything. */

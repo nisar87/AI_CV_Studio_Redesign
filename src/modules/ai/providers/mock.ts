@@ -234,6 +234,60 @@ function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] =
       const firstBullet = digestLines(i.profile).find((l) => /\.B\d+$/.test(l.id))?.id ?? '';
       return { terms: terms.map((term, n) => ({ term, line: n === 0 ? firstBullet : '' })) };
     }
+    case 'skills.gap': {
+      const i = input as ParsedInput<'skills.gap'>;
+      const lines = i.profile.split('\n');
+      const cvText = i.profile.toLowerCase();
+      const cvSkills = (lines.find((l) => l.startsWith('SKILLS:')) ?? '')
+        .replace(/^SKILLS:\s*/, '')
+        .split('; ')
+        .filter(Boolean);
+      const where = (k: string) =>
+        lines
+          .find(
+            (l) => /^[A-Z]+\d*(\.[A-Z]\d+)?:/.test(l) && l.toLowerCase().includes(k.toLowerCase()),
+          )
+          ?.split(':')[0];
+      // Asked-for things from the advert ("Essential: a, b and c."), or a typical pair for a typed role.
+      const asked = i.advert
+        ? (i.advert.match(/(?:essential|desirable)[^:]*:([^.]*)/gi) ?? [])
+            .flatMap((m) => m.replace(/^[^:]*:/, '').split(/,| and /))
+            .map((x) => x.replace(/\(.*?\)/g, '').trim())
+            .filter((x) => x.length > 2)
+            .slice(0, 6)
+        : [`${i.role} basics`, 'Spreadsheets'];
+      const skills = [
+        ...cvSkills.slice(0, 3).map((name) => ({
+          name: name.slice(0, 60),
+          importance: 'core' as const,
+          status: 'have' as const,
+          evidence: [where(name) ?? 'SKILLS'],
+          note: 'Your CV shows this.',
+        })),
+        ...asked.map((name) => {
+          const has = cvText.includes(name.toLowerCase());
+          return {
+            name: name.slice(0, 60),
+            importance: 'core' as const,
+            status: has ? ('have' as const) : ('missing' as const),
+            evidence: has ? [where(name) ?? 'SKILLS'] : [],
+            note: has ? 'Your CV shows this.' : 'Your CV does not show this yet.',
+          };
+        }),
+      ];
+      const missing = skills.filter((k) => k.status !== 'have').slice(0, 3);
+      return {
+        skills,
+        plan: missing.map((k, n) => ({
+          skill: k.name,
+          why: `Employers for this role ask for ${k.name.toLowerCase()}.`,
+          how: 'Practise it on a small real task each week and follow a free official guide.',
+          proof: `Add it to your skills, with one point showing where you used it.`,
+          weeks: 2 + n * 2,
+        })),
+        summary: `You already show ${skills.filter((k) => k.status === 'have').length} of the skills for this role. Start with ${missing[0]?.name ?? 'keeping your CV up to date'}.`,
+      };
+    }
     case 'story.draft': {
       const i = input as ParsedInput<'story.draft'>;
       const point = i.point.trim().replace(/\.$/, '');
@@ -272,7 +326,8 @@ function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] =
         | 'write_letter'
         | 'ats_check'
         | 'add_job'
-        | 'design';
+        | 'design'
+        | 'skill_gap';
       const actions: { tool: Tool; arg: string }[] = [];
       const on = (re: RegExp, tool: Tool, arg = '') => {
         if (re.test(m)) actions.push({ tool, arg });
@@ -283,6 +338,7 @@ function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] =
         on(/cover letter/, 'cover_letter', job);
         on(/how well|fit the/, 'job_match', job);
         on(/practi[sc]e/, 'mock_interview', job);
+        on(/\blearn\b|ready for/, 'skill_gap', job);
       }
       on(/resign/, 'write_letter', 'resignation');
       on(/referee|reference/, 'write_letter', 'reference');

@@ -167,6 +167,7 @@ export async function entitlementsFor(user: SessionUser | null) {
       mockInterview: cfg.features.mockInterview,
       coach: cfg.features.coach,
       stories: cfg.features.stories,
+      skillGap: cfg.features.skillGap,
     },
     aiWeights: cfg.aiWeights,
     hiddenLetterTypes: cfg.content.hiddenLetterTypes,

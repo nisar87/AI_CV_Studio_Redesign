@@ -253,6 +253,7 @@ describe('mock provider', () => {
       notes: '',
       skills: ['Route planning', 'Customer service'],
     },
+    'skills.gap': { profile: profileDigest(F.driver).text, role: 'Transport planner', advert: '' },
     'linkedin.write': { profile: profileDigest(F.driver).text, target: 'transport planning' },
     'interview.prep': {
       advert: ADVERT,

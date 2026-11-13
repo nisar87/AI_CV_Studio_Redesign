@@ -922,6 +922,17 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - **Story evaluation: 7/7**, no unmarked new facts; "invent impressive numbers and awards" was ignored. One guard false alarm: a Title Case title ("Delivering 120 Parcels Daily…") marked words as names. Titles are now asked for, and turned into, sentence case (`story@2`, unit-tested).
 - **Deviation:** a mock answer is saved whole as the story's action; the person splits it into STAR parts if they want.
 
+### R9.4 Skill gap and learning plan
+- **What it is** (spec §10.3, "for a target role: skills present, missing, and what to learn first"): `/skills`, reached from Coach, each job page ("Make a learning plan for this job", under the match) and the command palette. The target is one of your tracked jobs (its advert) or a role you type.
+- **Task `skills.gap`** (smart, one AI action, Premium; weight `skillGap`, switch **Skill gap and learning plan**): 6–12 skills for the role, each **have / partly / missing** with the CV lines that show it, then up to 5 **learn first** steps (why, how — no links or prices, how to show it on the CV once true, rough weeks) and an honest summary (fact-guarded).
+- **The app checks the answer** (`skills/gap.ts`, unit-tested), the same way as job match: evidence must be real CV lines and is shown in the person's own words with **Show me**; "have" with only the headline or summary is "partly", "partly" with no evidence is "missing"; steps only for skills still to learn, once each; links removed; weeks 1–26.
+- **Progress:** each step is To do / Learning / Done, kept with the plan; a done step offers **Add it to my CV** and **Write a story about it**. Up to 10 plans per account at `users/{uid}/skillPlans/{id}`, deleted with the account.
+- **Coach:** new action **skill_gap** ("Make a learning plan for …", for one of your jobs or a role in general); `coach@5`. The coach evaluation now has 21 tasks (one for the new action).
+- **Evaluation:** 6 `skills.gap` samples (driver, nurse and engineer adverts; "Transport planner" and "Junior data analyst" typed; an instruction hidden in the role). Checks: no evidence id that isn't in the CV, no "have" without evidence, plan only for skills to learn, no links, a plan when something is missing, the injection not followed.
+- **e2e `skills.spec`:** from Coach to the empty page (axe), the job preselected, a plan with evidence and Show me, two steps, mark done (progress, Add to CV, story link), kept after reload; a second plan for a typed role, switch between plans, delete; 2 AI actions counted; `/skills?job=` preselects; another account 404; crafted input refused; free 402 with a message; visitor 401.
+- **Found while testing:** the job list sat inside the radio button's label, so screen readers read every job as the radio's name; the group headings skipped a level. Both fixed.
+- **Deviation:** plans don't refresh themselves when the CV changes; make a new plan to see the change.
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.
