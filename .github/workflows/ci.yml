@@ -12,7 +12,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -56,6 +56,10 @@ jobs:
           PDF_BROWSER: bundled
       - name: Template QA (all templates × fixtures → PDF)
         run: npm run qa:templates
+        env:
+          CHROME_EXECUTABLE_PATH: /usr/bin/google-chrome
+      - name: Catalogue gates (32 designs × fixtures; spec §8.3)
+        run: npm run gates:catalogue
         env:
           CHROME_EXECUTABLE_PATH: /usr/bin/google-chrome
       - if: always()
