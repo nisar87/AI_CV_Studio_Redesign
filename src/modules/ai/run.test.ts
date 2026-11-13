@@ -230,6 +230,16 @@ describe('mock provider', () => {
       tone: 'formal',
       context: 'delivered parcels to costumers across Leicester',
     },
+    'interview.turn': {
+      advert: ADVERT,
+      jobTitle: 'Delivery Driver',
+      company: 'Swift',
+      profile: profileDigest(F.driver).text,
+      transcript: [],
+      question: 'Tell me about a time you solved a problem.',
+      answer: 'When a van broke down I re-planned the route so that every parcel arrived on time.',
+      remaining: 2,
+    },
     'linkedin.write': { profile: profileDigest(F.driver).text, target: 'transport planning' },
     'interview.prep': {
       advert: ADVERT,

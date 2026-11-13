@@ -31,6 +31,7 @@ export const TASK_IDS = [
   'quality.atsKeywords',
   'linkedin.write',
   'interview.prep',
+  'interview.turn',
   'import.transcribe',
   'makeover.diagnose',
   'design.compose',
@@ -206,6 +207,23 @@ export const taskInputs = {
     jobTitle: z.string().max(160),
     company: z.string().max(160),
     profile: z.string().min(20).max(24_000),
+  }),
+  /** Mock interview (R9): one turn — feedback on the last answer and the next question. */
+  'interview.turn': z.object({
+    advert: z.string().min(80).max(12_000),
+    jobTitle: z.string().max(160),
+    company: z.string().max(160),
+    profile: z.string().min(20).max(24_000),
+    /** Earlier questions and answers, oldest first. */
+    transcript: z
+      .array(z.object({ question: z.string().max(400), answer: z.string().max(3000) }))
+      .max(10)
+      .default([]),
+    /** The question just answered, and the answer ('' when the interview starts). */
+    question: z.string().max(400).default(''),
+    answer: z.string().max(3000).default(''),
+    /** Questions still to ask after this turn (0 = finish with a summary). */
+    remaining: z.number().int().min(0).max(10),
   }),
   'linkedin.write': z.object({
     profile: z.string().min(20).max(24_000),
@@ -398,6 +416,29 @@ export const taskOutputs = {
       .min(3)
       .max(10),
     tips: z.array(z.string().max(220)).max(4),
+  }),
+  'interview.turn': z.object({
+    feedback: z.object({
+      verdict: z.enum(['strong', 'good', 'work-on']),
+      /** Which parts of the STAR pattern the answer has. */
+      star: z.object({
+        situation: z.boolean(),
+        task: z.boolean(),
+        action: z.boolean(),
+        result: z.boolean(),
+      }),
+      /** A short phrase copied exactly from the answer that the main point is about. */
+      quote: z.string().max(300),
+      strengths: z.array(z.string().max(240)).max(3),
+      improve: z.array(z.string().max(240)).max(3),
+      /** How to make it stronger with something from the CV. */
+      tip: z.string().max(400),
+    }),
+    next: z.object({
+      question: z.string().max(300),
+      kind: z.enum(['experience', 'skills', 'situation', 'motivation', 'gap']),
+    }),
+    summary: z.string().max(900),
   }),
   'linkedin.write': z.object({
     headline: z.string().max(220),

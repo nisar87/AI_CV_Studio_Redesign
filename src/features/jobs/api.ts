@@ -67,6 +67,15 @@ export const jobAiApi = {
       method: 'POST',
       body: JSON.stringify({ document, tone }),
     }),
+  mockTurn: (
+    id: string,
+    document: ResumeDocument,
+    opts: { answer?: string; restart?: boolean } = {},
+  ) =>
+    call<{ job: Job }>(`/api/jobs/${id}/interview/turn`, {
+      method: 'POST',
+      body: JSON.stringify({ document, ...opts }),
+    }).then((r) => r.job),
   interview: (id: string, document: ResumeDocument) =>
     call<{ job: Job }>(`/api/jobs/${id}/interview`, {
       method: 'POST',

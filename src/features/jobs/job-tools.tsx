@@ -34,6 +34,7 @@ import type { ResumeDocument } from '@/modules/resume/schema';
 import { getRepository } from '@/modules/storage/repository';
 import { jobAiApi, jobsApi, JobsError } from './api';
 import { KitSection } from './kit-section';
+import { MockInterview } from './mock-interview';
 
 type Busy = null | 'kit' | 'match' | 'tailor' | 'letter' | 'save' | 'pdf' | 'interview' | 'notes';
 const MIN_ADVERT = 80;
@@ -257,6 +258,17 @@ export function JobTools({ job, onJobChange }: { job: Job; onJobChange: (j: Job)
             onJobChange={onJobChange}
             refresh={refresh}
           />
+
+          {ent?.features.mockInterview !== false && (
+            <MockInterview
+              job={job}
+              source={source}
+              disabled={advertShort || !source || busy !== null}
+              onJobChange={onJobChange}
+              onError={(e) => setProblem(toProblem(e))}
+              refresh={refresh}
+            />
+          )}
         </>
       )}
     </Card>

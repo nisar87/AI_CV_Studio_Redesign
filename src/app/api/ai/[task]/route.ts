@@ -19,6 +19,7 @@ const INTERNAL = new Set<string>([
   'makeover.diagnose',
   'letter.generic',
   'quality.atsKeywords',
+  'interview.turn',
 ]);
 const limiter = sharedAiLimiter();
 

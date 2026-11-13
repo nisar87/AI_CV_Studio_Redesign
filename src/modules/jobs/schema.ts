@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { letter } from '@/modules/letters/schema';
 import type { InterviewPrep } from './interview';
 import type { MatchResult } from './match';
+import type { MockSession } from './mock';
 
 /** Job tracker (Release 2). Jobs live in the account (users/{uid}/jobs/{id}); server-side only. */
 export const JOB_STAGES = ['saved', 'applied', 'interview', 'offer', 'closed'] as const;
@@ -49,6 +50,12 @@ export const job = jobInput.extend({
   match: z.custom<MatchResult>().optional(),
   /** Interview preparation (written by the server only). */
   interview: z.custom<InterviewPrep>().optional(),
+  /** Mock interview in progress or just finished (R9, server only). */
+  mock: z.custom<MockSession>().optional(),
+  /** Earlier mock interviews: when, and the verdict per answer (last 5). */
+  mockPast: z
+    .array(z.object({ at: z.string(), verdicts: z.array(z.string()), summary: z.string() }))
+    .optional(),
   /** Application kit (R8.4): the tailored CV made with the letter and email (server only). */
   kit: z.object({ cvId: z.string().max(64), at: z.string() }).optional(),
   createdAt: z.string(),

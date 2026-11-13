@@ -56,11 +56,11 @@ export function CoachHome() {
             <p className="text-ink-muted truncate text-sm">{j.company || 'Company not set'}</p>
           </div>
           <Link
-            href={`/jobs/${j.id}#interview`}
+            href={`/jobs/${j.id}#mock`}
             className="text-primary hover:bg-primary-soft inline-flex min-h-11 items-center gap-2 rounded-md px-3 font-semibold"
           >
             <MessagesSquare aria-hidden size={18} />
-            {j.interview ? 'Review interview prep' : 'Practise interview'}
+            {j.mock?.current ? 'Continue mock interview' : 'Mock interview'}
           </Link>
           <Link
             href={`/jobs/${j.id}`}

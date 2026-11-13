@@ -96,9 +96,16 @@ export const businessConfig = z.object({
     letters: z.boolean().default(true),
     /** R8 application kit on jobs. */
     kit: z.boolean().default(true),
+    /** R9 mock interview on jobs and in Coach. */
+    mockInterview: z.boolean().default(true),
   }),
   /** AI actions that cost more than one (complete-studio-spec §14: weights are config data). */
-  aiWeights: z.object({ kit: z.number().int().min(1).max(10).default(3) }).default({ kit: 3 }),
+  aiWeights: z
+    .object({
+      kit: z.number().int().min(1).max(10).default(3),
+      mockTurn: z.number().int().min(1).max(10).default(1),
+    })
+    .default({ kit: 3, mockTurn: 1 }),
   /** Content the owner can change without a deploy (spec §15). */
   content: z
     .object({
@@ -224,8 +231,9 @@ export const DEFAULT_CONFIG: BusinessConfig = {
     atsCheck: true,
     letters: true,
     kit: true,
+    mockInterview: true,
   },
-  aiWeights: { kit: 3 },
+  aiWeights: { kit: 3, mockTurn: 1 },
   content: { hiddenLetterTypes: [] },
   announcement: { enabled: false, text: '' },
   support: { email: '' },

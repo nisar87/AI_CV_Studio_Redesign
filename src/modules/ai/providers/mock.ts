@@ -234,6 +234,46 @@ function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] =
       const firstBullet = digestLines(i.profile).find((l) => /\.B\d+$/.test(l.id))?.id ?? '';
       return { terms: terms.map((term, n) => ({ term, line: n === 0 ? firstBullet : '' })) };
     }
+    case 'interview.turn': {
+      const i = input as ParsedInput<'interview.turn'>;
+      const a = i.answer.trim();
+      const words = a.split(/\s+/).filter(Boolean);
+      const result = /\b(result|so that|which meant|saved|reduced|increased|improved)\b/i.test(a);
+      const asked = i.transcript.length + (i.question ? 1 : 0);
+      const QUESTIONS = [
+        { question: `Why do you want this ${i.jobTitle} role?`, kind: 'motivation' as const },
+        {
+          question: 'Tell me about a time you solved a problem at work.',
+          kind: 'situation' as const,
+        },
+        { question: 'Which of your skills fits this job best?', kind: 'skills' as const },
+        { question: 'Walk me through your most recent job.', kind: 'experience' as const },
+        { question: 'What would you do in your first month?', kind: 'motivation' as const },
+      ];
+      return {
+        feedback: {
+          verdict: !a ? 'good' : words.length < 12 ? 'work-on' : result ? 'strong' : 'good',
+          star: {
+            situation: /\b(when|at|while)\b/i.test(a),
+            task: /\b(needed|had to|my job)\b/i.test(a),
+            action: /\bI\b/.test(a),
+            result,
+          },
+          quote: words.slice(0, 4).join(' '),
+          strengths: a ? ['You answered the question directly.'] : [],
+          improve: a && !result ? ['Say what happened in the end: the result.'] : [],
+          tip: a ? 'Use one real example from your CV and finish with the result.' : '',
+        },
+        next:
+          i.remaining > 0
+            ? (QUESTIONS[asked % QUESTIONS.length] as { question: string; kind: 'motivation' })
+            : { question: '', kind: 'experience' as const },
+        summary:
+          i.remaining > 0
+            ? ''
+            : 'You gave relevant answers. Practise ending each one with the result.',
+      };
+    }
     case 'interview.prep': {
       const i = input as ParsedInput<'interview.prep'>;
       const cv = digestLines(i.profile);

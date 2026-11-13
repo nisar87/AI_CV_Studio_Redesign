@@ -866,6 +866,28 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - per-task AI switches and model per tier.
   These belong with the R9/R10 tools that need them.
 
+## Release 9 — Coach (in progress)
+
+### R9.1 Mock interview
+- **On every job (and from Coach):**
+  - The AI interviewer asks 5 questions for that job, one at a time.
+  - After each answer it gives feedback: a verdict (strong / good / work on this one), which STAR parts the answer has, what worked, what to improve, and a tip using a real fact from the CV. It ends with a short summary.
+  - The interview is kept on the job (`mock`, plus the last 5 results in `mockPast`); "Practise again" starts a new one.
+- **Task `interview.turn`** (smart):
+  - Feedback and summary are fact-guarded against the CV and what the person said.
+  - The feedback must quote the person's own answer; a quote that isn't in the answer is dropped (`jobs/mock.ts`, unit-tested).
+  - Text inside the answer is data, not instructions.
+- **Cost:** each turn is one AI action (`aiWeights.mockTurn`, default 1), Premium. Switch: `features.mockInterview` (Console comes with the other R9 switches).
+- **Evaluation:** 12 new samples in the live evaluation (driver, nurse and engineer adverts):
+  - the first question;
+  - a vague answer, which must not be called strong;
+  - a full STAR answer, which must not be "work on";
+  - an answer that tries to inject instructions, which must not be obeyed.
+
+  Samples can now carry their own quality checks. A dry run of the whole set through the demo provider is a unit test.
+- **e2e `mock.spec`:** 5 answers, feedback and verdicts, the quote, summary, 6 AI actions counted, kept after reload, practise again, and 402 for free accounts.
+- **Deviation:** answers and feedback are returned whole, not streamed token by token (each turn takes a few seconds).
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.

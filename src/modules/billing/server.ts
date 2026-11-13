@@ -164,6 +164,7 @@ export async function entitlementsFor(user: SessionUser | null) {
       atsCheck: cfg.features.atsCheck,
       letters: cfg.features.letters,
       kit: cfg.features.kit,
+      mockInterview: cfg.features.mockInterview,
     },
     aiWeights: cfg.aiWeights,
     hiddenLetterTypes: cfg.content.hiddenLetterTypes,
