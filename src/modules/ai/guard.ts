@@ -95,7 +95,14 @@ const CREDENTIAL_FAMILIES = [
   /^master/,
   /^bachelor/,
 ];
+/** Named degrees: the generic word "degree" is known when the person names any of them. */
+const NAMED_DEGREE =
+  /^(bachelor|bachelor's|bachelors|master|master's|masters|bsc|ba|beng|bed|llb|msc|ma|meng|mba|mphil|mres|llm|phd|dphil|doctorate|hnd)$/;
+
 function credentialKnown(w: string, source: Source) {
+  // Only in this direction: a BSc makes "degree" known, never "master's".
+  if (w === 'degree' || w === 'degrees')
+    for (const x of source.words) if (NAMED_DEGREE.test(x)) return true;
   const fam = CREDENTIAL_FAMILIES.find((re) => re.test(w));
   if (!fam) return false;
   for (const x of source.words) if (fam.test(x)) return true;

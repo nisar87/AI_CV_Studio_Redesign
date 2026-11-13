@@ -23,7 +23,7 @@ _Last updated: 2026-11-14 (live on Firebase App Hosting at aicvstudio.app)_
 | R6 Design engine | `r6/design-engine` | ✅ Live on aicvstudio.app (2026-11-13); Design Studio switched on and checked live |
 | R7 Describe your design | `r7/describe` | ✅ Live on aicvstudio.app (2026-11-13): 32 designs, AI Designer on, verified with real Gemini; preference test and outside review are owner to-dos |
 | R8 One studio | `r8/studio` | ✅ Live on aicvstudio.app (2026-11-13): studio shell and Home, letters, Presence, application kit, ATS check, 24 section types, edit on the page, Console switches |
-| R9 Coach | `r9/coach`, `r9/stories` | 🟡 In progress: mock interview, career coach and story bank live (2026-11-14) |
+| R9 Coach | `r9/coach`, `r9/stories`, `r9/skills` | 🟡 In progress: mock interview, career coach, story bank and skill plan live (2026-11-14) |
 
 ## Phase 0 report
 
@@ -867,7 +867,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - per-task AI switches and model per tier.
   These belong with the R9/R10 tools that need them.
 
-## Release 9 — Coach (in progress: R9.1–R9.3 live)
+## Release 9 — Coach (in progress: R9.1–R9.4 live)
 
 ### R9.1 Mock interview
 - **On every job (and from Coach):**
@@ -931,6 +931,9 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 - **Evaluation:** 6 `skills.gap` samples (driver, nurse and engineer adverts; "Transport planner" and "Junior data analyst" typed; an instruction hidden in the role). Checks: no evidence id that isn't in the CV, no "have" without evidence, plan only for skills to learn, no links, a plan when something is missing, the injection not followed.
 - **e2e `skills.spec`:** from Coach to the empty page (axe), the job preselected, a plan with evidence and Show me, two steps, mark done (progress, Add to CV, story link), kept after reload; a second plan for a typed role, switch between plans, delete; 2 AI actions counted; `/skills?job=` preselects; another account 404; crafted input refused; free 402 with a message; visitor 401.
 - **Found while testing:** the job list sat inside the radio button's label, so screen readers read every job as the radio's name; the group headings skipped a level. Both fixed.
+- **Verified live with real Gemini (2026-11-14, owner's account; Premium granted temporarily, then removed, usage reset, the test plan deleted):**
+  - For the owner's saved Northwind "Database Performance Engineer" job (24 s): 6 skills shown with the owner's own CV lines as evidence; T-SQL and index/schema reviews honestly marked "partly" (implied, not stated); a 2-step plan to make them explicit; "14+ years" is derived from the CV dates. The page shows the plan with Show me links.
+  - **Evaluation: 6/6 skill-gap samples and the new coach task pass**, no unmarked new facts; the instruction hidden in the role was ignored. Found and fixed: "degree" was flagged in a summary although the CV lists a BSc (the generic word is now known when a named degree is in the CV — never the other way round, unit-tested); one summary spoke about the person in the third person (the prompt now asks for "you"; `skills-gap@2`).
 - **Deviation:** plans don't refresh themselves when the CV changes; make a new plan to see the change.
 
 ## Owner to-do (when you have time)
@@ -949,7 +952,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 
 ## Next action (exact)
 
-1. R9 "Coach": R9.1 mock interview, R9.2 career coach and R9.3 story bank are live. Next: R9.4 skill-gap plan, then job from URL, reminders by email, share comments, portfolio themes, LinkedIn review, application analytics — spec §16. (Console switches and weights for the R9 tools came with R9.3.)
+1. R9 "Coach": R9.1 mock interview, R9.2 career coach, R9.3 story bank and R9.4 skill plan are live. Next: R9.5 job from URL, then reminders by email, share comments, portfolio themes, LinkedIn review, application analytics — spec §16. (Console switches and weights for the R9 tools came with R9.3.)
 
 ## Deployment (2026-11-12)
 

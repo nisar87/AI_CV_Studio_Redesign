@@ -172,3 +172,11 @@ describe('story titles in Title Case (live story eval)', () => {
     ).toEqual([]);
   });
 });
+
+describe('truth guard: "degree" for a named degree (live skills eval)', () => {
+  it('knows "degree" when the CV names a BSc, but not a master\'s', () => {
+    const src = buildSource(['BSc (Hons) Business Management, First Class']);
+    expect(guardText('You have a First Class business degree.', src).findings).toEqual([]);
+    expect(guardText("Your master's degree helps.", src).findings.length).toBeGreaterThan(0);
+  });
+});
