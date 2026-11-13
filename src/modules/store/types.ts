@@ -133,6 +133,8 @@ export type Portfolio = {
   createdAt: string;
   updatedAt: string;
   views: number;
+  /** Opens per day (yyyy-mm-dd → count), for the Presence hub. */
+  daily?: Record<string, number>;
 };
 
 /** A private, read-only link to the latest version of one CV. */
@@ -153,6 +155,8 @@ export type Share = {
   createdAt: string;
   views: number;
   lastViewedAt: string | null;
+  /** Opens per day (yyyy-mm-dd → count), for the Presence hub. */
+  daily?: Record<string, number>;
 };
 
 export type AuditEntry = {

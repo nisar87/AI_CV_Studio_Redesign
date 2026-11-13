@@ -757,6 +757,16 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - The letter editor keeps the studio shell; it is a form plus preview, not the full CV studio.
   - Turning letter types on and off in the Console comes with R8.7.
 
+### R8.3 Presence hub
+- **`/presence`** brings together the portfolio page, the LinkedIn writer and every share link:
+  - **Portfolio:** live or not, its address, total visits and opens per day.
+  - **LinkedIn:** a link to the writer.
+  - **Share links:** each link with its CV, on or off, total opens, last opened, opens per day for 14 days, Copy, and Switch on/off.
+  - The empty state offers to create a link for the latest CV.
+- **Share analytics** (spec §10, P2, done now because Presence needs it): share-link and portfolio opens are also counted per day (`daily.yyyy-mm-dd`, server-side increments). The owner sees the last 14 days (`lastDays()`, unit-tested). Visitors are still not identified.
+- `/portfolio` and `/linkedin` stay as the tools' own pages under Presence (the shell marks Presence as current).
+- e2e: a stranger's two opens show on Presence, and switching the link off there makes it return 404.
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.
@@ -773,7 +783,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 
 ## Next action (exact)
 
-1. R8.1 and R8.2 are done. Next: R8.3 Presence hub, then R8.4 application kit and ATS check, R8.5 new section types, R8.6 edit-on-page, drag reorder, AI on a selection and sync back to the profile, R8.7 Console additions.
+1. R8.1–R8.3 are done. Next: R8.4 application kit and ATS check, R8.5 new section types, R8.6 edit-on-page, drag reorder, AI on a selection and sync back to the profile, R8.7 Console additions.
 
 ## Deployment (2026-11-12)
 

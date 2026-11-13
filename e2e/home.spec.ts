@@ -82,7 +82,7 @@ test('documents and presence are in the shell; the editor keeps its own bar', as
     'page',
   );
   await page.goto('/presence');
-  await expect(page.getByRole('link', { name: /Portfolio page/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Portfolio page' })).toBeVisible();
   await page.goto(`/cv/${driver.id}`);
   await expect(page.locator('[data-shell="studio"]')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Back to Documents' })).toBeVisible();

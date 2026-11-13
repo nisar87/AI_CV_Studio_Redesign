@@ -56,6 +56,16 @@ test.describe('free account', () => {
     await expect(page.getByText('Link switched on')).toBeVisible();
     expect((await s.goto(link))?.status()).toBe(200);
 
+    // Presence lists the link with its opens per day, and can switch it off.
+    await page.goto('/presence');
+    const links = page.getByRole('list', { name: 'Your share links' });
+    await expect(links).toContainText('driver fixture');
+    await expect(links).toContainText('2 opens');
+    await expect(links.getByRole('img', { name: /2 opens in the last 14 days/ })).toBeVisible();
+    await links.getByRole('button', { name: /Switch off the link/ }).click();
+    await expect(page.getByText('Link switched off')).toBeVisible();
+    expect((await s.goto(link))?.status()).toBe(404);
+
     // Deleting the CV deletes its link.
     expect((await page.request.delete(`/api/documents/${driver.id}`)).ok()).toBe(true);
     expect((await s.goto(link))?.status()).toBe(404);

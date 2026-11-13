@@ -208,7 +208,10 @@ export class FirestoreUserStore implements UserStore {
   async bumpPortfolioViews(slug: string) {
     await this.portfolios()
       .doc(slug)
-      .update({ views: FieldValue.increment(1) });
+      .update({
+        views: FieldValue.increment(1),
+        [`daily.${new Date().toISOString().slice(0, 10)}`]: FieldValue.increment(1),
+      });
   }
 
   private designs(uid: string) {
@@ -250,7 +253,11 @@ export class FirestoreUserStore implements UserStore {
   async bumpShareViews(token: string, at: string) {
     await this.shares()
       .doc(token)
-      .update({ views: FieldValue.increment(1), lastViewedAt: at });
+      .update({
+        views: FieldValue.increment(1),
+        lastViewedAt: at,
+        [`daily.${at.slice(0, 10)}`]: FieldValue.increment(1),
+      });
   }
 
   async knownUser(uid: string) {

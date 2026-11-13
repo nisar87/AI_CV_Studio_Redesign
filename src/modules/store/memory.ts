@@ -210,7 +210,11 @@ export class MemoryUserStore implements UserStore {
   }
   async bumpPortfolioViews(slug: string) {
     const p = this.portfolios.get(slug);
-    if (p) p.views += 1;
+    if (p) {
+      p.views += 1;
+      const day = new Date().toISOString().slice(0, 10);
+      p.daily = { ...p.daily, [day]: (p.daily?.[day] ?? 0) + 1 };
+    }
   }
 
   private designs = new Map<string, SavedDesign[]>();
@@ -249,7 +253,15 @@ export class MemoryUserStore implements UserStore {
   }
   async bumpShareViews(token: string, at: string) {
     const s = this.shares.get(token);
-    if (s) this.shares.set(token, { ...s, views: s.views + 1, lastViewedAt: at });
+    if (s) {
+      const day = at.slice(0, 10);
+      this.shares.set(token, {
+        ...s,
+        views: s.views + 1,
+        lastViewedAt: at,
+        daily: { ...s.daily, [day]: (s.daily?.[day] ?? 0) + 1 },
+      });
+    }
   }
 
   async listVersions(uid: string, id: string) {

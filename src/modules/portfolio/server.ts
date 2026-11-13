@@ -1,4 +1,5 @@
 import 'server-only';
+import { lastDays } from '@/modules/presence/daily';
 import { getUserStore } from '@/modules/store';
 import type { Portfolio } from '@/modules/store/types';
 import { slugProblem } from './slug';
@@ -32,5 +33,6 @@ export const publicPortfolio = (p: Portfolio) => ({
   createdAt: p.createdAt,
   updatedAt: p.updatedAt,
   views: p.views,
+  recent: lastDays(p.daily),
 });
 export type PortfolioView = ReturnType<typeof publicPortfolio>;

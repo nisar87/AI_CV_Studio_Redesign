@@ -2,6 +2,7 @@ import 'server-only';
 import { randomBytes } from 'node:crypto';
 import type { SessionUser } from '@/modules/identity/session';
 import { getUserStore } from '@/modules/store';
+import { lastDays } from '@/modules/presence/daily';
 import type { Share } from '@/modules/store/types';
 
 /** Unguessable link token (128 bits, URL-safe). */
@@ -27,6 +28,7 @@ export const publicShare = (s: Share) => ({
   createdAt: s.createdAt,
   views: s.views,
   lastViewedAt: s.lastViewedAt,
+  recent: lastDays(s.daily),
 });
 export type ShareView = ReturnType<typeof publicShare>;
 
