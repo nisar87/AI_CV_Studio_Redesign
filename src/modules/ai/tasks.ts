@@ -27,6 +27,8 @@ export type TaskDef<T extends TaskId> = {
   maxTokens: number;
   system: (input: ParsedInput<T>) => string;
   user: (input: ParsedInput<T>) => string;
+  /** 'minimal': choosing from fixed values (design tasks) — no long thinking needed. */
+  thinking?: 'minimal';
   /** Deterministic checks after schema validation. */
   finalize: (
     input: ParsedInput<T>,
@@ -610,8 +612,9 @@ function designCatalogForPrompt(): string {
 
 const compose: TaskDef<'design.compose'> = {
   id: 'design.compose',
-  version: 'compose@1',
+  version: 'compose@2',
   tier: 'smart',
+  thinking: 'minimal',
   temperature: 0.5,
   maxTokens: 4096,
   system: (i) =>
@@ -619,7 +622,7 @@ const compose: TaskDef<'design.compose'> = {
 Return 3 candidates. The first is the closest match to what was asked. The other two each vary ONE major dimension of the first (for example the same layout with a different header or heading style, or a different layout with the same look), so the choice is meaningful.
 For each candidate:
 - startFrom: the catalogue design closest to it (listed below).
-- choices: ONLY the fields that must differ from startFrom to match the request. Leave everything else out. Colours as #rrggbb, darker rather than lighter.
+- choices: ONLY the fields that must differ from startFrom to match the request. Leave everything else out — but every detail the person asked for (bullets, photo, colours, columns…) must be set here, even if your explanation mentions it. Colours as #rrggbb, darker rather than lighter.
 - name: 1–3 words. explanation: one sentence to the person ("Two columns in navy, with your skills on the left.").
 - unmet: requests you could not follow, each with the reason, from the list below. Empty if none.
 ${i.hasImage ? 'Read the picture for its structure only: columns, header type, heading style, bullet style, colours, photo. Never copy logos, artwork, brand names or the words in it.\n' : ''}
@@ -644,6 +647,7 @@ const refine: TaskDef<'design.refine'> = {
   id: 'design.refine',
   version: 'refine@1',
   tier: 'fast',
+  thinking: 'minimal',
   temperature: 0.2,
   maxTokens: 1024,
   system: () =>

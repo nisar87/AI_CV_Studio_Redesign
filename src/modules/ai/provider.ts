@@ -10,6 +10,8 @@ export type GenerateRequest = {
   maxTokens: number;
   temperature: number;
   signal?: AbortSignal;
+  /** 'minimal': the task picks from fixed values; ask the model not to think at length. */
+  thinking?: 'minimal';
   /** Attached files (vision tasks): a PDF or page images, base64-encoded. */
   files?: AiFile[];
   /** Task id and parsed input — used only by the deterministic mock provider. */

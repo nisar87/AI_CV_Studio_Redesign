@@ -96,6 +96,7 @@ export async function runTask<T extends TaskId>(
           temperature,
           signal: AbortSignal.timeout(deps.timeoutMs ?? 20_000),
           ...(deps.files ? { files: deps.files } : {}),
+          ...(task.thinking ? { thinking: task.thinking } : {}),
           task: { id, input },
         });
         usage.inputTokens += res.usage.inputTokens;

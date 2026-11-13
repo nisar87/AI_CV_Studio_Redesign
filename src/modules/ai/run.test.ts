@@ -499,3 +499,34 @@ describe('linkedin.write', () => {
     expect(r.result.experience[0]!.text).toBe('I deliver around 120 parcels a day.');
   });
 });
+
+describe('Gemini thinking setting (design tasks)', () => {
+  const ok = { candidates: [{ content: { parts: [{ text: '{"changes":[],"note":"x"}' }] } }] };
+  it('asks for minimal thinking, and asks again without it if the model refuses', async () => {
+    const bodies: Record<string, unknown>[] = [];
+    let n = 0;
+    const fetchImpl = (async (_u: string, init: RequestInit) => {
+      bodies.push(JSON.parse(String(init.body)));
+      n++;
+      if (n === 1)
+        return new Response(
+          JSON.stringify({ error: { message: 'thinking budget is not supported' } }),
+          { status: 400 },
+        );
+      return new Response(JSON.stringify(ok), { status: 200 });
+    }) as typeof fetch;
+    const p = createGeminiProvider({ apiKey: 'k', fetchImpl });
+    const r = await runTask('design.refine', { instruction: 'square bullets', current: {} }, 0, {
+      provider: p,
+      models,
+    });
+    expect(r.ok).toBe(true);
+    const cfg = (b: Record<string, unknown>) =>
+      (b.generationConfig as Record<string, unknown>).thinkingConfig;
+    expect(cfg(bodies[0]!)).toEqual({ thinkingBudget: 0 });
+    expect(cfg(bodies[1]!)).toBeUndefined();
+    expect(
+      (bodies[1]!.generationConfig as Record<string, unknown>).responseJsonSchema,
+    ).toBeDefined();
+  });
+});

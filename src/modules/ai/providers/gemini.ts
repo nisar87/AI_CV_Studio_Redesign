@@ -26,7 +26,7 @@ export function createGeminiProvider({
   fetchImpl?: typeof fetch;
   baseUrl?: string;
 }): AiProvider {
-  async function call(req: GenerateRequest, withSchema: boolean) {
+  async function call(req: GenerateRequest, withSchema: boolean, thinking = true) {
     // Without the schema field, the shape goes into the prompt instead.
     const user = withSchema
       ? req.user
@@ -49,6 +49,9 @@ export function createGeminiProvider({
         ...(withSchema ? { responseJsonSchema: leanSchema(req.schema) } : {}),
         temperature: req.temperature,
         maxOutputTokens: req.maxTokens,
+        ...(req.thinking === 'minimal' && thinking
+          ? { thinkingConfig: { thinkingBudget: 0 } }
+          : {}),
       },
     };
     let res: Response;
@@ -73,6 +76,11 @@ export function createGeminiProvider({
     id: 'gemini',
     async generate(req) {
       let { res, json } = await call(req, true);
+      // A model that can't turn thinking down rejects the setting: ask again without it.
+      if (res.status === 400 && req.thinking && /thinking/i.test(json.error?.message ?? '')) {
+        console.warn(JSON.stringify({ level: 'warn', area: 'ai', event: 'thinking_rejected' }));
+        ({ res, json } = await call(req, true, false));
+      }
       // A model may reject the schema field or find a schema too complex ("too many states");
       // fall back to plain JSON mode (shape in the prompt; Zod still validates the result).
       if (res.status === 400) {
@@ -84,7 +92,7 @@ export function createGeminiProvider({
             message: (json.error?.message ?? '').slice(0, 300),
           }),
         );
-        ({ res, json } = await call(req, false));
+        ({ res, json } = await call(req, false, !req.thinking));
       }
       if (!res.ok) {
         const msg = json.error?.message ?? `HTTP ${res.status}`;
