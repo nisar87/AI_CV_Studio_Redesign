@@ -131,7 +131,7 @@ const partsKnown = (w: string, source: Source) =>
 const OPENERS = new Set(['a', 'an', 'the', 'my', 'our', 'this', 'as', 'in', 'at', 'with', 'for']);
 
 /** Capitalised words that are not names (still checked if they carry a number). */
-const ALLOW_CAPITALISED = new Set(['i', "i'm", "i'd", "i'll", "i've", 'cv', 'ok']);
+const ALLOW_CAPITALISED = new Set(['i', "i'm", "i'd", "i'll", "i've", 'cv', 'ats', 'ok']);
 
 const normalise = (s: string) => s.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
 

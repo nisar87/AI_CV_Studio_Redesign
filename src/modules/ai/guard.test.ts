@@ -127,7 +127,7 @@ describe('truth guard: word families and compounds (live eval false alarms)', ()
 describe('truth guard: first-person contractions (live coach eval)', () => {
   it("never flags I'm, I'd, I'll or I've mid-sentence", () => {
     const src = buildSource(['Delivery driver']);
-    const text = "Sure, I'm here, I’d help, I'll check and I've seen it.";
+    const text = "Sure, I'm here, I’d help, I'll check the ATS result and I've seen it.";
     expect(guardText(text, src).findings).toEqual([]);
   });
 });

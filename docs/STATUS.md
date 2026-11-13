@@ -900,6 +900,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - "Which of my skills should I lead with?" on the owner's real CV: a specific answer (.NET/C# backend, SQL Server tuning, workflow automation, telecom clients from the CV), with tailor buttons for both tracked jobs and the ATS check; the ATS button opened the Check tab on the right CV.
   - **Coach evaluation: 19/20 on the first run**, average about 5 s, no unmarked new facts. Every action named the right tool and a tracked job; letter types matched the situation; the injection was declined.
   - Found and fixed: the guard marked "I'm" and "I'd" as unknown names (now never flagged, unit-tested); for an untracked "Google job" the coach should offer **Add a job** (the check now requires that; an offer for a tracked job is fine); the reply no longer names tools ("the add job tool"), it points to the button (`coach@2`).
+  - **Second live run after deploy: 20/20**, average 5.3 s; the Google request now offers only Add a job. Three replies still showed a guard marker: generic advice numbers ("within 24 hours", an unstated year count), caught correctly, and "ATS" flagged as a name (false alarm). Fixed: "ATS" is allowed, and the coach uses numbers only from the CV or jobs (`coach@3`).
 
 ## Owner to-do (when you have time)
 
