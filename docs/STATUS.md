@@ -904,6 +904,19 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - **Second live run after deploy: 20/20**, average 5.3 s; the Google request now offers only Add a job. Three replies still showed a guard marker: generic advice numbers ("within 24 hours", an unstated year count), caught correctly, and "ATS" flagged as a name (false alarm). Fixed: "ATS" is allowed, and the coach uses numbers only from the CV or jobs (`coach@3`).
   - **Third live run (`coach@3`): 20/20, no guard markers in any reply**, average 6.5 s. R9 acceptance for the coach (20 scripted tasks) is met.
 
+### R9.3 Story bank
+- **What it is** (spec §10.3, "reusable achievement stories written once, tagged by skill, used in interviews and letters"): `/stories`, reached from Coach (the shell marks Coach) and the command palette. Each story has a title, situation, task, action, result and up to 8 skill tags. Kept at `users/{uid}/stories/{id}`, deleted with the account.
+- **Writing is free**, up to the plan's number: new Console setting **Stories kept** (visitor 0, free 3, Premium 50). Switch: **Story bank**.
+- **Draft from my CV** (Premium, one AI action, weight `storyDraft`): pick a point from your CV (job, project or other bullet), optionally add notes, and the new task `story.draft` writes the STAR story. Facts may come only from that point, its job line and the notes; anything missing becomes a question to answer (`{{?…}}`), and the editor asks you to answer them. Tags are chosen only from the CV's skills. Nothing is saved until you press Save.
+- **Used in interviews:** the mock interview shows "Your stories that fit" the current question (matched by skill tag and words, no AI; `matchStories`, unit-tested), with **Use this story** to fill the answer. A good or strong answer can be **saved to the story bank**.
+- **Used as facts:** finished stories go to the mock interviewer (its tip can name one), the coach (can suggest one) and AI letters (`mock@2`, `coach@4`, `letter-generic@2`). The fact guard accepts them as the person's own words.
+- **Console:** switches and AI weights are now there for all R9 tools — mock interview, coach and story bank; weights for the kit, a mock turn, a coach message and a story draft.
+- **Privacy page:** a paragraph on stories.
+- **Evaluation:** 7 `story.draft` samples (driver, nurse, engineer, teacher, graduate; one with notes; one where the notes ask to invent numbers and awards). Checks: the action is there, tags only from the CV's skills, no number that isn't in the point.
+- **e2e `stories.spec`:** from Coach to the empty bank (axe), draft from a CV point with notes, edit title and tag, save, reload, edit, 1 AI action counted, delete; mock interview offers the matching story only on the right question and fills the answer (axe), saves a strong answer; free account keeps 3, the 4th is refused, drafting is 402; visitor 401; another account gets 404.
+- **Found while testing:** pale hint text on the tinted draft panel and an un-underlined link inside a sentence failed the accessibility check (fixed); the draft panel closed while typing a title (now decided once when the editor opens).
+- **Deviation:** a mock answer is saved whole as the story's action; the person splits it into STAR parts if they want.
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.

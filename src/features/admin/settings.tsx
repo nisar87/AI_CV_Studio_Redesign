@@ -10,6 +10,13 @@ import { useToast } from '@/components/ui/toast';
 import { CheckboxField } from '@/features/editor/fields';
 import { METERED, PLAN_IDS, type BusinessConfig, type Metered } from '@/modules/billing/config';
 import { LETTER_TYPES } from '@/modules/letters/types';
+
+const AI_WEIGHTS = [
+  ['kit', 'Application kit'],
+  ['mockTurn', 'Mock interview turn'],
+  ['coachTurn', 'Coach chat turn'],
+  ['storyDraft', 'Story draft'],
+] as const;
 import { AdminHeading } from './admin-shell';
 import { adminGet, adminSend } from './api';
 
@@ -144,6 +151,7 @@ export function AdminSettings() {
                     </th>
                   ))}
                   <th className="py-2 pr-3 font-semibold">Jobs tracked</th>
+                  <th className="py-2 pr-3 font-semibold">Stories kept</th>
                 </tr>
               </thead>
               <tbody>
@@ -181,6 +189,23 @@ export function AdminSettings() {
                         onChange={(e) =>
                           edit((c) => {
                             c.plans[p].maxJobs = Math.max(
+                              -1,
+                              Math.floor(Number(e.target.value) || 0),
+                            );
+                          })
+                        }
+                      />
+                    </td>
+                    <td className="py-2 pr-3">
+                      <input
+                        type="number"
+                        min={-1}
+                        aria-label={`${draft.plans[p].label}: stories kept`}
+                        className="border-line-strong bg-surface h-10 w-28 rounded-sm border px-2"
+                        value={draft.plans[p].maxStories}
+                        onChange={(e) =>
+                          edit((c) => {
+                            c.plans[p].maxStories = Math.max(
                               -1,
                               Math.floor(Number(e.target.value) || 0),
                             );
@@ -638,32 +663,49 @@ export function AdminSettings() {
             checked={draft.features.kit}
             onChange={(v) => edit((c) => void (c.features.kit = v))}
           />
+          <CheckboxField
+            label="Mock interview on jobs and in Coach"
+            checked={draft.features.mockInterview}
+            onChange={(v) => edit((c) => void (c.features.mockInterview = v))}
+          />
+          <CheckboxField
+            label="Career coach chat"
+            checked={draft.features.coach}
+            onChange={(v) => edit((c) => void (c.features.coach = v))}
+          />
+          <CheckboxField
+            label="Story bank (achievement stories for interviews and letters)"
+            checked={draft.features.stories}
+            onChange={(v) => edit((c) => void (c.features.stories = v))}
+          />
         </Section>
 
         <Section
           title="AI action weights"
           hint="How many AI actions bigger tasks count as against a plan’s monthly allowance."
         >
-          <label className="flex items-center gap-3 text-sm font-semibold">
-            Application kit
-            <input
-              type="number"
-              min={1}
-              max={10}
-              aria-label="AI actions per application kit"
-              className="border-line-strong bg-surface h-10 w-24 rounded-sm border px-2"
-              value={draft.aiWeights.kit}
-              onChange={(e) =>
-                edit(
-                  (c) =>
-                    void (c.aiWeights.kit = Math.min(
-                      10,
-                      Math.max(1, Math.floor(Number(e.target.value) || 1)),
-                    )),
-                )
-              }
-            />
-          </label>
+          {AI_WEIGHTS.map(([key, label]) => (
+            <label key={key} className="flex items-center gap-3 text-sm font-semibold">
+              <span className="w-56">{label}</span>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                aria-label={`AI actions per ${label.toLowerCase()}`}
+                className="border-line-strong bg-surface h-10 w-24 rounded-sm border px-2"
+                value={draft.aiWeights[key]}
+                onChange={(e) =>
+                  edit(
+                    (c) =>
+                      void (c.aiWeights[key] = Math.min(
+                        10,
+                        Math.max(1, Math.floor(Number(e.target.value) || 1)),
+                      )),
+                  )
+                }
+              />
+            </label>
+          ))}
         </Section>
 
         <Section

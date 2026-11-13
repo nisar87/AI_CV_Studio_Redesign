@@ -1,5 +1,6 @@
 import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
+import type { Story } from '@/modules/stories/schema';
 import type { CoachThread } from '@/modules/coach/thread';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import {
@@ -92,6 +93,28 @@ export class MemoryUserStore implements UserStore {
     this.letterBucket(uid).delete(id);
   }
 
+  private stories = new Map<string, Map<string, Story>>();
+  private storyBucket(uid: string) {
+    let b = this.stories.get(uid);
+    if (!b) this.stories.set(uid, (b = new Map()));
+    return b;
+  }
+  async listStories(uid: string) {
+    return structuredClone([...this.storyBucket(uid).values()]).sort((a, b) =>
+      b.updatedAt.localeCompare(a.updatedAt),
+    );
+  }
+  async getStory(uid: string, id: string) {
+    const s = this.storyBucket(uid).get(id);
+    return s ? structuredClone(s) : null;
+  }
+  async putStory(uid: string, story: Story) {
+    this.storyBucket(uid).set(story.id, structuredClone(story));
+  }
+  async deleteStory(uid: string, id: string) {
+    this.storyBucket(uid).delete(id);
+  }
+
   private metrics = new Map<string, Record<string, number>>();
   async bumpMetrics(day: string, counts: Record<string, number>) {
     const m = this.metrics.get(day) ?? {};
@@ -117,6 +140,7 @@ export class MemoryUserStore implements UserStore {
     this.passes.delete(uid);
     this.jobs.delete(uid);
     this.letters.delete(uid);
+    this.stories.delete(uid);
     this.coach.delete(uid);
     this.designs.delete(uid);
     for (const [t, sh] of this.shares) if (sh.uid === uid) this.shares.delete(t);

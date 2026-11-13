@@ -2,6 +2,7 @@ import 'server-only';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
+import type { Story } from '@/modules/stories/schema';
 import type { CoachThread } from '@/modules/coach/thread';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import {
@@ -29,6 +30,7 @@ import {
  *   usage/{uid}_{yyyy-mm}                    { uid, month, 'pdf.download': n, ... }
  *   users/{uid}/jobs/{id}                    Job (tracker; deleted with the account)
  *   users/{uid}/letters/{id}                 SavedLetter (letter library; deleted with the account)
+ *   users/{uid}/stories/{id}                 Story (story bank; deleted with the account)
  *   users/{uid}/coach/main                   CoachThread (career coach; deleted with the account)
  *   portfolios/{slug}                        Portfolio (public page; one per account)
  *   referralCodes/{code}                     { uid }  (invite link; users/{uid}.referralCode, .referredBy)
@@ -100,6 +102,24 @@ export class FirestoreUserStore implements UserStore {
   }
   async deleteLetter(uid: string, id: string) {
     await this.lettersCol(uid).doc(id).delete();
+  }
+
+  private storiesCol(uid: string) {
+    return this.db.collection('users').doc(uid).collection('stories');
+  }
+  async listStories(uid: string) {
+    const snap = await this.storiesCol(uid).orderBy('updatedAt', 'desc').limit(500).get();
+    return snap.docs.map((d) => d.data() as Story);
+  }
+  async getStory(uid: string, id: string) {
+    const s = await this.storiesCol(uid).doc(id).get();
+    return s.exists ? (s.data() as Story) : null;
+  }
+  async putStory(uid: string, story: Story) {
+    await this.storiesCol(uid).doc(story.id).set(story);
+  }
+  async deleteStory(uid: string, id: string) {
+    await this.storiesCol(uid).doc(id).delete();
   }
 
   async bumpMetrics(day: string, counts: Record<string, number>) {

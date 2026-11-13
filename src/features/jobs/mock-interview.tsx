@@ -1,10 +1,22 @@
 'use client';
 
-import { useState } from 'react';
-import { CircleAlert, CircleCheck, MessageCircle, RotateCcw, Send, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  BookmarkPlus,
+  BookOpen,
+  CircleAlert,
+  CircleCheck,
+  MessageCircle,
+  RotateCcw,
+  Send,
+  Sparkles,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TextArea } from '@/components/ui/field';
+import { storiesApi } from '@/features/stories/api';
 import { MOCK_QUESTIONS, type MockFeedback } from '@/modules/jobs/mock';
+import { matchStories, storyAsAnswer, type Story } from '@/modules/stories/schema';
 import type { Job } from '@/modules/jobs/schema';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import { cn } from '@/lib/cn';
@@ -81,7 +93,37 @@ export function MockInterview({
 }) {
   const [answer, setAnswer] = useState('');
   const [busy, setBusy] = useState(false);
+  // Story bank (R9.3): stories that fit the question, and saving a good answer as a story.
+  const [stories, setStories] = useState<Story[] | null>(null);
+  const [saved, setSaved] = useState<Record<number, 'saving' | 'saved' | string>>({});
+  useEffect(() => {
+    storiesApi.list().then(
+      (r) => setStories(r.enabled ? r.stories : null),
+      () => setStories(null),
+    );
+  }, []);
   const m = job.mock;
+  const fits = useMemo(
+    () => (stories && m?.current ? matchStories(stories, m.current.question, 2) : []),
+    [stories, m?.current],
+  );
+  const saveStory = async (i: number, question: string, text: string) => {
+    setSaved((x) => ({ ...x, [i]: 'saving' }));
+    try {
+      const story = await storiesApi.create({
+        title: question.replace(/\?$/, '').slice(0, 120),
+        action: text.slice(0, 1200),
+        source: {
+          kind: 'mock',
+          ref: `${job.title}${job.company ? ` at ${job.company}` : ''}`.slice(0, 160),
+        },
+      });
+      setStories((x) => (x ? [story, ...x] : [story]));
+      setSaved((x) => ({ ...x, [i]: 'saved' }));
+    } catch (e) {
+      setSaved((x) => ({ ...x, [i]: e instanceof Error ? e.message : 'Couldn’t save it.' }));
+    }
+  };
   const turn = async (opts: { answer?: string; restart?: boolean }) => {
     if (!source) return;
     setBusy(true);
@@ -146,6 +188,31 @@ export function MockInterview({
                 {t.answer}
               </p>
               <Feedback f={t.feedback} />
+              {stories && t.feedback.verdict !== 'work-on' && (
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  {saved[i] === 'saved' ? (
+                    <span className="text-success font-semibold">
+                      Saved to your{' '}
+                      <Link href="/stories" className="underline">
+                        story bank
+                      </Link>
+                    </span>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      icon={<BookmarkPlus aria-hidden size={16} />}
+                      loading={saved[i] === 'saving'}
+                      onClick={() => saveStory(i, t.question, t.answer)}
+                    >
+                      Save to my story bank
+                    </Button>
+                  )}
+                  {saved[i] && saved[i] !== 'saving' && saved[i] !== 'saved' && (
+                    <span className="text-danger">{saved[i]}</span>
+                  )}
+                </div>
+              )}
             </li>
           ))}
         </ol>
@@ -158,6 +225,34 @@ export function MockInterview({
           >
             {m.current.question}
           </p>
+          {fits.length > 0 && (
+            <div
+              className="bg-primary-soft/40 flex flex-col gap-2 rounded-lg p-3 text-sm"
+              data-testid="mock-stories"
+            >
+              <p className="flex items-center gap-1.5 font-semibold">
+                <BookOpen aria-hidden size={16} /> Your stories that fit
+              </p>
+              <ul className="flex flex-col gap-2">
+                {fits.map((st) => (
+                  <li key={st.id} className="flex flex-wrap items-center justify-between gap-2">
+                    <span>{st.title}</span>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        if (answer.trim() && !confirm('Replace your answer with this story?'))
+                          return;
+                        setAnswer(storyAsAnswer(st).slice(0, 3000));
+                      }}
+                    >
+                      Use this story
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <TextArea
             label="Your answer"
             hint="Answer as you would in the interview. Try: the situation, what you had to do, what you did, and the result."

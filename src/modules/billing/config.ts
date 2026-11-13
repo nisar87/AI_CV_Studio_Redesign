@@ -39,20 +39,24 @@ const limitsWith = (designAi: number, ats: number) =>
 export const businessConfig = z.object({
   plans: z.object({
     // maxJobs: how many jobs the tracker keeps at once (-1 = no limit). Optional for older saves.
+    // maxStories (R9.3): how many story-bank stories an account keeps (-1 = no limit).
     visitor: z.object({
       label: z.string().max(40),
       limits: limitsWith(0, 0),
       maxJobs: z.number().int().min(-1).max(10_000).default(0),
+      maxStories: z.number().int().min(-1).max(10_000).default(0),
     }),
     free: z.object({
       label: z.string().max(40),
       limits: limitsWith(1, 2),
       maxJobs: z.number().int().min(-1).max(10_000).default(3),
+      maxStories: z.number().int().min(-1).max(10_000).default(3),
     }),
     premium: z.object({
       label: z.string().max(40),
       limits: limitsWith(40, -1),
       maxJobs: z.number().int().min(-1).max(10_000).default(-1),
+      maxStories: z.number().int().min(-1).max(10_000).default(50),
     }),
   }),
   /** Design catalogue: availability and tier per design. */
@@ -100,6 +104,8 @@ export const businessConfig = z.object({
     mockInterview: z.boolean().default(true),
     /** R9 career coach chat. */
     coach: z.boolean().default(true),
+    /** R9 story bank. */
+    stories: z.boolean().default(true),
   }),
   /** AI actions that cost more than one (complete-studio-spec §14: weights are config data). */
   aiWeights: z
@@ -107,8 +113,9 @@ export const businessConfig = z.object({
       kit: z.number().int().min(1).max(10).default(3),
       mockTurn: z.number().int().min(1).max(10).default(1),
       coachTurn: z.number().int().min(1).max(10).default(1),
+      storyDraft: z.number().int().min(1).max(10).default(1),
     })
-    .default({ kit: 3, mockTurn: 1, coachTurn: 1 }),
+    .default({ kit: 3, mockTurn: 1, coachTurn: 1, storyDraft: 1 }),
   /** Content the owner can change without a deploy (spec §15). */
   content: z
     .object({
@@ -194,6 +201,7 @@ export const DEFAULT_CONFIG: BusinessConfig = {
       label: 'Visitor',
       limits: { 'pdf.download': 0, 'import.cv': 0, 'ai.action': 0, 'design.ai': 0, 'ats.check': 0 },
       maxJobs: 0,
+      maxStories: 0,
     },
     free: {
       label: 'Free',
@@ -205,6 +213,7 @@ export const DEFAULT_CONFIG: BusinessConfig = {
         'ats.check': 2,
       },
       maxJobs: 3,
+      maxStories: 3,
     },
     premium: {
       label: 'Premium',
@@ -216,6 +225,7 @@ export const DEFAULT_CONFIG: BusinessConfig = {
         'ats.check': -1,
       },
       maxJobs: -1,
+      maxStories: 50,
     },
   },
   designs: DESIGN_IDS.map((id) => ({ id, enabled: true, tier: 'free' as const, isNew: false })),
@@ -236,8 +246,9 @@ export const DEFAULT_CONFIG: BusinessConfig = {
     kit: true,
     mockInterview: true,
     coach: true,
+    stories: true,
   },
-  aiWeights: { kit: 3, mockTurn: 1, coachTurn: 1 },
+  aiWeights: { kit: 3, mockTurn: 1, coachTurn: 1, storyDraft: 1 },
   content: { hiddenLetterTypes: [] },
   announcement: { enabled: false, text: '' },
   support: { email: '' },

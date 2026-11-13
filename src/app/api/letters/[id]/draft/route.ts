@@ -11,6 +11,8 @@ import { LETTER_TYPE, missingAnswers } from '@/modules/letters/types';
 import { aiBudgetSpent, track } from '@/modules/metrics/server';
 import { resumeDocument } from '@/modules/resume/schema';
 import { getUserStore } from '@/modules/store';
+import { storyLines } from '@/modules/stories/schema';
+import { storiesForAi } from '@/modules/stories/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -59,6 +61,7 @@ export async function POST(req: Request, ctx: LetterCtx) {
       name: doc.data.basics.name,
       profile: profileDigest(doc.data).text.slice(0, 24_000),
       tone,
+      stories: storyLines(await storiesForAi(user.uid)),
     },
     0,
     { provider, models: aiModels(), timeoutMs: 60_000 },

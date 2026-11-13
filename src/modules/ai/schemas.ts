@@ -47,6 +47,7 @@ export const TASK_IDS = [
   'interview.prep',
   'interview.turn',
   'coach.chat',
+  'story.draft',
   'import.transcribe',
   'makeover.diagnose',
   'design.compose',
@@ -212,6 +213,8 @@ export const taskInputs = {
     name: z.string().max(120),
     profile: z.string().min(20).max(24_000),
     tone: z.enum(['warm', 'formal']).default('warm'),
+    /** Story-bank stories (R9.3), "S1: title [skills] — story" per line: the person's own facts. */
+    stories: z.string().max(8000).default(''),
   }),
   'quality.atsKeywords': z.object({
     advert: z.string().min(80).max(12_000),
@@ -239,6 +242,8 @@ export const taskInputs = {
     answer: z.string().max(3000).default(''),
     /** Questions still to ask after this turn (0 = finish with a summary). */
     remaining: z.number().int().min(0).max(10),
+    /** Story-bank stories (R9.3), "S1: title [skills] — story" per line: the person's own facts. */
+    stories: z.string().max(8000).default(''),
   }),
   /** Career coach (R9): one chat turn with optional studio actions to offer. */
   'coach.chat': z.object({
@@ -250,6 +255,19 @@ export const taskInputs = {
       .max(16)
       .default([]),
     message: z.string().trim().min(1).max(2000),
+    /** Story-bank stories (R9.3), "S1: title [skills] — story" per line: the person's own facts. */
+    stories: z.string().max(8000).default(''),
+  }),
+  'story.draft': z.object({
+    profile: z.string().min(20).max(24_000),
+    /** The CV point the story grows from (the person's own words). */
+    point: z.string().trim().min(3).max(800),
+    /** The job or project line it belongs to ("Van Driver, Swift Logistics (2019 to now)"). */
+    role: z.string().max(300).default(''),
+    /** What the person adds about it (optional, their words). */
+    notes: z.string().max(2000).default(''),
+    /** The person's skills; tags are chosen from these. */
+    skills: z.array(z.string().max(60)).max(60).default([]),
   }),
   'linkedin.write': z.object({
     profile: z.string().min(20).max(24_000),
@@ -478,6 +496,14 @@ export const taskOutputs = {
         }),
       )
       .max(3),
+  }),
+  'story.draft': z.object({
+    title: z.string().min(1).max(120),
+    situation: z.string().max(1200),
+    task: z.string().max(1200),
+    action: z.string().min(1).max(1200),
+    result: z.string().max(1200),
+    skills: z.array(z.string().max(60)).max(5),
   }),
   'linkedin.write': z.object({
     headline: z.string().max(220),

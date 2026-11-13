@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Briefcase, MessagesSquare, Target } from 'lucide-react';
+import { BookOpen, Briefcase, MessagesSquare, Target } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/misc';
 import { useAccount } from '@/features/account/account-context';
@@ -36,6 +36,26 @@ export function CoachHome() {
         )}
         <CoachJobs jobs={jobs} />
       </section>
+      {account.status === 'signedIn' && ent?.features.stories !== false && (
+        <section
+          aria-labelledby="stories-h"
+          className="border-line bg-surface flex flex-wrap items-center gap-4 rounded-xl border p-5"
+        >
+          <BookOpen aria-hidden size={26} className="text-primary" />
+          <div className="min-w-0 flex-1">
+            <h2 id="stories-h" className="font-semibold">
+              Story bank
+            </h2>
+            <p className="text-ink-muted text-sm">
+              Write your best work examples once — they’re offered in mock interviews and used by
+              the coach and in letters.
+            </p>
+          </div>
+          <ButtonLink href="/stories" variant="secondary">
+            Open my stories
+          </ButtonLink>
+        </section>
+      )}
     </div>
   );
 }

@@ -166,6 +166,7 @@ export async function entitlementsFor(user: SessionUser | null) {
       kit: cfg.features.kit,
       mockInterview: cfg.features.mockInterview,
       coach: cfg.features.coach,
+      stories: cfg.features.stories,
     },
     aiWeights: cfg.aiWeights,
     hiddenLetterTypes: cfg.content.hiddenLetterTypes,

@@ -234,6 +234,21 @@ function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] =
       const firstBullet = digestLines(i.profile).find((l) => /\.B\d+$/.test(l.id))?.id ?? '';
       return { terms: terms.map((term, n) => ({ term, line: n === 0 ? firstBullet : '' })) };
     }
+    case 'story.draft': {
+      const i = input as ParsedInput<'story.draft'>;
+      const point = i.point.trim().replace(/\.$/, '');
+      const lower = point.replace(/^./, (c) => c.toLowerCase());
+      const text = `${point} ${i.notes}`.toLowerCase();
+      const hasResult = /\d|no missed|on time|saved|reduced|improved|increased/.test(text);
+      return {
+        title: point.split(/\s+/).slice(0, 6).join(' '),
+        situation: i.role ? `I worked as ${i.role}.` : 'This was in my last job.',
+        task: 'I needed to get this done well.',
+        action: `I ${lower}.${i.notes ? ` ${i.notes.trim()}` : ''}`,
+        result: hasResult ? `The result: ${lower}.` : '{{?What changed because of this?}}',
+        skills: i.skills.filter((k) => text.includes(k.toLowerCase().split(' ')[0]!)).slice(0, 3),
+      };
+    }
     case 'coach.chat': {
       const i = input as ParsedInput<'coach.chat'>;
       // Deterministic keyword routing (the demo stands in for the model's judgement).

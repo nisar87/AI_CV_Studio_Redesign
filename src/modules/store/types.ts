@@ -1,5 +1,6 @@
 import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
+import type { Story } from '@/modules/stories/schema';
 import type { CoachThread } from '@/modules/coach/thread';
 import type { ResumeDocument } from '@/modules/resume/schema';
 
@@ -45,6 +46,11 @@ export interface UserStore {
   getLetter(uid: string, id: string): Promise<SavedLetter | null>;
   putLetter(uid: string, letter: SavedLetter): Promise<void>;
   deleteLetter(uid: string, id: string): Promise<void>;
+  // Story bank (R9.3)
+  listStories(uid: string): Promise<Story[]>;
+  getStory(uid: string, id: string): Promise<Story | null>;
+  putStory(uid: string, story: Story): Promise<void>;
+  deleteStory(uid: string, id: string): Promise<void>;
   /** Adds to today's event counters (metrics/{yyyy-mm-dd}); names are [a-z0-9_]. */
   bumpMetrics(day: string, counts: Record<string, number>): Promise<void>;
   /** Daily counters for days in [from, to] (inclusive, yyyy-mm-dd), oldest first. */

@@ -31,6 +31,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       ...CREATE.map((c) => ({ label: c.label, group: 'Create', href: c.href })),
       { label: 'Designs', group: 'Go to', href: '/templates' },
       { label: 'Career profile', group: 'Go to', href: '/profile' },
+      { label: 'Story bank', group: 'Go to', href: '/stories' },
       { label: 'Account and settings', group: 'Go to', href: '/account' },
       { label: 'Help', group: 'Go to', href: '/help' },
       ...docs,

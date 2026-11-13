@@ -10,6 +10,8 @@ import { profileDigest } from '@/modules/jobs/digest';
 import { aiBudgetSpent, track } from '@/modules/metrics/server';
 import { safeParseResumeDocument } from '@/modules/resume/schema';
 import { getUserStore } from '@/modules/store';
+import { storyLines } from '@/modules/stories/schema';
+import { storiesForAi } from '@/modules/stories/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -66,9 +68,10 @@ export async function POST(req: Request) {
     return apiError('RATE_LIMITED', 'Too many messages. Please wait a little.', rid);
   }
   const store = getUserStore();
-  const [thread, jobs] = await Promise.all([
+  const [thread, jobs, stories] = await Promise.all([
     store.getCoachThread(user.uid),
     store.listJobs(user.uid),
+    storiesForAi(user.uid),
   ]);
   const open = jobs.filter((j) => j.stage !== 'closed').slice(0, 30);
   const r = await runTask(
@@ -80,6 +83,7 @@ export async function POST(req: Request) {
         .slice(-HISTORY_FOR_MODEL)
         .map((m) => ({ role: m.role, text: m.text.slice(0, 4000) })),
       message,
+      stories: storyLines(stories),
     },
     0,
     { provider, models: aiModels(), timeoutMs: 45_000 },

@@ -20,7 +20,10 @@ const UNLIMITED = {
 };
 const base: BusinessConfig = {
   ...DEFAULT_CONFIG,
-  plans: { ...DEFAULT_CONFIG.plans, premium: { label: 'Premium', limits: UNLIMITED, maxJobs: -1 } },
+  plans: {
+    ...DEFAULT_CONFIG.plans,
+    premium: { label: 'Premium', limits: UNLIMITED, maxJobs: -1, maxStories: 50 },
+  },
 };
 const strict: BusinessConfig = {
   ...base,
@@ -30,6 +33,7 @@ const strict: BusinessConfig = {
       label: 'Free',
       limits: { 'pdf.download': 2, 'import.cv': 2, 'ai.action': 0, 'design.ai': 1, 'ats.check': 2 },
       maxJobs: 3,
+      maxStories: 3,
     },
   },
   designs: base.designs.map((d) => ({

@@ -25,6 +25,7 @@ const BASE: BusinessConfig = {
         'ats.check': -1,
       },
       maxJobs: -1,
+      maxStories: 50,
     },
   },
 };

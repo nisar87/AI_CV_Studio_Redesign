@@ -246,6 +246,13 @@ describe('mock provider', () => {
       history: [],
       message: 'Which of my skills should I lead with?',
     },
+    'story.draft': {
+      profile: profileDigest(F.driver).text,
+      point: 'Delivered 120 parcels a day across Leicester with no missed slots',
+      role: 'Van Driver, Swift Logistics (2019 to now)',
+      notes: '',
+      skills: ['Route planning', 'Customer service'],
+    },
     'linkedin.write': { profile: profileDigest(F.driver).text, target: 'transport planning' },
     'interview.prep': {
       advert: ADVERT,

@@ -6,6 +6,8 @@ import { prepareJobAi } from '@/modules/jobs/ai-route';
 import { profileDigest } from '@/modules/jobs/digest';
 import { advance, MOCK_QUESTIONS } from '@/modules/jobs/mock';
 import { getUserStore } from '@/modules/store';
+import { storyLines } from '@/modules/stories/schema';
+import { storiesForAi } from '@/modules/stories/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,6 +47,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       question: answering ? session!.current!.question : '',
       answer: answering ? answer : '',
       remaining: Math.max(0, MOCK_QUESTIONS - asked - (answering ? 0 : 1)),
+      stories: storyLines(await storiesForAi(p.user.uid)),
     },
     0,
     p.deps,
