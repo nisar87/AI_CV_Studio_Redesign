@@ -687,6 +687,10 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - Label-margin designs (Ledger, Column, Press) count as multi-column for the position-sorted extraction check; their ATS-safe versions pass it.
   - The Design-tab picker shows static thumbnails of the 32 designs, filtered by family. The gallery shows them with the person's own CV.
   - Not built: sharing user designs in a Community shelf (R10, as planned).
+- **Owner feedback (same day):** the thumbnails looked richer than the applied design. The cause was the typeface: thumbnails showed the sample CV's font (serif headings), while picking a design kept the CV's own font (plain sans). Fixed and live:
+  - every design now has its own typeface — the one its thumbnail shows — and picking it applies it (still changeable under Font);
+  - the Design-tab picker draws each card with the person's own CV (spec §7.7), over the static thumbnail;
+  - thumbnails were regenerated through the same code path.
 - **Owner to-do for R7:**
   - the 30-person blind preference test (target: ours preferred in 60% of pairings);
   - the outside reviewer's rubric scores for the 22 new designs (minimum 8.5 average).
