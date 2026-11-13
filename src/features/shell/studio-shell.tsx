@@ -111,7 +111,8 @@ export function ShellTop() {
           onClick={() => setPalette(true)}
           className="border-line-strong text-ink-muted hover:bg-sunken mt-2 inline-flex min-h-10 items-center gap-2 rounded-md border px-3 text-sm"
         >
-          <Search aria-hidden size={16} /> Search or jump to…
+          <Search aria-hidden size={16} /> Search
+          <span className="sr-only">or jump to</span>
           <kbd className="bg-sunken ml-auto rounded px-1.5 text-xs">Ctrl K</kbd>
         </button>
         <div className="mt-auto flex flex-col gap-1">

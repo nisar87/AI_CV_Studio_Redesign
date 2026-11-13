@@ -718,6 +718,13 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - Presence links the portfolio and LinkedIn tools.
   - Coach lists your jobs with "Practise interview" and "Check my match", or asks you to add a job (the coach chat comes in R9).
 - **Fixed bars and toasts** (job detail, admin settings) sit clear of the rail and the phone bottom bar, using `--shell-left` and `--shell-bottom`.
+- **Verified live on the owner's account:**
+  - The studio shell shows the five destinations.
+  - Home suggests "Create your application kit" for the saved Northwind job.
+  - The pipeline shows Saved 2.
+  - Profile strength asks for a career profile to be set up.
+  - `/cv` redirects to `/documents`; `/presence` and `/coach` load.
+  - A narrow Continue card was then fixed: the title wraps and the button no longer clips.
 - **Deviation:** the spec's "Letter" entry in the Create sheet waits for R8.2, when the letter library exists. The Cover letter entry goes to Jobs, where letters are made today.
 
 ## Owner to-do (when you have time)

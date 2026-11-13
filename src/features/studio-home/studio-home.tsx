@@ -172,7 +172,7 @@ export function StudioHome() {
         {name ? `Welcome back, ${name}` : 'Your studio'}
       </h1>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         {latestDoc ? (
           <section aria-labelledby="continue" className="flex flex-col gap-3">
             <h2
@@ -182,14 +182,15 @@ export function StudioHome() {
               Continue
             </h2>
             <div className="flex gap-4">
-              <div className="w-40 shrink-0 sm:w-48">
+              <div className="w-36 shrink-0 sm:w-44">
                 <Thumb doc={latestDoc} label={`Open ${latestDoc.title}`} />
               </div>
-              <div className="flex min-w-0 flex-col justify-center gap-3">
-                <p className="truncate text-lg font-semibold">{latestDoc.title}</p>
+              <div className="flex min-w-0 flex-1 flex-col justify-center gap-3">
+                <p className="line-clamp-3 text-lg font-semibold break-words">{latestDoc.title}</p>
                 <ButtonLink
                   href={`/cv/${latestDoc.id}`}
                   icon={<ArrowRight aria-hidden size={18} />}
+                  className="self-start"
                 >
                   Continue editing
                 </ButtonLink>
