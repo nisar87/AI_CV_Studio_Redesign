@@ -360,8 +360,8 @@ type Entry = { head: string[]; body: string[]; dates: FoundDates };
 /**
  * Splits a section into entries: a short header (with dates) followed by detail lines.
  * When the section has dates, entries start only at dated lines. A date printed on its own line
- * takes the header lines just above it — as many as the previous entry had before its date
- * (e.g. "Role / Company / date" → 2, "Title / date / School" → 1).
+ * takes the header lines just above it — as many as the first entry had before its date
+ * (e.g. "Role / Company / date" → 2, "Title / date / School" → 1, "date / Role / Company" → 0).
  */
 function entries(lines: { text: string; bullet: boolean }[]): Entry[] {
   const found = lines.map((l) => (l.bullet ? null : findDates(l.text)));
@@ -387,7 +387,9 @@ function entries(lines: { text: string; bullet: boolean }[]): Entry[] {
     if (startsNew) {
       const next: E = { head: [], body: [], dates: null, all: [], before: 0 };
       if (cur && d && !d.rest) {
-        const want = Math.max(1, Math.min(2, out[0]?.before ?? 1));
+        // When the first entry printed its date first ("date / Role / Company"), dates lead every
+        // entry and nothing above belongs to the new one.
+        const want = Math.min(2, out[0]?.before ?? 1);
         const moved: string[] = [];
         while (moved.length < want && cur.all.length > 1) {
           const last = cur.all[cur.all.length - 1]!;

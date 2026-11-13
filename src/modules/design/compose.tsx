@@ -45,7 +45,9 @@ const INK: Record<DesignSpecV2['color']['ink'], [string, string, string]> = {
 
 export function resolveSpec(s: DesignSpecV2): ResolvedDesign {
   const raw = s.color.mode === 'mono' ? INK[s.color.ink][1] : s.color.accent;
-  const accent = ensureContrast(raw, '#ffffff', 4.5);
+  // Accent text also sits on cream paper and on tinted side columns (down to the 90% white
+  // "soft" tint): 5.2:1 against white keeps it at 4.5:1 or more on all of them.
+  const accent = ensureContrast(raw, '#ffffff', 5.2);
   const skill = s.lists.skills.style;
   return {
     templateId: s.baseId ?? 'clarity',
@@ -309,12 +311,14 @@ const MARKER: Record<DesignSpecV2['bullets']['marker'], string> = {
   square: "content:'';width:.3em;height:.3em;background:var(--bullet)",
   diamond: "content:'';width:.3em;height:.3em;background:var(--bullet);transform:rotate(45deg)",
   dash: "content:'';width:.55em;height:.11em;background:var(--bullet);top:calc(var(--lh) * .5em - .05em)",
+  // Drawn shapes, not text glyphs: a glyph missing from the CV fonts would make Chrome embed a
+  // fallback font as Type 3 in the PDF.
   arrow:
-    "content:'\\2192';color:var(--bullet);font-size:.9em;line-height:inherit;width:auto;height:auto;background:none;top:0",
+    "content:'';width:0;height:0;background:none;border-left:.42em solid var(--bullet);border-top:.25em solid transparent;border-bottom:.25em solid transparent;top:calc(var(--lh) * .5em - .25em)",
   chevron:
-    "content:'\\203A';color:var(--bullet);font-weight:700;width:auto;height:auto;background:none;top:0",
+    "content:'';width:.3em;height:.3em;background:none;border-top:.12em solid var(--bullet);border-right:.12em solid var(--bullet);transform:rotate(45deg);top:calc(var(--lh) * .5em - .2em);left:.05em",
   check:
-    "content:'\\2713';color:var(--bullet);font-size:.85em;width:auto;height:auto;background:none;top:.05em",
+    "content:'';width:.24em;height:.46em;background:none;border-bottom:.13em solid var(--bullet);border-right:.13em solid var(--bullet);transform:rotate(45deg);top:calc(var(--lh) * .5em - .34em);left:.2em",
   none: 'content:none',
 };
 
@@ -323,7 +327,7 @@ function css(s: DesignSpecV2, d: ResolvedDesign): string {
   const ink = INK[s.color.ink];
   const second =
     s.color.mode === 'duo' && s.color.secondary
-      ? ensureContrast(s.color.secondary, '#ffffff', 3)
+      ? ensureContrast(s.color.secondary, '#ffffff', 5.2)
       : d.accent;
   const sideLeft = L.type === 'sidebar-left' || L.type === 'rails';
   const fill =
@@ -344,10 +348,15 @@ function css(s: DesignSpecV2, d: ResolvedDesign): string {
   const hColor = s.headings.color === 'accent' ? 'var(--accent)' : 'var(--ink)';
   const caseCss = (c: DesignSpecV2['headings']['case']) =>
     c === 'upper'
-      ? 'text-transform:uppercase;letter-spacing:.1em'
+      ? // Kept modest: wider tracking splits words in PDF text extraction ("WO R K").
+        'text-transform:uppercase;letter-spacing:.06em'
       : c === 'small-caps'
-        ? 'font-variant:small-caps;letter-spacing:.05em'
+        ? // Drawn as smaller capitals: Chrome's synthetic small caps split words in PDF text
+          // extraction ("W ork history"), which screening software could misread.
+          'text-transform:uppercase;letter-spacing:.06em'
         : '';
+  /** Small capitals are capitals at 90% size. */
+  const capK = (c: DesignSpecV2['headings']['case']) => (c === 'small-caps' ? 0.9 : 1);
   const out: string[] = [];
   out.push(
     `:root{--ink:${ink[0]};--ink-2:${ink[1]};--ink-3:${ink[2]};--second:${second};--bullet:${s.bullets.color === 'accent' ? 'var(--accent)' : 'var(--ink-2)'};--side-w:${L.sideWidthPct}%;--gap:${L.gapMm}mm}`,
@@ -368,15 +377,17 @@ function css(s: DesignSpecV2, d: ResolvedDesign): string {
 .cv-has-aside .cv-main{position:relative}
 .cv-has-third .cv-third{width:var(--side-w);order:2;font-size:.95em;padding-left:var(--gap);position:relative}`);
     if (fill !== 'transparent') {
-      const w = `calc((var(--page-w) - 2 * var(--margin)) * ${L.sideWidthPct / 100} + ${L.sideBleed ? 'var(--margin)' : '0mm'})`;
+      // The fill ends 3 mm before the column's text, so it never touches the main column.
+      const w = `calc((var(--page-w) - 2 * var(--margin)) * ${L.sideWidthPct / 100} - var(--gap) + 3mm + ${L.sideBleed ? 'var(--margin)' : '0mm'})`;
       const pos = sideLeft
         ? `left:${L.sideBleed ? '0' : 'var(--margin)'}`
         : `right:${L.sideBleed ? '0' : 'var(--margin)'}`;
       out.push(`.cv-has-aside .cv-page:not(.cv-page--wide)::before{content:'';position:absolute;top:0;bottom:0;${pos};width:${w};background:${fill};z-index:0}
 .cv-has-aside .cv-aside{padding-${sideLeft ? 'left' : 'right'}:${L.sideBleed ? '0' : '3mm'};padding-top:2mm}`);
       if (third)
-        out.push(`.cv-has-third .cv-page:not(.cv-page--wide)::after{content:'';position:absolute;top:0;bottom:0;right:${L.sideBleed ? '0' : 'var(--margin)'};width:calc((var(--page-w) - 2 * var(--margin)) * ${L.sideWidthPct / 100} + ${L.sideBleed ? 'var(--margin)' : '0mm'});background:${fill};z-index:0}
+        out.push(`.cv-has-third .cv-page:not(.cv-page--wide)::after{content:'';position:absolute;top:0;bottom:0;right:${L.sideBleed ? '0' : 'var(--margin)'};width:${w};background:${fill};z-index:0}
 .cv-has-third .cv-third{padding-right:${L.sideBleed ? '0' : '3mm'};padding-top:2mm}`);
+      if (L.sideFill === 'solid') out.push('.cv-aside,.cv-third{--ink-3:var(--ink-2)}');
       if (deep)
         out.push(`.cv-aside,.cv-third{color:#fff;--ink:#fff;--ink-2:rgba(255,255,255,.88);--ink-3:rgba(255,255,255,.72);--accent:var(--accent-bright);--bullet:var(--accent-bright)}
 .cv-aside .g-tags li,.cv-third .g-tags li{background:rgba(255,255,255,.14);color:#fff}`);
@@ -394,7 +405,7 @@ function css(s: DesignSpecV2, d: ResolvedDesign): string {
 .cv-main [data-block]:not(.b-heading){padding-left:calc(23% + var(--gap))}
 .cv-main [data-block]:has(> .b-labelled){padding-left:0}
 .cv-main .b-heading{height:0;padding:0;overflow:hidden;position:absolute}
-.g-label{font-size:.82em;font-weight:${s.headings.weight};color:${hColor};${caseCss(s.headings.case)};padding-top:.15em}`);
+.g-label{font-size:${(H_EM[s.headings.size] * 0.92 * capK(s.headings.case)).toFixed(3)}em;font-weight:${s.headings.weight};color:${hColor};${caseCss(s.headings.case)};padding-top:.15em}`);
 
   // Header
   const H = s.header;
@@ -402,12 +413,12 @@ function css(s: DesignSpecV2, d: ResolvedDesign): string {
     H.name.case === 'upper'
       ? 'text-transform:uppercase'
       : H.name.case === 'small-caps'
-        ? 'font-variant:small-caps'
+        ? 'text-transform:uppercase'
         : '';
   out.push(`.g-header{position:relative;padding-bottom:4pt}
 .g-hrow{display:flex;align-items:center;gap:6mm}
 .g-id{flex:1;min-width:0}
-.g-name{font-family:var(--font-heading);font-weight:${H.name.weight};font-size:${NAME_EM[H.name.size]}em;line-height:1.08;letter-spacing:${H.name.trackingEm}em;color:var(--ink);${nameCase}}
+.g-name{font-family:var(--font-heading);font-weight:${H.name.weight};font-size:${(NAME_EM[H.name.size] * capK(H.name.case)).toFixed(3)}em;line-height:1.08;letter-spacing:${H.name.trackingEm}em;color:var(--ink);${nameCase}}
 .g-name-2{color:var(--accent)}
 .g-headline{margin-top:.3em;font-size:1.15em;font-weight:600;color:var(--accent)}
 .g-contacts{margin-top:.75em;font-size:.93em;color:var(--ink-2)}
@@ -439,7 +450,7 @@ function css(s: DesignSpecV2, d: ResolvedDesign): string {
 .g-header--band,.g-header--in-sidebar{background:${bandBg};${clip}padding-top:var(--margin);padding-left:var(--margin);padding-right:var(--margin);color:#fff}
 .g-header--band .g-name,.g-header--in-sidebar .g-name{color:#fff}
 .g-header--band .g-name-2,.g-header--in-sidebar .g-name-2{color:var(--accent-bright)}
-.g-header--band .g-headline,.g-header--in-sidebar .g-headline{color:var(--accent-bright)}
+.g-header--band .g-headline,.g-header--in-sidebar .g-headline{color:rgba(255,255,255,.94)}
 .g-header--band .g-contacts,.g-header--in-sidebar .g-contacts{color:rgba(255,255,255,.9)}
 .g-header--band .cv-icon,.g-header--in-sidebar .cv-icon{color:var(--accent-bright)}
 .g-header--band .cv-sep,.g-header--in-sidebar .cv-sep{color:rgba(255,255,255,.5)}
@@ -461,7 +472,7 @@ function css(s: DesignSpecV2, d: ResolvedDesign): string {
 
   // Section headings
   out.push(`.b-heading{padding-top:var(--section-gap);padding-bottom:5pt}
-.g-h{display:flex;align-items:center;gap:.5em;font-family:var(--font-body);font-size:${H_EM[s.headings.size]}em;font-weight:${s.headings.weight};color:${hColor};${caseCss(s.headings.case)}}
+.g-h{display:flex;align-items:center;gap:.5em;font-family:var(--font-body);font-size:${(H_EM[s.headings.size] * capK(s.headings.case)).toFixed(3)}em;font-weight:${s.headings.weight};color:${hColor};${caseCss(s.headings.case)}}
 .g-h-icon{width:1.15em;height:1.15em;flex:none;color:var(--accent)}`);
   const hs = s.headings.style;
   if (hs === 'underline')
@@ -482,7 +493,9 @@ function css(s: DesignSpecV2, d: ResolvedDesign): string {
     out.push(
       '[data-cv-pages]{counter-reset:sec}.cv-main .g-h{counter-increment:sec}.cv-main .g-h::before{content:counter(sec,decimal-leading-zero);color:var(--accent);font-variant-numeric:tabular-nums;margin-right:.2em}',
     );
-  if (s.color.mode === 'duo') out.push('.g-h{color:var(--second)}');
+  // Duo colour: the second colour is the heading text, or the fill behind white heading text.
+  if (s.color.mode === 'duo')
+    out.push(hs === 'filled' ? '.g-h{background:var(--second)}' : '.g-h{color:var(--second)}');
 
   // Section containers and dividers (per block: blocks are paginated independently)
   const sc = s.sections;
@@ -494,8 +507,11 @@ function css(s: DesignSpecV2, d: ResolvedDesign): string {
     out.push(
       '.cv-main [data-block]{border-left:.8pt solid var(--accent-line);border-right:.8pt solid var(--accent-line);padding-left:4mm;padding-right:4mm}.cv-main .b-heading{border-top:.8pt solid var(--accent-line)}',
     );
+  // A tinted heading strip always has dark text (it replaces a "filled" heading's white text).
   if (sc.container === 'tinted-heading')
-    out.push('.g-h{background:var(--accent-tint);padding:2.5pt 6pt}');
+    out.push(
+      `.g-h{background:var(--accent-tint);padding:2.5pt 6pt;color:${hs === 'filled' ? 'var(--accent-deep)' : hColor}}.g-h .g-h-icon{color:var(--accent)}`,
+    );
   if (sc.divider === 'line')
     out.push(
       '.cv-main .b-heading:not(:first-child){border-top:.6pt solid var(--rule);margin-top:4pt}',
@@ -531,6 +547,7 @@ function css(s: DesignSpecV2, d: ResolvedDesign): string {
 .cv-bullets li+li{margin-top:1.5pt}
 .cv-bullets li::before{${MARKER[s.bullets.marker]}}
 ${s.bullets.marker === 'none' ? '.cv-bullets li{padding-left:0}' : ''}
+${s.bullets.marker === 'arrow' ? '.cv-bullets li{padding-left:1.2em}' : ''}
 ${s.entries.layout === 'dates-left' || s.entries.layout === 'timeline-dots' ? '.b-entry .cv-bullets,.b-bullet .cv-bullets{margin-left:calc(21% + 4mm)}' : ''}
 .g-summary{color:var(--ink-2)}
 .g-muted{color:var(--ink-3)}
@@ -703,4 +720,69 @@ function qrTarget(model: RenderModel, which: DesignSpecV2['extras']['qr']): stri
       : (links.find((c) => /aicvstudio\.app\/p\//i.test(c.href!)) ??
         links.find((c) => !/linkedin\.com/i.test(c.href!)));
   return hit?.href ?? null;
+}
+
+/**
+ * Every text/background colour pair the composer can draw for a spec (catalogue gate §8.3,
+ * "contrast on resolved colours"). Kept next to `css()`, which it mirrors.
+ */
+export function contrastPairs(spec: DesignSpecV2): { what: string; fg: string; bg: string }[] {
+  const s = spec;
+  const d = resolveSpec(s);
+  const ink = INK[s.color.ink];
+  const page =
+    s.page.background === 'cream'
+      ? '#fbf8f1'
+      : s.page.background === 'tint'
+        ? d.accentTint
+        : '#ffffff';
+  /** `fg` at `alpha` opacity over `bg`. */
+  const over = (fg: string, alpha: number, bg: string) => mix(bg, fg, alpha);
+  const second =
+    s.color.mode === 'duo' && s.color.secondary
+      ? ensureContrast(s.color.secondary, '#ffffff', 5.2)
+      : d.accent;
+  const heading =
+    s.color.mode === 'duo' ? second : s.headings.color === 'accent' ? d.accent : ink[0];
+  const out: { what: string; fg: string; bg: string }[] = [];
+  const add = (what: string, fg: string, bg: string) => out.push({ what, fg, bg });
+  for (const [i, c] of ink.entries()) add(`ink-${i + 1} on page`, c, page);
+  add('accent text on page', d.accent, page);
+  add('tag text', ink[0], d.accentSoft);
+  const hs = s.headings.style;
+  const sc = s.sections.container;
+  if (sc === 'tinted-heading')
+    add('heading on tinted strip', hs === 'filled' ? d.accentDeep : heading, d.accentTint);
+  else if (hs === 'filled')
+    add('filled heading', '#ffffff', s.color.mode === 'duo' ? second : d.accent);
+  else add('heading on page', heading, page);
+  if (sc === 'card')
+    for (const [i, c] of ink.entries()) add(`ink-${i + 1} in card`, c, d.accentTint);
+  if (s.header.style === 'band' || s.header.style === 'in-sidebar') {
+    const bands = s.header.band === 'gradient' ? [d.accentDeep, d.accent] : [d.accentDeep];
+    for (const b of bands) {
+      add('name on band', '#ffffff', b);
+      add('headline on band', over('#ffffff', 0.94, b), b);
+      add('contacts on band', over('#ffffff', 0.9, b), b);
+    }
+  }
+  if (s.header.style === 'card') add('name on header card', ink[0], d.accentTint);
+  const L = s.layout;
+  const side = ['sidebar-left', 'sidebar-right', 'two-equal', 'rails'].includes(L.type);
+  if (side && L.sideFill !== 'none') {
+    if (L.sideFill === 'deep') {
+      const b = d.accentDeep;
+      add('side text', '#ffffff', b);
+      add('side text 2', over('#ffffff', 0.88, b), b);
+      add('side muted', over('#ffffff', 0.72, b), b);
+      add('side accent', d.accentBright, b);
+      add('side tags', '#ffffff', over('#ffffff', 0.14, b));
+    } else {
+      const b = L.sideFill === 'solid' ? d.accentSoft : d.accentTint;
+      const sideInk = L.sideFill === 'solid' ? [ink[0], ink[1], ink[1]] : ink;
+      for (const [i, c] of sideInk.entries()) add(`side ink-${i + 1}`, c, b);
+      add('side heading', heading, b);
+    }
+  }
+  return out;
 }

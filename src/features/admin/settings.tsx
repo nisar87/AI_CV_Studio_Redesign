@@ -1,5 +1,6 @@
 'use client';
 
+import { DESIGN_META, FAMILY_LABEL } from '@/modules/design/designs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
@@ -17,6 +18,7 @@ const METER_LABEL: Record<Metered, string> = {
   'pdf.download': 'PDF downloads',
   'import.cv': 'CV imports',
   'ai.action': 'AI actions',
+  'design.ai': 'AI designs (Designer)',
 };
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -209,7 +211,12 @@ export function AdminSettings() {
                 className="flex flex-wrap items-center gap-x-6 gap-y-1 py-2"
                 data-testid={`design-row-${d.id}`}
               >
-                <span className="w-28 font-semibold">{cap(d.id)}</span>
+                <span className="w-40">
+                  <span className="block font-semibold">{cap(d.id)}</span>
+                  <span className="text-ink-muted block text-xs">
+                    {FAMILY_LABEL[DESIGN_META[d.id].family].name}
+                  </span>
+                </span>
                 <CheckboxField
                   label="Shown"
                   checked={d.enabled}
@@ -608,6 +615,11 @@ export function AdminSettings() {
             label="Design Studio (adjust and fine-tune every design detail)"
             checked={draft.features.designStudio}
             onChange={(v) => edit((c) => void (c.features.designStudio = v))}
+          />
+          <CheckboxField
+            label="AI Designer (describe a design in words or with a picture)"
+            checked={draft.features.designer}
+            onChange={(v) => edit((c) => void (c.features.designer = v))}
           />
         </Section>
 

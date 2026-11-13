@@ -166,6 +166,16 @@ describe('mock provider', () => {
       description: 'I am a school teacher, I want a blue, modern, clean and elegant CV',
     },
     'design.interpret': { description: 'modern, blue, clean and elegant', presetId: 'teacher' },
+    'design.compose': {
+      description: 'three columns, navy, square bullets',
+      presetId: 'tech',
+      stats: {
+        pages: 2,
+        sections: [{ kind: 'experience', items: 3, chars: 1800 }],
+        hasPhoto: false,
+      },
+    },
+    'design.refine': { instruction: 'make the sidebar narrower', current: { sideWidth: 32 } },
     'write.summary': {
       presetId: 'driver',
       headline: 'Delivery Driver',

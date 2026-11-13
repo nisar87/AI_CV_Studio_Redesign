@@ -24,7 +24,8 @@
     "templates:thumbs": "tsx scripts/template-thumbnails.tsx",
     "check:secrets": "node scripts/check-client-secrets.mjs",
     "ai:eval": "tsx --conditions=react-server scripts/ai-eval.ts",
-    "emulators": "firebase emulators:start --only auth --project demo-aicv"
+    "emulators": "firebase emulators:start --only auth --project demo-aicv",
+    "gates:catalogue": "tsx scripts/catalogue-gates.tsx"
   },
   "dependencies": {
     "@fontsource-variable/figtree": "^5.3.0",

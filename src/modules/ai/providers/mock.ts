@@ -69,6 +69,14 @@ function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] =
         })),
       };
     }
+    case 'design.compose': {
+      const i = input as ParsedInput<'design.compose'>;
+      return mockCompose(i.description, files.length > 0, attempt);
+    }
+    case 'design.refine': {
+      const i = input as ParsedInput<'design.refine'>;
+      return mockRefine(i.instruction, i.current);
+    }
     case 'write.summary': {
       const i = input as ParsedInput<'write.summary'>;
       if (i.mode !== 'write' && i.currentSummary) {
@@ -369,3 +377,124 @@ const STOP = new Set([
 ]);
 const sig = (t: string) =>
   (t.toLowerCase().match(/[a-z][a-z-]{3,}/g) ?? []).filter((w) => !STOP.has(w));
+
+// ---------- AI Designer (deterministic keyword rules for tests and demos) ----------
+
+const COLOURS: [RegExp, string][] = [
+  [/navy/, '#1f3a5f'],
+  [/teal/, '#1e6a6a'],
+  [/green/, '#2d6a3e'],
+  [/purple|violet/, '#5b2a6e'],
+  [/burgundy|wine|red/, '#7a2e4d'],
+  [/orange|rust/, '#9a4a12'],
+  [/gold|brown/, '#7a5a2e'],
+  [/blue/, '#1f4e8c'],
+];
+
+function mockCompose(description: string, image: boolean, attempt: number) {
+  const d = description.toLowerCase();
+  const c: Record<string, unknown> = {};
+  const unmet: string[] = [];
+  let start = 'clarity';
+  if (/\b(4|5|6|four|five|six)[ -]?col/.test(d)) {
+    unmet.push(
+      'More than three columns would make lines too short to read, so this uses three columns.',
+    );
+    c.layout = 'rails';
+    start = 'mosaic';
+  } else if (/\b(3|three)[ -]?col/.test(d)) {
+    c.layout = 'rails';
+    start = 'mosaic';
+  } else if (/\b(2|two)[ -]?col|sidebar|side column/.test(d) || image) {
+    c.layout = /right/.test(d) ? 'sidebar-right' : 'sidebar-left';
+    start = c.layout === 'sidebar-right' ? 'summit' : 'harbor';
+  } else if (/timeline|dates down/.test(d)) {
+    c.layout = 'timeline';
+    start = 'chronicle';
+  } else if (/grid|cards?\b|boxes/.test(d)) {
+    c.layout = 'two-equal';
+    c.container = 'card';
+    start = 'grid';
+  }
+  if (/dark sidebar|dark side/.test(d)) c.sideFill = 'deep';
+  if (/black and white|monochrome|no colou?r/.test(d)) c.colorMode = 'mono';
+  else
+    for (const [re, hex] of COLOURS)
+      if (re.test(d)) {
+        c.accent = hex;
+        break;
+      }
+  if (/square bullet/.test(d)) c.bullets = 'square';
+  else if (/arrow/.test(d)) c.bullets = 'arrow';
+  else if (/tick|check/.test(d)) c.bullets = 'check';
+  else if (/no bullet/.test(d)) c.bullets = 'none';
+  if (/coloured headings|headings in (colou?red )?boxes|filled/.test(d)) c.headings = 'filled';
+  else if (/line under|underline/.test(d)) c.headings = 'underline';
+  else if (/numbered/.test(d)) c.headings = 'numbered';
+  if (/no photo/.test(d)) c.photo = false;
+  else if (/round photo|circle photo/.test(d)) c.photoShape = 'circle';
+  if (/banner|big header|coloured header/.test(d)) c.header = 'band';
+  if (/serif|elegant|classic/.test(d)) c.font = 'executive';
+  if (/compact|one page/.test(d)) c.spacing = 'compact';
+  if (/skill bars|percent|dots out of/.test(d))
+    unmet.push('Skill bars would show a level you never gave, so your skills are shown as tags.');
+  const alt = (k: string, a: string, b: string) => ({ ...c, [k]: c[k] === a ? b : a });
+  const v = attempt % 2;
+  return {
+    candidates: [
+      {
+        name: image ? 'From your picture' : 'Your design',
+        explanation: 'The closest match to what you described.',
+        startFrom: start,
+        choices: c,
+        unmet,
+      },
+      {
+        name: 'Underlined headings',
+        explanation: 'The same layout with quieter, underlined headings.',
+        startFrom: start,
+        choices: alt('headings', 'underline', v ? 'overline' : 'bar-left'),
+        unmet,
+      },
+      {
+        name: 'With a banner',
+        explanation: 'The same layout with your name in a colour banner.',
+        startFrom: start,
+        choices: alt('header', 'band', 'split'),
+        unmet,
+      },
+    ],
+  };
+}
+
+function mockRefine(instruction: string, current: Record<string, unknown>) {
+  const d = instruction.toLowerCase();
+  const changes: { field: string; value: string }[] = [];
+  const width = Number(current.sideWidth) || 32;
+  if (/\b(4|5|four|five)[ -]?col/.test(d))
+    return {
+      changes,
+      note: 'More than three columns would make lines too short to read, so nothing was changed.',
+    };
+  if (/narrow/.test(d)) changes.push({ field: 'sideWidth', value: String(width - 4) });
+  if (/wider|wide/.test(d) && !/narrow/.test(d))
+    changes.push({ field: 'sideWidth', value: String(width + 4) });
+  if (/square bullet/.test(d)) changes.push({ field: 'bullets', value: 'square' });
+  if (/less colou?r|no colou?r|black and white/.test(d))
+    changes.push({ field: 'colorMode', value: 'mono' });
+  if (/bigger text|larger text/.test(d)) changes.push({ field: 'textSize', value: '11' });
+  if (/no photo|remove (the )?photo/.test(d)) changes.push({ field: 'photo', value: 'false' });
+  if (/headings? in (colou?red )?boxes|filled headings/.test(d))
+    changes.push({ field: 'headings', value: 'filled' });
+  for (const [re, hex] of COLOURS)
+    if (re.test(d)) {
+      changes.push({ field: 'accent', value: hex });
+      break;
+    }
+  return {
+    changes,
+    note: changes.length
+      ? 'Done — only what you asked was changed.'
+      : 'I could not match that to a design setting.',
+  };
+}

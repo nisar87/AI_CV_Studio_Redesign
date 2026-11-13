@@ -2,7 +2,7 @@
 
 import { Check, Crown } from 'lucide-react';
 import { isPremiumDesign, useEntitlements } from '@/features/account/entitlements';
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { SelectableCard } from '@/components/ui/card';
 import { StyleAssist } from '@/features/ai/style-assist';
 import { CheckboxField } from './fields';
@@ -13,7 +13,9 @@ import { FONT_PAIR_IDS, type DesignSpec } from '@/modules/resume/schema';
 import { contrast } from '@/modules/templates/color';
 import { ACCENT_PALETTE } from '@/modules/templates/design';
 import { FONT_PAIRS } from '@/modules/templates/fonts';
-import { TEMPLATE_LIST, getTemplate } from '@/modules/templates/registry';
+import { currentDesignId } from '@/modules/design/catalogue';
+import { getTemplate } from '@/modules/templates/registry';
+import { DESIGNS, DESIGN_META, FAMILIES, FAMILY_LABEL, type Family } from '@/modules/design/designs';
 import type { DocumentEditor } from './use-document-editor';
 import { DesignStudio } from './design-studio';
 import type { PreviewStatus } from '@/features/preview/document-preview';
@@ -63,10 +65,14 @@ export function DesignPanel({
   const { ent } = useEntitlements();
   const showPremium = (id: string) =>
     ent !== null && ent.plan !== 'premium' && isPremiumDesign(ent, id);
-  const available = TEMPLATE_LIST.filter(
+  const current = currentDesignId(d);
+  const meta = current ? DESIGN_META[current] : null;
+  const [family, setFamily] = useState<Family | 'all'>('all');
+  const available = DESIGNS.filter(
     (t) =>
-      t.id === d.templateId || !ent || ent.designs.find((x) => x.id === t.id)?.enabled !== false,
+      t.id === current || !ent || ent.designs.find((x) => x.id === t.id)?.enabled !== false,
   );
+  const shown = family === 'all' ? available : available.filter((t) => t.family === family);
   const customLow = contrast(d.accent, '#ffffff') < 4.5;
 
   return (
@@ -83,9 +89,27 @@ export function DesignPanel({
         }
       />
       <Group title="Look" hint="Your words stay the same — only the design changes.">
+        <div role="group" aria-label="Design families" className="flex flex-wrap gap-1.5">
+          {(['all', ...FAMILIES] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              aria-pressed={family === f}
+              onClick={() => setFamily(f)}
+              className={cn(
+                'rounded-full border px-3 py-1 text-[13px] font-semibold transition-colors',
+                family === f
+                  ? 'bg-primary text-on-primary border-transparent'
+                  : 'border-line-strong text-ink-muted hover:bg-sunken',
+              )}
+            >
+              {f === 'all' ? 'All' : FAMILY_LABEL[f].name}
+            </button>
+          ))}
+        </div>
         <div role="radiogroup" aria-label="Design" className="grid grid-cols-2 gap-3">
-          {available.map((t) => {
-            const selected = d.templateId === t.id;
+          {shown.map((t) => {
+            const selected = current === t.id;
             return (
               <button
                 key={t.id}
@@ -93,14 +117,7 @@ export function DesignPanel({
                 role="radio"
                 aria-checked={selected}
                 aria-label={`${t.style} · ${t.name}${showPremium(t.id) ? ' · Premium' : ''}`}
-                onClick={() =>
-                  set({
-                    templateId: t.id,
-                    ...(t.support.defaults.fontPair
-                      ? { fontPair: t.support.defaults.fontPair }
-                      : {}),
-                  })
-                }
+                onClick={() => update((x) => ops.useDesign(x, t.id))}
                 className={cn(
                   'group flex flex-col gap-2 rounded-lg p-1.5 text-left transition-colors',
                   selected ? 'bg-primary-soft ring-primary ring-2' : 'hover:bg-sunken',
@@ -131,15 +148,17 @@ export function DesignPanel({
                   <span className="text-ink block text-sm font-semibold">{t.style}</span>
                   <span className="text-ink-muted block text-xs">
                     {t.name}
-                    {t.photo === 'optional' ? ' · Photo' : ''}
+                    {t.photo ? ' · Photo' : ''}
                   </span>
                 </span>
               </button>
             );
           })}
         </div>
-        <p className="text-ink-muted text-sm">{template.description}</p>
-        {showPremium(d.templateId) && (
+        <p className="text-ink-muted text-sm">
+          {meta ? meta.description : 'Your own design, made in the Design Studio below.'}
+        </p>
+        {meta && showPremium(meta.id) && (
           <p
             className="text-ink-muted bg-accent-soft rounded-md px-3 py-2 text-sm"
             data-gate="premium-note"
@@ -149,7 +168,7 @@ export function DesignPanel({
             design.
           </p>
         )}
-        {template.photo === 'optional' && doc.basics.photo && (
+        {(meta?.photo ?? true) && doc.basics.photo && (
           <CheckboxField
             label="Show my photo"
             checked={d.options.showPhoto !== false}

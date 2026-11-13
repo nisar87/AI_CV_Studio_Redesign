@@ -121,6 +121,8 @@ export function tidyLines(lines: string[]): string[] {
 function clean(s: string) {
   return s
     .replace(/[\u0000-\u0008\u000b-\u001f\u007f​-‍﻿]/g, '')
+    // Some fonts map the apostrophe to the modifier letter (U+02BC); read it as a plain one.
+    .replace(/\u02bc/g, '’')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -195,10 +197,14 @@ export function groupLines(items: Item[]): string[] {
   });
 }
 
-/** Same visual row only if horizontally adjacent (avoids joining two columns into one line). */
+/**
+ * Same visual row only if horizontally adjacent (avoids joining two columns into one line).
+ * Word and chip gaps are under one font size; column gaps in our narrowest three-column designs
+ * are about two (7 mm at 9.6 pt).
+ */
 function near(parts: Item[], it: Item) {
   const size = it.h || 10;
-  return parts.some((p) => it.x <= p.x + p.w + size * 2.5 && it.x + it.w >= p.x - size * 2.5);
+  return parts.some((p) => it.x <= p.x + p.w + size * 1.8 && it.x + it.w >= p.x - size * 1.8);
 }
 
 async function docLines(bytes: Uint8Array): Promise<string[]> {

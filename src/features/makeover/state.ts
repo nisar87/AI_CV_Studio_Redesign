@@ -6,7 +6,7 @@ import type { ImportReport } from '@/modules/import/parse';
 import type { Chip } from '@/modules/makeover/polish';
 import type { Profile } from '@/modules/makeover/profile';
 import type { ContentStats, Ranked } from '@/modules/makeover/rank';
-import type { ResumeDocument, TemplateId } from '@/modules/resume/schema';
+import type { DesignId, ResumeDocument } from '@/modules/resume/schema';
 
 /** What /api/makeover returns. */
 export type MakeoverResult = {
@@ -57,7 +57,7 @@ export function takeHandOff(): File | null {
 export type Pending = {
   result: MakeoverResult;
   doc: ResumeDocument;
-  templateId: TemplateId;
+  templateId: DesignId;
   action: 'download' | 'edit';
   at: number;
 };

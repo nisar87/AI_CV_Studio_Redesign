@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
   // Entitlement gate: design tier, then the monthly download allowance (counted on success only).
   const user = await currentUser();
-  const design = await checkDesign(user, parsed.data.design.templateId, parsed.data.design.v2);
+  const design = await checkDesign(user, parsed.data.design);
   if (!design.ok) {
     await track(design.reason === 'sign_in' ? 'pdf_denied_signin' : 'pdf_denied_premium');
     return apiError(denialCode(design), design.message, rid, { reason: design.reason });

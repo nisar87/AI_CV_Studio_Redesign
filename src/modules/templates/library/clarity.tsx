@@ -107,7 +107,7 @@ const css = `
 .c-running{display:flex;justify-content:space-between;font-size:.82em;color:var(--ink-3);letter-spacing:.04em}
 .c-running strong{font-family:var(--font-heading);font-weight:var(--heading-weight);color:var(--ink-2);letter-spacing:0}
 .b-heading{padding-top:var(--section-gap);padding-bottom:5pt}
-.c-h{display:flex;align-items:center;gap:.7em;font-family:var(--font-body);font-size:.86em;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.c-h{display:flex;align-items:center;gap:.7em;font-family:var(--font-body);font-size:.86em;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--accent)}
 .c-h::before{content:'';width:10pt;height:2.4pt;border-radius:1pt;background:var(--accent);flex:none}
 .c-h::after{content:'';flex:1;height:.75pt;background:var(--accent-line)}
 .b-entry{padding-top:var(--item-gap)}

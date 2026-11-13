@@ -11,7 +11,7 @@ import { setConfig } from './support/auth';
  */
 test.describe.configure({ mode: 'serial' });
 
-const UNLIMITED = { 'pdf.download': -1, 'import.cv': -1, 'ai.action': -1 };
+const UNLIMITED = { 'pdf.download': -1, 'import.cv': -1, 'ai.action': -1, 'design.ai': -1 };
 const base: BusinessConfig = {
   ...DEFAULT_CONFIG,
   plans: { ...DEFAULT_CONFIG.plans, premium: { label: 'Premium', limits: UNLIMITED, maxJobs: -1 } },
@@ -22,7 +22,7 @@ const strict: BusinessConfig = {
     ...base.plans,
     free: {
       label: 'Free',
-      limits: { 'pdf.download': 2, 'import.cv': 2, 'ai.action': 0 },
+      limits: { 'pdf.download': 2, 'import.cv': 2, 'ai.action': 0, 'design.ai': 1 },
       maxJobs: 3,
     },
   },

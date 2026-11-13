@@ -1,6 +1,7 @@
-import type { DesignSpec, TemplateId } from '@/modules/resume/schema';
+import type { DesignId, DesignSpec, TemplateId } from '@/modules/resume/schema';
 import { DENSITY } from '@/modules/templates/design';
 import { getTemplate } from '@/modules/templates/registry';
+import { DESIGN_META, LEGACY_FALLBACK, SPEC_DESIGNS, isSpecDesign } from './designs';
 import { parseSpec, type DesignSpecV2, type DesignSpecV2Input } from './spec';
 
 /**
@@ -155,7 +156,8 @@ export function toV1(spec: DesignSpecV2, fallback: DesignSpec): DesignSpec {
   const skill = spec.lists.skills.style;
   return {
     ...fallback,
-    templateId: spec.baseId ?? fallback.templateId,
+    templateId:
+      spec.baseId ?? (spec.designId ? LEGACY_FALLBACK[spec.designId] : fallback.templateId),
     accent: spec.color.accent,
     fontPair: spec.type.pair,
     density: spec.spacing.density,
@@ -190,4 +192,48 @@ export function applyV1Change(
   if (o?.skillStyle) out.lists.skills.style = o.skillStyle;
   if (o?.showPhoto !== undefined) out.header.photo.show = o.showPhoto;
   return out;
+}
+
+/**
+ * The spec of any catalogue design, carrying the person's own choices from their current design
+ * (colour, paper size, spacing, photo on or off). The font is the design's own when it has one.
+ */
+export function designSpec(id: DesignId, current: DesignSpec): DesignSpecV2 {
+  const meta = DESIGN_META[id];
+  const v1: DesignSpec = { ...current, fontPair: meta.fontPair ?? current.fontPair };
+  if (!isSpecDesign(id)) return migrateV1({ ...v1, templateId: id });
+  const base = parseSpec({ ...SPEC_DESIGNS[id], designId: id });
+  const withChoices = applyV1Change(base, v1, {
+    accent: v1.accent,
+    fontPair: v1.fontPair,
+    pageSize: v1.pageSize,
+  });
+  // Spacing: only when the person moved away from the default (the design's own spacing wins).
+  const spaced =
+    v1.density !== 'balanced'
+      ? applyV1Change(withChoices, v1, { density: v1.density })
+      : withChoices;
+  if (current.options?.showPhoto === false) spaced.header.photo.show = false;
+  return spaced;
+}
+
+/** Which catalogue design a CV is in, or null for a custom (Design Studio) design. */
+export function currentDesignId(d: DesignSpec): DesignId | null {
+  const v2 = d.v2;
+  if (!v2) return d.templateId;
+  if (v2.designId) return v2.designId;
+  if (v2.baseId) return v2.baseId;
+  return null;
+}
+
+/**
+ * Which design's tier decides a download (R6 rule, extended to the 32 designs):
+ *  - a catalogue design (attached), or its ATS-safe version: that design;
+ *  - a custom Design Studio design: null (custom designs are Premium).
+ */
+export function tierDesignId(d: DesignSpec): DesignId | null {
+  const id = currentDesignId(d);
+  if (id) return id;
+  if (d.v2?.atsSafe) return d.v2.origin ?? d.templateId;
+  return null;
 }

@@ -1,7 +1,15 @@
-import { applyV1Change, migrateV1, toV1 } from '@/modules/design/catalogue';
+import { applyV1Change, designSpec, migrateV1, toV1 } from '@/modules/design/catalogue';
+import { DESIGN_META, isSpecDesign } from '@/modules/design/designs';
 import type { DesignSpecV2 } from '@/modules/design/spec';
 import { newId } from './create';
-import type { Basics, DesignSpec, ResumeDocument, Section, SectionKind } from './schema';
+import type {
+  Basics,
+  DesignId,
+  DesignSpec,
+  ResumeDocument,
+  Section,
+  SectionKind,
+} from './schema';
 
 /**
  * Pure document operations. Every edit in the UI goes through one of these, which keeps
@@ -167,11 +175,23 @@ export const ops = {
     const next = { ...v1, ...patch, options: { ...v1.options, ...(patch.options ?? {}) } };
     if (!v2) return touch(doc, { design: next });
     // A design with a v2 spec stays in step: picking a catalogue design re-attaches to it.
-    const spec =
-      patch.templateId && patch.templateId !== v1.templateId
-        ? migrateV1(next)
-        : applyV1Change(v2, next, patch);
+    // Picking a catalogue design re-attaches, also when the v1 id is unchanged (a spec-only or
+    // custom design is stored with the v1 id of its family's hand-crafted design).
+    const repick =
+      !!patch.templateId &&
+      (patch.templateId !== v1.templateId || !!v2.designId || !v2.baseId);
+    const spec = repick ? migrateV1(next) : applyV1Change(v2, next, patch);
     return touch(doc, { design: { ...next, v2: spec } });
+  },
+  /** Switch to a catalogue design (any of the 32); the words and the person's colour stay. */
+  useDesign(doc: ResumeDocument, id: DesignId) {
+    if (!isSpecDesign(id)) {
+      const font = DESIGN_META[id].fontPair;
+      return ops.setDesign(doc, { templateId: id, ...(font ? { fontPair: font } : {}) });
+    }
+    const { v2: _old, ...v1 } = doc.design;
+    void _old;
+    return ops.setSpec(doc, designSpec(id, v1));
   },
   /** Set the Design Spec v2 (Design Studio); the v1 fields follow it. */
   setSpec(doc: ResumeDocument, spec: DesignSpecV2) {

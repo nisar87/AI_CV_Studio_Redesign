@@ -79,6 +79,26 @@ describe('parseCv', () => {
     expect(items(d2, 'custom')[0]).toMatchObject({ bullets: ['Line two', 'Line three'] });
   });
 
+  it('handles "date / Role / Company" (dates first, bullets without symbols)', () => {
+    const { doc } = parseCv([
+      'Grace Mensah',
+      'Work history',
+      '2020 – Present',
+      'Year 5 Class Teacher',
+      'Oakfield Primary School · Manchester',
+      'Teach a class of 30 pupils',
+      'Mentor two early-career teachers',
+      '2017 – 2020',
+      'Year 4 Class Teacher',
+      'St Mary’s Primary School · Stockport',
+      'Ran the after-school gardening club',
+    ]);
+    expect(items(doc, 'experience')).toMatchObject([
+      { role: 'Year 5 Class Teacher', organization: 'Oakfield Primary School', current: true },
+      { role: 'Year 4 Class Teacher', organization: 'St Mary’s Primary School', end: '2020' },
+    ]);
+  });
+
   it('handles "Role / Company / date" and "Title / date / School" layouts', () => {
     const { doc } = parseCv([
       'Ali Khan',

@@ -17,7 +17,7 @@ const BASE: BusinessConfig = {
     ...DEFAULT_CONFIG.plans,
     premium: {
       label: 'Premium',
-      limits: { 'pdf.download': -1, 'import.cv': -1, 'ai.action': -1 },
+      limits: { 'pdf.download': -1, 'import.cv': -1, 'ai.action': -1, 'design.ai': -1 },
       maxJobs: -1,
     },
   },

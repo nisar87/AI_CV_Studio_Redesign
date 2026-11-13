@@ -1,5 +1,6 @@
 import 'server-only';
-import type { TemplateId } from '@/modules/resume/schema';
+import type { DesignSpec } from '@/modules/resume/schema';
+import { tierDesignId } from '@/modules/design/catalogue';
 import type { SessionUser } from '@/modules/identity/session';
 import { getUserStore } from '@/modules/store';
 import {
@@ -78,6 +79,15 @@ export async function grantPass(
   return expiresAt;
 }
 
+/**
+ * Whether the plan includes a capability at all (switches on, limit not 0), without counting a
+ * use: for actions that are part of a counted one (AI Designer refines follow a compose).
+ */
+export async function includes(user: SessionUser | null, cap: Metered): Promise<Decision> {
+  const [{ value: cfg }, { plan }] = await Promise.all([getBusinessConfig(), planFor(user)]);
+  return canUse(user ? plan : 'visitor', cfg, cap, 0);
+}
+
 /** Reserve one use of a metered capability. Call release() if the work then fails. */
 export async function reserve(
   user: SessionUser | null,
@@ -100,21 +110,20 @@ export async function reserve(
   };
 }
 
-export async function checkDesign(
-  user: SessionUser | null,
-  id: TemplateId,
-  v2?: { baseId?: string; atsSafe?: boolean },
-): Promise<Decision> {
+export async function checkDesign(user: SessionUser | null, design: DesignSpec): Promise<Decision> {
   const [{ value: cfg }, { plan }] = await Promise.all([getBusinessConfig(), planFor(user)]);
+  const id = tierDesignId(design);
   // A design customised in the Design Studio (no longer a catalogue design) is a Premium
-  // "Designer" feature; the ATS-safe version stays free.
-  if (v2 && !v2.baseId && !v2.atsSafe && plan !== 'premium')
-    return {
-      ok: false,
-      reason: 'premium',
-      message:
-        'Custom designs are part of Premium. Go back to a catalogue design or the ATS-safe version to download free.',
-    };
+  // "Designer" feature.
+  if (id === null)
+    return plan === 'premium'
+      ? { ok: true }
+      : {
+          ok: false,
+          reason: 'premium',
+          message:
+            'Custom designs are part of Premium. Go back to a catalogue design or the ATS-safe version to download free.',
+        };
   return canUseDesign(plan, cfg, id);
 }
 
@@ -134,6 +143,7 @@ export async function entitlementsFor(user: SessionUser | null) {
       'pdf.download': usage['pdf.download'] ?? 0,
       'import.cv': usage['import.cv'] ?? 0,
       'ai.action': usage['ai.action'] ?? 0,
+      'design.ai': usage['design.ai'] ?? 0,
     },
     designs: cfg.designs,
     passes: cfg.passes.filter((p) => p.active),
@@ -144,6 +154,7 @@ export async function entitlementsFor(user: SessionUser | null) {
       signups: cfg.features.signups,
       maintenance: cfg.features.maintenance,
       designStudio: cfg.features.designStudio,
+      designer: cfg.features.designer,
     },
     announcement: cfg.announcement.enabled ? cfg.announcement.text : null,
   };

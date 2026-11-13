@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { TEMPLATE_IDS } from '@/modules/resume/schema';
+import { DESIGN_IDS } from '@/modules/resume/schema';
 
 /**
  * Business configuration (docs/product/studio-master-plan.md §3, §4.4). One typed schema shared by
@@ -11,28 +11,38 @@ export const PLAN_IDS = ['visitor', 'free', 'premium'] as const;
 export type PlanId = (typeof PLAN_IDS)[number];
 
 /** Metered capabilities: each plan has a monthly limit (-1 = unlimited, 0 = not included). */
-export const METERED = ['pdf.download', 'import.cv', 'ai.action'] as const;
+export const METERED = ['pdf.download', 'import.cv', 'ai.action', 'design.ai'] as const;
 export type Metered = (typeof METERED)[number];
 
 const limit = z.number().int().min(-1).max(100_000);
-const limits = z.object({ 'pdf.download': limit, 'import.cv': limit, 'ai.action': limit });
+/**
+ * `design.ai` (R7 AI Designer: composes per month) is newer than saved configs, so each plan has
+ * its own default: one free compose to try, 40 a month with Premium (complete-studio-spec §14).
+ */
+const limitsWith = (designAi: number) =>
+  z.object({
+    'pdf.download': limit,
+    'import.cv': limit,
+    'ai.action': limit,
+    'design.ai': limit.default(designAi),
+  });
 
 export const businessConfig = z.object({
   plans: z.object({
     // maxJobs: how many jobs the tracker keeps at once (-1 = no limit). Optional for older saves.
     visitor: z.object({
       label: z.string().max(40),
-      limits,
+      limits: limitsWith(0),
       maxJobs: z.number().int().min(-1).max(10_000).default(0),
     }),
     free: z.object({
       label: z.string().max(40),
-      limits,
+      limits: limitsWith(1),
       maxJobs: z.number().int().min(-1).max(10_000).default(3),
     }),
     premium: z.object({
       label: z.string().max(40),
-      limits,
+      limits: limitsWith(40),
       maxJobs: z.number().int().min(-1).max(10_000).default(-1),
     }),
   }),
@@ -40,7 +50,7 @@ export const businessConfig = z.object({
   designs: z
     .array(
       z.object({
-        id: z.enum(TEMPLATE_IDS),
+        id: z.enum(DESIGN_IDS),
         enabled: z.boolean(),
         tier: z.enum(['free', 'premium']),
         isNew: z.boolean().default(false),
@@ -69,6 +79,8 @@ export const businessConfig = z.object({
     maintenance: z.boolean(),
     /** R6 Design Studio (adjust and fine-tune every design detail). Off until switched on. */
     designStudio: z.boolean().default(false),
+    /** R7 AI Designer ("Describe your design"). Off until switched on. */
+    designer: z.boolean().default(false),
   }),
   announcement: z.object({ enabled: z.boolean(), text: z.string().max(240) }),
   /** How to pay for a pass (manual payments, R1.4). Shown on /premium when sales are on. */
@@ -146,21 +158,21 @@ export const DEFAULT_CONFIG: BusinessConfig = {
   plans: {
     visitor: {
       label: 'Visitor',
-      limits: { 'pdf.download': 0, 'import.cv': 0, 'ai.action': 0 },
+      limits: { 'pdf.download': 0, 'import.cv': 0, 'ai.action': 0, 'design.ai': 0 },
       maxJobs: 0,
     },
     free: {
       label: 'Free',
-      limits: { 'pdf.download': 30, 'import.cv': 2, 'ai.action': 0 },
+      limits: { 'pdf.download': 30, 'import.cv': 2, 'ai.action': 0, 'design.ai': 1 },
       maxJobs: 3,
     },
     premium: {
       label: 'Premium',
-      limits: { 'pdf.download': 100, 'import.cv': 30, 'ai.action': 300 },
+      limits: { 'pdf.download': 100, 'import.cv': 30, 'ai.action': 300, 'design.ai': 40 },
       maxJobs: -1,
     },
   },
-  designs: TEMPLATE_IDS.map((id) => ({ id, enabled: true, tier: 'free' as const, isNew: false })),
+  designs: DESIGN_IDS.map((id) => ({ id, enabled: true, tier: 'free' as const, isNew: false })),
   passes: [
     { id: 'month', label: '1 month', days: 30, pricePkr: 499, active: true },
     { id: 'quarter', label: '3 months', days: 90, pricePkr: 1299, active: true },
@@ -172,6 +184,7 @@ export const DEFAULT_CONFIG: BusinessConfig = {
     signups: true,
     maintenance: false,
     designStudio: false,
+    designer: false,
   },
   announcement: { enabled: false, text: '' },
   support: { email: '' },
@@ -185,10 +198,39 @@ export const DEFAULT_CONFIG: BusinessConfig = {
   },
 };
 
-/** Design tiers recommended for launch (applied by the owner in the Admin Console). */
-export const LAUNCH_FREE_DESIGNS = ['clarity', 'chronicle', 'heritage'] as const;
+/**
+ * Design tiers recommended for launch (applied by the owner in the Admin Console): one free
+ * design per family (owner decision, Appendix C).
+ */
+export const LAUNCH_FREE_DESIGNS = [
+  'clarity',
+  'heritage',
+  'harbor',
+  'column',
+  'chronicle',
+  'spark',
+  'lens',
+  'grid',
+] as const;
+
+/**
+ * Catalogue designs a stored config does not know yet (added in a later release) are appended
+ * hidden and Premium, marked new: they appear only when the owner switches them on.
+ */
+export function withAllDesigns(cfg: BusinessConfig): BusinessConfig {
+  const known = new Set(cfg.designs.map((d) => d.id));
+  const missing = DESIGN_IDS.filter((id) => !known.has(id));
+  if (missing.length === 0) return cfg;
+  return {
+    ...cfg,
+    designs: [
+      ...cfg.designs,
+      ...missing.map((id) => ({ id, enabled: false, tier: 'premium' as const, isNew: true })),
+    ],
+  };
+}
 
 export function parseConfig(raw: unknown): BusinessConfig {
   const r = businessConfig.safeParse(raw);
-  return r.success ? r.data : DEFAULT_CONFIG;
+  return r.success ? withAllDesigns(r.data) : DEFAULT_CONFIG;
 }

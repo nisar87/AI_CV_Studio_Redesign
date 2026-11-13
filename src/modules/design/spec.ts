@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { DENSITIES, FONT_PAIR_IDS, PAGE_SIZES, TEMPLATE_IDS } from '@/modules/resume/ids';
+import {
+  DENSITIES,
+  FONT_PAIR_IDS,
+  PAGE_SIZES,
+  DESIGN_IDS,
+  SPEC_DESIGN_IDS,
+  TEMPLATE_IDS,
+} from '@/modules/resume/ids';
 
 /**
  * Design Spec v2 (complete-studio-spec §7.3, Appendix A): the bounded design vocabulary.
@@ -114,6 +121,13 @@ export const designSpecV2 = z.object({
    * any other field detaches it (baseId removed) and the generic composer takes over.
    */
   baseId: z.enum(TEMPLATE_IDS).optional().catch(undefined),
+  /**
+   * Spec-only catalogue design (R7) this spec still is. Rendered by the composer like any spec;
+   * kept while only the overridable fields change, so the design keeps its catalogue tier.
+   */
+  designId: z.enum(SPEC_DESIGN_IDS).optional().catch(undefined),
+  /** Catalogue design a custom design was started from ("Back to …"). */
+  origin: z.enum(DESIGN_IDS).optional().catch(undefined),
   /** "ATS-safe version": render one plain column with standard headings (applied by normalise). */
   atsSafe: flag(false),
   page: z

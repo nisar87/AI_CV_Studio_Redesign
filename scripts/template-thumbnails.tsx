@@ -6,9 +6,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import puppeteer from 'puppeteer-core';
 import { FIXTURES, withPhoto } from '../src/modules/resume/fixtures';
-import { TEMPLATE_IDS } from '../src/modules/resume/schema';
+import { DESIGNS } from '../src/modules/design/designs';
+import { ops } from '../src/modules/resume/ops';
 import { buildDocumentHtml } from '../src/modules/templates/build-document';
-import { getTemplate } from '../src/modules/templates/registry';
 
 const OUT = 'public/templates';
 fs.mkdirSync(OUT, { recursive: true });
@@ -17,14 +17,13 @@ const browser = await puppeteer.launch({
   executablePath: process.env.CHROME_EXECUTABLE_PATH ?? '/usr/bin/google-chrome',
   args: ['--no-sandbox', '--font-render-hinting=none'],
 });
-for (const id of TEMPLATE_IDS) {
-  const t = getTemplate(id);
-  const base = id === 'heritage' ? FIXTURES.executive : FIXTURES.teacher;
-  const doc = structuredClone(
-    t.photo === 'optional' ? withPhoto(base, id === 'heritage' ? 'b' : 'a') : base,
-  );
-  doc.design.templateId = id;
-  if (t.support.defaults.fontPair) doc.design.fontPair = t.support.defaults.fontPair;
+const only = process.argv[2]?.split(',');
+for (const meta of DESIGNS) {
+  const id = meta.id;
+  if (only && !only.includes(id)) continue;
+  const classic = meta.family === 'classic';
+  const base = classic ? FIXTURES.executive : FIXTURES.teacher;
+  const doc = ops.useDesign(meta.photo ? withPhoto(base, classic ? 'b' : 'a') : base, id);
   const page = await browser.newPage();
   await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 0.5 });
   await page.setContent(buildDocumentHtml(doc, { fonts: { kind: 'inline', read } }));

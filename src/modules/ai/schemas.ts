@@ -1,6 +1,13 @@
 import { z } from 'zod';
 import { PRESET_IDS } from '@/modules/resume/professions';
-import { DENSITIES, FONT_PAIR_IDS, TEMPLATE_IDS, hexColor } from '@/modules/resume/schema';
+import {
+  DENSITIES,
+  DESIGN_IDS,
+  FONT_PAIR_IDS,
+  TEMPLATE_IDS,
+  hexColor,
+} from '@/modules/resume/schema';
+import { FIELDS, FIELD_NAMES, type FieldDef } from '@/modules/design/vocab';
 
 /**
  * Input and output contracts of every AI task. Shared by the API route (validation),
@@ -23,6 +30,8 @@ export const TASK_IDS = [
   'interview.prep',
   'import.transcribe',
   'makeover.diagnose',
+  'design.compose',
+  'design.refine',
 ] as const;
 export type TaskId = (typeof TASK_IDS)[number];
 
@@ -46,7 +55,53 @@ export const designChoice = z.object({
 });
 export type DesignChoice = z.infer<typeof designChoice>;
 
+/** The flat design fields as an all-optional object (the model sets only what it changes). */
+const designChoices = z.object(
+  Object.fromEntries(
+    FIELD_NAMES.map((n) => {
+      const f: FieldDef = FIELDS[n];
+      const t =
+        f.kind === 'enum'
+          ? z.enum(f.values as [string, ...string[]])
+          : f.kind === 'kinds'
+            ? z.array(z.enum(f.values as [string, ...string[]])).max(6)
+            : f.kind === 'number'
+              ? z.number()
+              : f.kind === 'bool'
+                ? z.boolean()
+                : z.string().regex(/^#[0-9a-fA-F]{6}$/);
+      return [n, t.optional()];
+    }),
+  ),
+);
+
 export const taskInputs = {
+  'design.compose': z.object({
+    description: short(600).default(''),
+    presetId: z.enum(PRESET_IDS),
+    /** Content statistics (no CV text): length, section sizes, photo. */
+    stats: z.object({
+      pages: z.number().min(0).max(10),
+      sections: z
+        .array(
+          z.object({
+            kind: short(20),
+            items: z.number().int().min(0).max(99),
+            chars: z.number().int().min(0).max(100_000),
+          }),
+        )
+        .max(30),
+      hasPhoto: z.boolean(),
+    }),
+    /** Current design as flat fields, plus the catalogue design it is (or started from). */
+    current: z.record(z.string(), z.unknown()).default({}),
+    currentDesign: z.enum(DESIGN_IDS).optional(),
+    hasImage: z.boolean().default(false),
+  }),
+  'design.refine': z.object({
+    instruction: short(300).min(2),
+    current: z.record(z.string(), z.unknown()),
+  }),
   'intake.interpret': z.object({ description: short(600).min(3) }),
   'design.interpret': z.object({
     description: short(400).min(2),
@@ -152,6 +207,31 @@ const ymd = z.string().max(10);
  * maxLength in the schema).
  */
 export const taskOutputs = {
+  'design.compose': z.object({
+    candidates: z
+      .array(
+        z.object({
+          name: z.string().max(40),
+          explanation: z.string().max(240),
+          startFrom: z.enum(DESIGN_IDS),
+          choices: designChoices,
+          unmet: z.array(z.string().max(200)).max(4).default([]),
+        }),
+      )
+      .min(1)
+      .max(3),
+  }),
+  'design.refine': z.object({
+    changes: z
+      .array(
+        z.object({
+          field: z.enum(FIELD_NAMES as [string, ...string[]]),
+          value: z.string().max(120),
+        }),
+      )
+      .max(12),
+    note: z.string().max(240).default(''),
+  }),
   'intake.interpret': z.object({
     presetId: z.enum(PRESET_IDS),
     targetTitle: z.string().max(120),

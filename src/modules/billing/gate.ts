@@ -1,4 +1,4 @@
-import type { TemplateId } from '@/modules/resume/schema';
+import type { DesignId } from '@/modules/resume/schema';
 import type { BusinessConfig, Metered, PlanId } from './config';
 
 /**
@@ -16,9 +16,10 @@ const NOUN: Record<Metered, string> = {
   'pdf.download': 'PDF downloads',
   'import.cv': 'CV imports',
   'ai.action': 'AI actions',
+  'design.ai': 'AI designs',
 };
 
-export function canUseDesign(plan: PlanId, cfg: BusinessConfig, id: TemplateId): Decision {
+export function canUseDesign(plan: PlanId, cfg: BusinessConfig, id: DesignId): Decision {
   const d = cfg.designs.find((x) => x.id === id);
   if (!d || !d.enabled)
     return { ok: false, reason: 'disabled', message: 'This design is not available right now.' };
@@ -36,6 +37,8 @@ export function canUse(plan: PlanId, cfg: BusinessConfig, cap: Metered, used: nu
     };
   if (cap === 'ai.action' && !cfg.features.ai)
     return { ok: false, reason: 'disabled', message: 'AI help is switched off right now.' };
+  if (cap === 'design.ai' && (!cfg.features.ai || !cfg.features.designer))
+    return { ok: false, reason: 'disabled', message: 'The AI Designer is switched off right now.' };
   if (cap === 'import.cv' && !cfg.features.import)
     return { ok: false, reason: 'disabled', message: 'Importing is switched off right now.' };
   const limit = cfg.plans[plan].limits[cap];

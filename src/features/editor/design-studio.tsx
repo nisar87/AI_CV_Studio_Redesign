@@ -25,7 +25,8 @@ import {
   type DesignSpecV2,
 } from '@/modules/design/spec';
 import { DENSITY } from '@/modules/templates/design';
-import { getTemplate } from '@/modules/templates/registry';
+import { currentDesignId } from '@/modules/design/catalogue';
+import { DESIGN_META } from '@/modules/design/designs';
 import { ops } from '@/modules/resume/ops';
 import type { DocumentEditor } from './use-document-editor';
 
@@ -187,8 +188,10 @@ export function DesignStudio({
   const { doc, update } = editor;
   const account = useAccount();
   const spec = useMemo(() => doc.design.v2 ?? migrateV1(doc.design), [doc.design]);
-  const attached = !!spec.baseId && !spec.atsSafe;
-  const base = getTemplate(doc.design.templateId);
+  const attached = !!(spec.baseId || spec.designId) && !spec.atsSafe;
+  const baseId =
+    currentDesignId({ ...doc.design, v2: spec }) ?? spec.origin ?? doc.design.templateId;
+  const base = DESIGN_META[baseId];
   const notes = useMemo(() => normalise(spec, doc).unmet, [spec, doc]);
 
   /** Change the spec. `keepBase`: the change is one the catalogue design accepts as it is. */
@@ -198,7 +201,11 @@ export function DesignStudio({
         const cur = x.design.v2 ?? migrateV1(x.design);
         const next = structuredClone(cur);
         fn(next);
-        if (!opt.keepBase) next.baseId = undefined;
+        if (!opt.keepBase) {
+          next.origin = cur.designId ?? cur.baseId ?? cur.origin;
+          next.baseId = undefined;
+          next.designId = undefined;
+        }
         return ops.setSpec(x, next);
       }, opt.key);
     },
@@ -360,7 +367,7 @@ export function DesignStudio({
             size="sm"
             variant="ghost"
             icon={<RotateCcw aria-hidden size={16} />}
-            onClick={() => update((x) => ops.clearSpec(x))}
+            onClick={() => update((x) => ops.useDesign(x, baseId))}
           >
             Back to {base.name}
           </Button>

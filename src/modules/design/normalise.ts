@@ -36,7 +36,8 @@ export function atsSafeSpec(s: DesignSpecV2): DesignSpecV2 {
       contact: { layout: 'inline', icons: false },
       photo: { ...s.header.photo, show: false },
     },
-    headings: { ...s.headings, style: 'underline', case: 'upper' },
+    // Normal case without letter spacing: spaced capitals can split words in text extraction.
+    headings: { ...s.headings, style: 'underline', case: 'normal' },
     sections: { container: 'none', divider: 'none' },
     entries: { ...s.entries, layout: 'dates-right' },
     bullets: { ...s.bullets, marker: 'disc' },
@@ -96,7 +97,10 @@ export function normalise(input: DesignSpecV2, doc?: ResumeDocument): Normalised
   const H = s.header;
   if (H.style === 'in-sidebar' && !hasSide) H.style = 'plain';
   if (H.photo.position === 'side-top' && !hasSide) H.photo.position = 'header-right';
-  if (H.photo.position === 'overlap' && H.style !== 'band') H.photo.position = 'header-right';
+  // The overlapping portrait hangs off the left of a band; on a centred band it would cover the
+  // name, so it sits in the band instead.
+  if (H.photo.position === 'overlap' && (H.style !== 'band' || H.align === 'center'))
+    H.photo.position = 'header-right';
 
   // Bars and dots would show a level the person never gave.
   if (s.lists.skills.style === 'bars' || s.lists.skills.style === 'dots') {

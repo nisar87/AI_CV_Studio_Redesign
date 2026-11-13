@@ -103,7 +103,14 @@ export const SECTION_KINDS = [
   'custom',
 ] as const;
 
-export { TEMPLATE_IDS, FONT_PAIR_IDS, DENSITIES, PAGE_SIZES } from './ids';
+export {
+  TEMPLATE_IDS,
+  SPEC_DESIGN_IDS,
+  DESIGN_IDS,
+  FONT_PAIR_IDS,
+  DENSITIES,
+  PAGE_SIZES,
+} from './ids';
 
 export const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Use a #RRGGBB colour');
 
@@ -178,6 +185,9 @@ export type ProjectItem = z.infer<typeof projectItem>;
 export type CustomItem = z.infer<typeof customItem>;
 export type DesignSpec = z.infer<typeof designSpec>;
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
+/** Any catalogue design, hand-crafted or spec-only (R7). */
+export type DesignId = (typeof import('./ids').DESIGN_IDS)[number];
+export type SpecDesignId = (typeof import('./ids').SPEC_DESIGN_IDS)[number];
 export type FontPairId = (typeof FONT_PAIR_IDS)[number];
 export type Density = (typeof DENSITIES)[number];
 export type PageSize = (typeof PAGE_SIZES)[number];

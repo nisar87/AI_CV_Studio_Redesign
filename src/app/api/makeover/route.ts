@@ -9,7 +9,7 @@ import { detectProfile } from '@/modules/makeover/profile';
 import { contentStats, rankDesigns } from '@/modules/makeover/rank';
 import { issueMakeover, takePreview } from '@/modules/makeover/server';
 import { track } from '@/modules/metrics/server';
-import { TEMPLATE_IDS, type TemplateId } from '@/modules/resume/schema';
+import { DESIGN_IDS, TEMPLATE_IDS, type DesignId } from '@/modules/resume/schema';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -87,9 +87,9 @@ export async function POST(req: Request) {
       ...read.doc,
       presetId: read.doc.presetId === 'general' ? profile.presetId : read.doc.presetId,
     };
-    const enabled = TEMPLATE_IDS.filter(
-      (id) => cfg.designs.find((d) => d.id === id)?.enabled !== false,
-    ) as TemplateId[];
+    const enabled: DesignId[] = DESIGN_IDS.filter(
+      (id) => cfg.designs.find((d) => d.id === id)?.enabled === true,
+    );
     const stats = contentStats(doc, profile.presetId, read.photo);
     const ranking = rankDesigns(stats, enabled.length ? enabled : [...TEMPLATE_IDS]);
     const makeoverId = await issueMakeover(mode === 'full');

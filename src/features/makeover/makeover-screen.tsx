@@ -13,11 +13,13 @@ import { DocumentPreview } from '@/features/preview/document-preview';
 import { cn } from '@/lib/cn';
 import { applySuggestions, chipCounts, type Suggestion } from '@/modules/makeover/polish';
 import { getProfession } from '@/modules/resume/professions';
-import type { ResumeDocument, TemplateId } from '@/modules/resume/schema';
+import type { DesignId, ResumeDocument } from '@/modules/resume/schema';
 import { getRepository } from '@/modules/storage/repository';
 import { isProfile, makeProfile } from '@/modules/resume/profile';
 import { CheckboxField } from '@/features/editor/fields';
-import { getTemplate } from '@/modules/templates/registry';
+import { currentDesignId } from '@/modules/design/catalogue';
+import { ops } from '@/modules/resume/ops';
+import { DESIGN_META } from '@/modules/design/designs';
 import { BeforeView } from './before-view';
 import { DropZone } from './drop-zone';
 import { PolishChips } from './polish-panel';
@@ -25,16 +27,8 @@ import { clearPending, loadPending, savePending, takeHandOff, type MakeoverResul
 
 type Failure = { message: string; reason?: string };
 
-export function withDesign(doc: ResumeDocument, id: TemplateId): ResumeDocument {
-  const t = getTemplate(id);
-  return {
-    ...doc,
-    design: {
-      ...doc.design,
-      templateId: id,
-      fontPair: t.support.defaults.fontPair ?? doc.design.fontPair,
-    },
-  };
+export function withDesign(doc: ResumeDocument, id: DesignId): ResumeDocument {
+  return ops.useDesign(doc, id);
 }
 
 function event(name: 'makeover_design_switch' | 'landing_view') {
@@ -59,7 +53,7 @@ export function MakeoverScreen() {
   const [failure, setFailure] = useState<Failure | null>(null);
   const [result, setResult] = useState<MakeoverResult | null>(null);
   const [doc, setDoc] = useState<ResumeDocument | null>(null);
-  const [templateId, setTemplateId] = useState<TemplateId>('clarity');
+  const [templateId, setDesignId] = useState<DesignId>('clarity');
   const [saving, setSaving] = useState<'download' | 'edit' | null>(null);
   const [saveFailure, setSaveFailure] = useState<Failure | null>(null);
   const [placed, setPlaced] = useState<Record<string, 'added' | 'left'>>({});
@@ -73,7 +67,7 @@ export function MakeoverScreen() {
 
   const isPremium = ent?.plan === 'premium';
   const locked = useCallback(
-    (id: TemplateId) => !isPremium && ent?.designs.find((d) => d.id === id)?.tier === 'premium',
+    (id: DesignId) => !isPremium && ent?.designs.find((d) => d.id === id)?.tier === 'premium',
     [ent, isPremium],
   );
 
@@ -122,7 +116,7 @@ export function MakeoverScreen() {
         const first = j.ranking.find((x) => !locked(x.id)) ?? j.ranking[0];
         setResult(j);
         setDoc(j.document);
-        setTemplateId(first?.id ?? 'clarity');
+        setDesignId(first?.id ?? 'clarity');
         setPhase('result');
         refresh();
       } catch {
@@ -151,7 +145,7 @@ export function MakeoverScreen() {
       if (!p) return;
       setResult(p.result);
       setDoc(p.doc);
-      setTemplateId(p.templateId);
+      setDesignId(p.templateId);
       setPhase('result');
       autoAction.current = p.action;
     }, 0);
@@ -368,7 +362,7 @@ export function MakeoverScreen() {
             </h3>
             <div role="radiogroup" aria-labelledby="mk-designs" className="grid grid-cols-3 gap-3">
               {result.ranking.map((r, i) => {
-                const t = getTemplate(r.id);
+                const t = DESIGN_META[r.id];
                 const on = r.id === templateId;
                 return (
                   <button
@@ -380,7 +374,7 @@ export function MakeoverScreen() {
                     data-design={r.id}
                     onClick={() => {
                       if (on) return;
-                      setTemplateId(r.id);
+                      setDesignId(r.id);
                       event('makeover_design_switch');
                     }}
                     title={r.reasons.length ? `${t.name}: ${r.reasons.join(', ')}` : t.name}
@@ -410,7 +404,7 @@ export function MakeoverScreen() {
             </div>
             {locked(templateId) && (
               <p className="text-ink-muted text-sm">
-                {getTemplate(templateId).name} is a Premium design. You can save and edit in it;
+                {DESIGN_META[templateId].name} is a Premium design. You can save and edit in it;
                 downloading needs Premium, or switch to a free design any time.
               </p>
             )}
@@ -534,7 +528,7 @@ function Compare({
           <DocumentPreview
             doc={doc}
             debounceMs={0}
-            title={`Your new CV in the ${getTemplate(doc.design.templateId).name} design`}
+            title={`Your new CV in the ${DESIGN_META[currentDesignId(doc.design) ?? doc.design.templateId].name} design`}
           />
           {watermark && (
             <div

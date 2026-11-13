@@ -42,6 +42,11 @@ export const EVENTS = [
   'polish_ok',
   'polish_fail',
   'polish_accept',
+  // R7 AI Designer
+  'design_compose',
+  'design_compose_fail',
+  'design_refine',
+  'design_refine_fail',
 ] as const;
 export type MetricEvent = (typeof EVENTS)[number];
 
@@ -92,6 +97,10 @@ export async function aiCallsToday(now = Date.now()): Promise<number> {
       'vision_fail',
       'polish_ok',
       'polish_fail',
+      'design_compose',
+      'design_compose_fail',
+      'design_refine',
+      'design_refine_fail',
     ].reduce((n, k) => n + (c[k] ?? 0), 0);
     budgetCache = { at: now, day, used };
     return used;

@@ -1,5 +1,7 @@
 'use client';
 
+import { tierDesignId } from '@/modules/design/catalogue';
+import { DESIGN_META } from '@/modules/design/designs';
 import Link from 'next/link';
 import { useState } from 'react';
 import { ArrowLeft, Crown, Download, FileJson, FileText, LogIn, Printer } from 'lucide-react';
@@ -9,7 +11,6 @@ import { useAccount } from '@/features/account/account-context';
 import { isPremiumDesign, remaining, useEntitlements } from '@/features/account/entitlements';
 import { ops } from '@/modules/resume/ops';
 import { getRepository } from '@/modules/storage/repository';
-import { getTemplate } from '@/modules/templates/registry';
 import { useToast } from '@/components/ui/toast';
 import { DocumentPreview, type PreviewStatus } from '@/features/preview/document-preview';
 import { PreviewStatusLine } from '@/features/editor/editor-screen';
@@ -38,10 +39,10 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
   const editHref = `/cv/${doc.id}`;
   const here = `/cv/${doc.id}/download`;
   const signedOut = account.status === 'signedOut';
-  const v2 = doc.design.v2;
-  const customDesign = !!v2 && !v2.baseId && !v2.atsSafe;
+  const designId = tierDesignId(doc.design);
+  const customDesign = designId === null;
   const lockedDesign = ent
-    ? ent.plan !== 'premium' && (customDesign || isPremiumDesign(ent, doc.design.templateId))
+    ? ent.plan !== 'premium' && (customDesign || isPremiumDesign(ent, designId))
     : false;
   const left = ent && ent.plan !== 'visitor' ? remaining(ent, 'pdf.download') : null;
 
@@ -49,12 +50,12 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
   function switchToFreeDesign() {
     const free = ent?.designs.find((d) => d.enabled && d.tier === 'free');
     if (!free) return;
-    const next = ops.setDesign(ops.clearSpec(doc), { templateId: free.id });
+    const next = ops.useDesign(doc, free.id);
     getRepository().save(next);
     setDoc(next);
     setBlocked(null);
     toast.show({
-      message: `Switched to ${getTemplate(free.id).name}. Your words are unchanged.`,
+      message: `Switched to ${DESIGN_META[free.id].name}. Your words are unchanged.`,
       tone: 'success',
     });
   }
@@ -189,9 +190,9 @@ export function DownloadScreen({ doc: initialDoc }: { doc: ResumeDocument }) {
             >
               <h2 id="premium-h" className="flex items-center gap-2 text-lg font-semibold">
                 <Crown aria-hidden size={20} className="text-accent-ink" />{' '}
-                {customDesign
+                {designId === null
                   ? 'Custom designs are part of Premium'
-                  : `${getTemplate(doc.design.templateId).name} is a Premium design`}
+                  : `${DESIGN_META[designId].name} is a Premium design`}
               </h2>
               <p className="text-ink-muted">
                 Premium unlocks every design, AI writing help and more downloads. Or switch to a

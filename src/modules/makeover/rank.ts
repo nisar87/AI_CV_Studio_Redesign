@@ -1,5 +1,6 @@
 import type { PresetId } from '@/modules/resume/professions';
-import type { ResumeDocument, TemplateId } from '@/modules/resume/schema';
+import { DESIGNS } from '@/modules/design/designs';
+import type { DesignId, ResumeDocument, TemplateId } from '@/modules/resume/schema';
 
 /**
  * Design ranking (spec §6.3): a deterministic score per design, so the result is explainable and
@@ -18,7 +19,7 @@ export type DesignTraits = {
   fit: Partial<Record<PresetId, number>>;
 };
 
-export const DESIGN_TRAITS: Record<TemplateId, DesignTraits> = {
+const CRAFTED_TRAITS: Record<TemplateId, DesignTraits> = {
   clarity: {
     family: 'single',
     bold: false,
@@ -91,6 +92,25 @@ export const DESIGN_TRAITS: Record<TemplateId, DesignTraits> = {
   },
 };
 
+/**
+ * Traits of every catalogue design: the 10 crafted designs keep their tuned values; the R7
+ * spec-only designs take theirs from the catalogue metadata.
+ */
+export const DESIGN_TRAITS: Record<DesignId, DesignTraits> = Object.fromEntries(
+  DESIGNS.map((d) => [
+    d.id,
+    d.id in CRAFTED_TRAITS
+      ? CRAFTED_TRAITS[d.id as TemplateId]
+      : {
+          family: d.columns > 1 ? 'sidebar' : 'single',
+          bold: d.family === 'bold' || d.family === 'portrait',
+          timeline: d.family === 'timeline',
+          photo: d.photo,
+          fit: d.fit,
+        },
+  ]),
+) as Record<DesignId, DesignTraits>;
+
 export type ContentStats = {
   presetId: PresetId;
   words: number;
@@ -138,9 +158,9 @@ export function contentStats(
   };
 }
 
-export type Ranked = { id: TemplateId; score: number; reasons: string[] };
+export type Ranked = { id: DesignId; score: number; reasons: string[] };
 
-export function scoreDesign(id: TemplateId, s: ContentStats): Ranked {
+export function scoreDesign(id: DesignId, s: ContentStats): Ranked {
   const t = DESIGN_TRAITS[id];
   const reasons: string[] = [];
   const fit = t.fit[s.presetId] ?? 0.4;
@@ -174,7 +194,7 @@ export function scoreDesign(id: TemplateId, s: ContentStats): Ranked {
  * Top `count` designs, best first. The strip always includes a single-column, a side-column and a
  * bold design, so the choice is visibly different.
  */
-export function rankDesigns(s: ContentStats, enabled: TemplateId[], count = 6): Ranked[] {
+export function rankDesigns(s: ContentStats, enabled: DesignId[], count = 6): Ranked[] {
   const all = enabled
     .map((id) => scoreDesign(id, s))
     .sort((a, b) => b.score - a.score || enabled.indexOf(a.id) - enabled.indexOf(b.id));
