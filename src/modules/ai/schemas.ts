@@ -27,6 +27,7 @@ export const TASK_IDS = [
   'job.tailor',
   'letter.write',
   'letter.generic',
+  'quality.atsKeywords',
   'linkedin.write',
   'interview.prep',
   'import.transcribe',
@@ -186,6 +187,10 @@ export const taskInputs = {
     name: z.string().max(120),
     profile: z.string().min(20).max(24_000),
     tone: z.enum(['warm', 'formal']).default('warm'),
+  }),
+  'quality.atsKeywords': z.object({
+    advert: z.string().min(80).max(12_000),
+    profile: z.string().min(20).max(24_000),
   }),
   'interview.prep': z.object({
     advert: z.string().min(80).max(12_000),
@@ -353,6 +358,18 @@ export const taskOutputs = {
     greeting: z.string().max(80),
     paragraphs: z.array(z.string().min(1).max(1200)).min(1).max(5),
     closing: z.string().max(80),
+  }),
+  'quality.atsKeywords': z.object({
+    terms: z
+      .array(
+        z.object({
+          /** As written in the advert, 1 to 4 words. */
+          term: z.string().min(1).max(60),
+          /** For a term the CV lacks: the id of a CV line that already shows it in other words, or "". */
+          line: z.string().max(20),
+        }),
+      )
+      .max(25),
   }),
   'interview.prep': z.object({
     questions: z

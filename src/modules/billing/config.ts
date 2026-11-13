@@ -11,7 +11,13 @@ export const PLAN_IDS = ['visitor', 'free', 'premium'] as const;
 export type PlanId = (typeof PLAN_IDS)[number];
 
 /** Metered capabilities: each plan has a monthly limit (-1 = unlimited, 0 = not included). */
-export const METERED = ['pdf.download', 'import.cv', 'ai.action', 'design.ai'] as const;
+export const METERED = [
+  'pdf.download',
+  'import.cv',
+  'ai.action',
+  'design.ai',
+  'ats.check',
+] as const;
 export type Metered = (typeof METERED)[number];
 
 const limit = z.number().int().min(-1).max(100_000);
@@ -19,12 +25,14 @@ const limit = z.number().int().min(-1).max(100_000);
  * `design.ai` (R7 AI Designer: composes per month) is newer than saved configs, so each plan has
  * its own default: one free compose to try, 40 a month with Premium (complete-studio-spec §14).
  */
-const limitsWith = (designAi: number) =>
+const limitsWith = (designAi: number, ats: number) =>
   z.object({
     'pdf.download': limit,
     'import.cv': limit,
     'ai.action': limit,
     'design.ai': limit.default(designAi),
+    /** R8 ATS check: free 2 a month (readability checks), Premium unlimited with keywords. */
+    'ats.check': limit.default(ats),
   });
 
 export const businessConfig = z.object({
@@ -32,17 +40,17 @@ export const businessConfig = z.object({
     // maxJobs: how many jobs the tracker keeps at once (-1 = no limit). Optional for older saves.
     visitor: z.object({
       label: z.string().max(40),
-      limits: limitsWith(0),
+      limits: limitsWith(0, 0),
       maxJobs: z.number().int().min(-1).max(10_000).default(0),
     }),
     free: z.object({
       label: z.string().max(40),
-      limits: limitsWith(1),
+      limits: limitsWith(1, 2),
       maxJobs: z.number().int().min(-1).max(10_000).default(3),
     }),
     premium: z.object({
       label: z.string().max(40),
-      limits: limitsWith(40),
+      limits: limitsWith(40, -1),
       maxJobs: z.number().int().min(-1).max(10_000).default(-1),
     }),
   }),
@@ -81,6 +89,8 @@ export const businessConfig = z.object({
     designStudio: z.boolean().default(false),
     /** R7 AI Designer ("Describe your design"). Off until switched on. */
     designer: z.boolean().default(false),
+    /** R8 ATS check in the editor's Check tab. */
+    atsCheck: z.boolean().default(true),
   }),
   announcement: z.object({ enabled: z.boolean(), text: z.string().max(240) }),
   /** How to pay for a pass (manual payments, R1.4). Shown on /premium when sales are on. */
@@ -158,17 +168,29 @@ export const DEFAULT_CONFIG: BusinessConfig = {
   plans: {
     visitor: {
       label: 'Visitor',
-      limits: { 'pdf.download': 0, 'import.cv': 0, 'ai.action': 0, 'design.ai': 0 },
+      limits: { 'pdf.download': 0, 'import.cv': 0, 'ai.action': 0, 'design.ai': 0, 'ats.check': 0 },
       maxJobs: 0,
     },
     free: {
       label: 'Free',
-      limits: { 'pdf.download': 30, 'import.cv': 2, 'ai.action': 0, 'design.ai': 1 },
+      limits: {
+        'pdf.download': 30,
+        'import.cv': 2,
+        'ai.action': 0,
+        'design.ai': 1,
+        'ats.check': 2,
+      },
       maxJobs: 3,
     },
     premium: {
       label: 'Premium',
-      limits: { 'pdf.download': 100, 'import.cv': 30, 'ai.action': 300, 'design.ai': 40 },
+      limits: {
+        'pdf.download': 100,
+        'import.cv': 30,
+        'ai.action': 300,
+        'design.ai': 40,
+        'ats.check': -1,
+      },
       maxJobs: -1,
     },
   },
@@ -185,6 +207,7 @@ export const DEFAULT_CONFIG: BusinessConfig = {
     maintenance: false,
     designStudio: false,
     designer: false,
+    atsCheck: true,
   },
   announcement: { enabled: false, text: '' },
   support: { email: '' },

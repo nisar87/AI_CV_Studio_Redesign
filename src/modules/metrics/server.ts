@@ -47,6 +47,7 @@ export const EVENTS = [
   'design_compose_fail',
   'design_refine',
   'design_refine_fail',
+  'ats_check',
 ] as const;
 export type MetricEvent = (typeof EVENTS)[number];
 

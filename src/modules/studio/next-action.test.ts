@@ -42,7 +42,10 @@ describe('nextAction', () => {
     expect(a).toMatchObject({ id: 'interview', href: '/jobs/j2#interview' });
   });
   it('a saved job without letter or CV → application kit', () => {
-    expect(nextAction([doc()], [job()], { now })).toMatchObject({ id: 'kit', href: '/jobs/j1' });
+    expect(nextAction([doc()], [job()], { now })).toMatchObject({
+      id: 'kit',
+      href: '/jobs/j1#kit',
+    });
   });
   it('applied over a week ago → follow up', () => {
     const a = nextAction([doc()], [job({ stage: 'applied', appliedOn: '2026-11-02' })], { now });

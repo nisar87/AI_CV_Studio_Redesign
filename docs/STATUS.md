@@ -751,6 +751,10 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 - **Documents hub:** filters All · CVs · Letters and "For job". The Letters list shows library letters and the cover letters written on jobs (they open on their job). It has one-click starts for every letter type.
 - **Create sheet:** Cover letter → the general cover letter; Letter → the type picker. The general cover letter points to Jobs when there is a specific advert.
 - **Privacy page:** a paragraph on letters.
+- **Verified live with real Gemini** (owner's account; Premium granted temporarily, then removed, usage reset and the test letters deleted):
+  - Resignation letter, formal: "Dear Head of Engineering," with the role, organisation and last day exactly as answered, the thank-you and handover from the answers, and no invented facts (0 findings, 7 s).
+  - General cover letter: used only CV facts and the "why" answer.
+  - The PDF downloaded as `Nisar-Ahmad-Resignation-letter.pdf`.
 - **Deviations:**
   - Letters are a separate account collection, not `docType: 'letter'` documents (Appendix B). This avoids touching every CV path (editor, sync, makeover, health check) for something with a different shape; the hub joins them.
   - Job cover letters stay on their job.
@@ -765,7 +769,35 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - The empty state offers to create a link for the latest CV.
 - **Share analytics** (spec §10, P2, done now because Presence needs it): share-link and portfolio opens are also counted per day (`daily.yyyy-mm-dd`, server-side increments). The owner sees the last 14 days (`lastDays()`, unit-tested). Visitors are still not identified.
 - `/portfolio` and `/linkedin` stay as the tools' own pages under Presence (the shell marks Presence as current).
+- **Verified live:** the owner's Presence page shows the three areas. A test link opened twice was counted as 2, under today in the 14-day list (Firestore per-day increments work); the link was deleted afterwards.
 - e2e: a stranger's two opens show on Presence, and switching the link off there makes it return 404.
+
+### R8.4 Application kit and ATS check
+- **ATS check** (`src/modules/quality/ats.ts`, `POST /api/quality/ats`, editor **Check** tab):
+  - It makes the PDF exactly as it downloads, reads it back with our importer (the same one people use for old CVs) and reports pass / needs work / good to know per check. Each check comes with a specific fix and "Show me" (or "Open the Design tab"). There is no single score.
+  - Checks:
+    - text can be read (≥97% of words back);
+    - name and contact found;
+    - every job read with its employer;
+    - reading order (sections, and a job's points before the next job);
+    - usual section headings;
+    - layout (columns or photo → suggest the ATS-safe version);
+    - length.
+  - "What the software reads first" shows the extracted text.
+  - **Keywords (Premium, against a saved job):** the new task `quality.atsKeywords` lists the advert's terms; the app re-checks presence itself. For a missing term the AI may point to one of the person's own lines that already shows it in other words (only real line ids are kept), so a word is added only where it's true.
+  - **Allowance `ats.check`:** visitor 0, free 2 a month (readability only), Premium unlimited (-1), plus the switch "ATS check" in Admin → Settings. Older saved settings get these values automatically.
+- **Check tab** in the editor: Content · Design · **Check** (also on phones). It brings together the CV health check and the ATS check. "Show me" opens the field in place.
+- **Application kit** (`POST /api/jobs/{id}/kit`):
+  - One button on a job makes a CV tailored to the job, a cover letter and a covering email in one call (tailor and letter run in parallel).
+  - It costs **3 AI actions**: `reserve()` now takes a weight, and the store reserves and releases by weight (unit-tested). If either part fails, nothing is counted.
+  - The three pieces show side by side as live thumbnails. "Download CV and letter" downloads both PDFs; "Copy email" copies the email.
+  - The job remembers its kit (`kit.cvId`). Home's next step goes to `/jobs/{id}#kit` and stops asking once the kit exists.
+- **Tests:** unit tests for the read-back checks (good CV; lost contact, employer and order; columns) and keyword re-checking; e2e `ats.spec` (free twice a month then 402, the report, Show me, Premium keywords) and `kit.spec` (Home → kit, three pieces, 3 AI actions, two PDFs, free 402).
+- **Deviations:**
+  - Proofreading (`quality.proofread`) is not part of the Check tab yet; it is not in this release's list.
+  - The kit downloads two PDFs rather than one merged file.
+  - The job page keeps its single column with the kit first, not the Kit · Interview · Notes tabs; the anchors `#kit`, `#letter` and `#interview` jump to each part.
+  - AI weights are fixed in code (kit = 3) until the Console gets AI weights in R8.7.
 
 ## Owner to-do (when you have time)
 
@@ -783,7 +815,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 
 ## Next action (exact)
 
-1. R8.1–R8.3 are done. Next: R8.4 application kit and ATS check, R8.5 new section types, R8.6 edit-on-page, drag reorder, AI on a selection and sync back to the profile, R8.7 Console additions.
+1. R8.1–R8.4 are done. Next: R8.5 new section types, R8.6 edit-on-page, drag reorder, AI on a selection and sync back to the profile, R8.7 Console additions.
 
 ## Deployment (2026-11-12)
 

@@ -3,7 +3,7 @@
 import { AiDocProvider } from '@/features/ai/context';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Download, Eye, Palette, PenLine } from 'lucide-react';
+import { Download, Eye, ListChecks, Palette, PenLine } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { ButtonLink } from '@/components/ui/button';
 import { Tabs, tabId, tabPanelId } from '@/components/ui/tabs';
@@ -14,9 +14,10 @@ import { ops } from '@/modules/resume/ops';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import { ContentPanel, type ContentPanelHandle } from './content-panel';
 import { DesignPanel } from './design-panel';
+import { CheckPanel } from '@/features/quality/check-panel';
 import { useDocumentEditor } from './use-document-editor';
 
-type View = 'content' | 'design' | 'preview';
+type View = 'content' | 'design' | 'check' | 'preview';
 
 export function PreviewStatusLine({
   status,
@@ -56,9 +57,10 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
   const params = useSearchParams();
   const [welcome, setWelcome] = useState(params.get('welcome') === '1');
   // ?tab=design opens the Look panel straight away (Studio Home and next-best-step links).
-  const [view, setView] = useState<View>(() =>
-    params.get('tab') === 'design' ? 'design' : 'content',
-  );
+  const [view, setView] = useState<View>(() => {
+    const t = params.get('tab');
+    return t === 'design' || t === 'check' ? t : 'content';
+  });
   const [status, setStatus] = useState<PreviewStatus | null>(null);
   const content = useRef<ContentPanelHandle>(null);
   const panelTab = view === 'preview' ? 'content' : view;
@@ -116,6 +118,7 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
                 tabs={[
                   { value: 'content', label: 'Content', icon: <PenLine aria-hidden size={18} /> },
                   { value: 'design', label: 'Design', icon: <Palette aria-hidden size={18} /> },
+                  { value: 'check', label: 'Check', icon: <ListChecks aria-hidden size={18} /> },
                 ]}
               />
             </div>
@@ -153,8 +156,18 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
               )}
               {panelTab === 'content' ? (
                 <ContentPanel ref={content} editor={editor} />
-              ) : (
+              ) : panelTab === 'design' ? (
                 <DesignPanel editor={editor} status={status} />
+              ) : (
+                <CheckPanel
+                  doc={doc}
+                  pages={status?.pages}
+                  onShow={(ref) => {
+                    setView('content');
+                    window.setTimeout(() => content.current?.reveal(ref), 50);
+                  }}
+                  onDesign={() => setView('design')}
+                />
               )}
             </div>
           </main>
@@ -183,12 +196,13 @@ export function EditorScreen({ initial }: { initial: ResumeDocument }) {
 
         <nav
           aria-label="Editor views"
-          className="border-line bg-surface fixed inset-x-0 bottom-0 z-20 grid grid-cols-3 border-t pb-[env(safe-area-inset-bottom)] lg:hidden"
+          className="border-line bg-surface fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t pb-[env(safe-area-inset-bottom)] lg:hidden"
         >
           {(
             [
               ['content', 'Edit', PenLine],
               ['design', 'Design', Palette],
+              ['check', 'Check', ListChecks],
               ['preview', 'Preview', Eye],
             ] as const
           ).map(([v, label, Icon]) => (

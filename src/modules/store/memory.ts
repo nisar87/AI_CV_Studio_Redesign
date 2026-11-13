@@ -282,18 +282,18 @@ export class MemoryUserStore implements UserStore {
   async getUsage(uid: string, month: string) {
     return { ...(this.usage.get(`${uid}/${month}`) ?? {}) };
   }
-  async reserveUsage(uid: string, month: string, key: string, limit: number) {
+  async reserveUsage(uid: string, month: string, key: string, limit: number, weight = 1) {
     const k = `${uid}/${month}`;
     const u = this.usage.get(k) ?? {};
     const n = u[key] ?? 0;
-    if (limit !== -1 && n >= limit) return false;
-    this.usage.set(k, { ...u, [key]: n + 1 });
+    if (limit !== -1 && n + weight > limit) return false;
+    this.usage.set(k, { ...u, [key]: n + weight });
     return true;
   }
-  async releaseUsage(uid: string, month: string, key: string) {
+  async releaseUsage(uid: string, month: string, key: string, weight = 1) {
     const k = `${uid}/${month}`;
     const u = this.usage.get(k) ?? {};
-    this.usage.set(k, { ...u, [key]: Math.max(0, (u[key] ?? 0) - 1) });
+    this.usage.set(k, { ...u, [key]: Math.max(0, (u[key] ?? 0) - weight) });
   }
   async getConfig(area: string) {
     const v = this.config.get(area)?.[0];

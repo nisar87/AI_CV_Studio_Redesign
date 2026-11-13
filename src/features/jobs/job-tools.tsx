@@ -33,8 +33,9 @@ import type { Letter } from '@/modules/letters/schema';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import { getRepository } from '@/modules/storage/repository';
 import { jobAiApi, jobsApi, JobsError } from './api';
+import { KitSection } from './kit-section';
 
-type Busy = null | 'match' | 'tailor' | 'letter' | 'save' | 'pdf' | 'interview' | 'notes';
+type Busy = null | 'kit' | 'match' | 'tailor' | 'letter' | 'save' | 'pdf' | 'interview' | 'notes';
 const MIN_ADVERT = 80;
 
 /** Problem shown under the tools, with the right next step for sign-in or Premium denials. */
@@ -96,6 +97,22 @@ export function JobTools({ job, onJobChange }: { job: Job; onJobChange: (j: Job)
       router.push(`/cv/${document.id}`);
     });
 
+  const makeKit = () =>
+    run('kit', async (doc) => {
+      if (
+        job.kit &&
+        !confirm('Make a new kit? Your letter is replaced; the earlier tailored CV is kept.')
+      )
+        return;
+      const { document, job: next } = await jobAiApi.kit(job.id, doc, job.letter?.tone ?? 'warm');
+      getRepository().save(document);
+      onJobChange(next);
+      toast.show({
+        tone: 'success',
+        message: 'Your kit is ready. Read it through and make it yours.',
+      });
+    });
+
   return (
     <Card className="flex flex-col gap-5 p-5" data-testid="job-tools">
       <div className="flex items-start justify-between gap-3">
@@ -151,6 +168,15 @@ export function JobTools({ job, onJobChange }: { job: Job; onJobChange: (j: Job)
               Add the full advert in “The job” and save. It’s what we compare your CV with.
             </Banner>
           )}
+
+          <KitSection
+            job={job}
+            disabled={advertShort || !source || busy !== null}
+            loading={busy === 'kit'}
+            onCreate={makeKit}
+            onProblem={setProblem}
+            refresh={refresh}
+          />
 
           <div className="flex flex-wrap gap-2">
             <Button
@@ -639,7 +665,11 @@ function LetterEditor({
     setDraft((d) => d && { ...d, paragraphs: d.paragraphs.map((p, j) => (j === i ? v : p)) });
 
   return (
-    <section aria-label="Cover letter" className="border-line flex flex-col gap-4 border-t pt-5">
+    <section
+      id="letter"
+      aria-label="Cover letter"
+      className="border-line flex scroll-mt-20 flex-col gap-4 border-t pt-5"
+    >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h3 className="flex items-center gap-2 font-semibold">
           <FileText aria-hidden size={18} /> Cover letter

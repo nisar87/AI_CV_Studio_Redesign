@@ -7,17 +7,23 @@ const cfg: BusinessConfig = {
   plans: {
     visitor: {
       label: 'Visitor',
-      limits: { 'pdf.download': 0, 'import.cv': 0, 'ai.action': 0, 'design.ai': 0 },
+      limits: { 'pdf.download': 0, 'import.cv': 0, 'ai.action': 0, 'design.ai': 0, 'ats.check': 0 },
       maxJobs: 0,
     },
     free: {
       label: 'Free',
-      limits: { 'pdf.download': 3, 'import.cv': 2, 'ai.action': 0, 'design.ai': 1 },
+      limits: { 'pdf.download': 3, 'import.cv': 2, 'ai.action': 0, 'design.ai': 1, 'ats.check': 2 },
       maxJobs: 3,
     },
     premium: {
       label: 'Premium',
-      limits: { 'pdf.download': -1, 'import.cv': 30, 'ai.action': 300, 'design.ai': 40 },
+      limits: {
+        'pdf.download': -1,
+        'import.cv': 30,
+        'ai.action': 300,
+        'design.ai': 40,
+        'ats.check': 2,
+      },
       maxJobs: -1,
     },
   },

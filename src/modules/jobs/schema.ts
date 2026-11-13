@@ -49,6 +49,8 @@ export const job = jobInput.extend({
   match: z.custom<MatchResult>().optional(),
   /** Interview preparation (written by the server only). */
   interview: z.custom<InterviewPrep>().optional(),
+  /** Application kit (R8.4): the tailored CV made with the letter and email (server only). */
+  kit: z.object({ cvId: z.string().max(64), at: z.string() }).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

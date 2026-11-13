@@ -19,6 +19,7 @@ const METER_LABEL: Record<Metered, string> = {
   'import.cv': 'CV imports',
   'ai.action': 'AI actions',
   'design.ai': 'AI designs (Designer)',
+  'ats.check': 'ATS checks (-1 = no limit)',
 };
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -620,6 +621,11 @@ export function AdminSettings() {
             label="AI Designer (describe a design in words or with a picture)"
             checked={draft.features.designer}
             onChange={(v) => edit((c) => void (c.features.designer = v))}
+          />
+          <CheckboxField
+            label="ATS check (in the editor’s Check tab)"
+            checked={draft.features.atsCheck}
+            onChange={(v) => edit((c) => void (c.features.atsCheck = v))}
           />
         </Section>
 

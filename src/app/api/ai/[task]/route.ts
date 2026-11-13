@@ -13,7 +13,13 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const MAX_BODY = 48 * 1024;
-const INTERNAL = new Set<string>(['import.structure', 'import.transcribe', 'makeover.diagnose']);
+const INTERNAL = new Set<string>([
+  'import.structure',
+  'import.transcribe',
+  'makeover.diagnose',
+  'letter.generic',
+  'quality.atsKeywords',
+]);
 const limiter = sharedAiLimiter();
 
 /** POST /api/ai/:task — docs/engineering/api-contracts.md. Logs never contain user text. */

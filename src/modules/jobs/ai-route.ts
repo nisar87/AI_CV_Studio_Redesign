@@ -17,6 +17,8 @@ import type { Job } from './schema';
 export async function prepareJobAi(
   req: Request,
   ctx: { params: Promise<{ id: string }> },
+  /** AI actions this request costs (the application kit = 3, spec §14). */
+  weight = 1,
 ): Promise<
   | { error: Response }
   | {
@@ -51,7 +53,7 @@ export async function prepareJobAi(
   const { provider } = getAiProvider();
   if (!provider)
     return { error: apiError('AI_UNAVAILABLE', 'AI help is switched off right now.', rid) };
-  const gate = await reserve(user, 'ai.action');
+  const gate = await reserve(user, 'ai.action', weight);
   if (!gate.decision.ok)
     return {
       error: apiError(denialCode(gate.decision), gate.decision.message, rid, {

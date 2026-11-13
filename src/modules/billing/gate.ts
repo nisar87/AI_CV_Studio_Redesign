@@ -17,6 +17,7 @@ const NOUN: Record<Metered, string> = {
   'import.cv': 'CV imports',
   'ai.action': 'AI actions',
   'design.ai': 'AI designs',
+  'ats.check': 'ATS checks',
 };
 
 export function canUseDesign(plan: PlanId, cfg: BusinessConfig, id: DesignId): Decision {
@@ -39,6 +40,8 @@ export function canUse(plan: PlanId, cfg: BusinessConfig, cap: Metered, used: nu
     return { ok: false, reason: 'disabled', message: 'AI help is switched off right now.' };
   if (cap === 'design.ai' && (!cfg.features.ai || !cfg.features.designer))
     return { ok: false, reason: 'disabled', message: 'The AI Designer is switched off right now.' };
+  if (cap === 'ats.check' && !cfg.features.atsCheck)
+    return { ok: false, reason: 'disabled', message: 'The ATS check is switched off right now.' };
   if (cap === 'import.cv' && !cfg.features.import)
     return { ok: false, reason: 'disabled', message: 'Importing is switched off right now.' };
   const limit = cfg.plans[plan].limits[cap];

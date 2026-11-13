@@ -208,6 +208,18 @@ function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] =
         closing: i.tone === 'formal' ? 'Yours sincerely,' : 'Kind regards,',
       };
     }
+    case 'quality.atsKeywords': {
+      const i = input as ParsedInput<'quality.atsKeywords'>;
+      // Capitalised words and phrases from the advert, deterministic.
+      const seen = new Set<string>();
+      const terms = [...i.advert.matchAll(/\b[A-Z][A-Za-z+#]{2,}(?:\s[A-Z][A-Za-z+#]{2,})?\b/g)]
+        .map((m) => m[0])
+        .filter((t) => !/^(We|The|You|Our|This|Must|Please|Apply|Job|Role)\b/.test(t))
+        .filter((t) => !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()))
+        .slice(0, 8);
+      const firstBullet = digestLines(i.profile).find((l) => /\.B\d+$/.test(l.id))?.id ?? '';
+      return { terms: terms.map((term, n) => ({ term, line: n === 0 ? firstBullet : '' })) };
+    }
     case 'interview.prep': {
       const i = input as ParsedInput<'interview.prep'>;
       const cv = digestLines(i.profile);

@@ -223,6 +223,7 @@ describe('mock provider', () => {
       profile: profileDigest(F.driver).text,
       tone: 'formal',
     },
+    'quality.atsKeywords': { advert: ADVERT, profile: profileDigest(F.driver).text },
     'linkedin.write': { profile: profileDigest(F.driver).text, target: 'transport planning' },
     'interview.prep': {
       advert: ADVERT,

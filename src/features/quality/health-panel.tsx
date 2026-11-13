@@ -7,7 +7,16 @@ import { healthCheck, type Finding } from '@/modules/quality/health';
 import type { ResumeDocument } from '@/modules/resume/schema';
 
 /** CV health check: what to fix before sending, what could be stronger, and what is already good. */
-export function HealthPanel({ doc, pages }: { doc: ResumeDocument; pages?: number }) {
+export function HealthPanel({
+  doc,
+  pages,
+  onShow,
+}: {
+  doc: ResumeDocument;
+  pages?: number;
+  /** Inside the editor: open the field in place instead of following a link. */
+  onShow?: (ref: string) => void;
+}) {
   const report = useMemo(() => healthCheck(doc, { pages }), [doc, pages]);
   const [showPassed, setShowPassed] = useState(false);
   const fixes = report.findings.filter((f) => f.severity === 'fix');
@@ -29,9 +38,11 @@ export function HealthPanel({ doc, pages }: { doc: ResumeDocument; pages?: numbe
             ? 'Ready to send. A few ideas could make it stronger.'
             : 'Ready to send. Nothing to fix.'}
       </p>
-      {fixes.length > 0 && <Group title="Fix before sending" items={fixes} doc={doc} tone="fix" />}
+      {fixes.length > 0 && (
+        <Group title="Fix before sending" items={fixes} doc={doc} tone="fix" onShow={onShow} />
+      )}
       {improve.length > 0 && (
-        <Group title="Could be stronger" items={improve} doc={doc} tone="improve" />
+        <Group title="Could be stronger" items={improve} doc={doc} tone="improve" onShow={onShow} />
       )}
       {report.passed.length > 0 && (
         <div className="mt-3">
@@ -64,11 +75,13 @@ function Group({
   items,
   doc,
   tone,
+  onShow,
 }: {
   title: string;
   items: Finding[];
   doc: ResumeDocument;
   tone: 'fix' | 'improve';
+  onShow?: (ref: string) => void;
 }) {
   const Icon = tone === 'fix' ? CircleAlert : Lightbulb;
   return (
@@ -99,12 +112,22 @@ function Group({
                   ))}
                 </ul>
               )}
-              <Link
-                href={`/cv/${doc.id}${f.ref ? `?focus=${encodeURIComponent(f.ref)}` : ''}`}
-                className="text-primary mt-1 inline-block text-sm font-semibold underline underline-offset-4"
-              >
-                Show me
-              </Link>
+              {onShow ? (
+                <button
+                  type="button"
+                  onClick={() => onShow(f.ref ?? 'basics/contact')}
+                  className="text-primary mt-1 inline-block text-sm font-semibold underline underline-offset-4"
+                >
+                  Show me
+                </button>
+              ) : (
+                <Link
+                  href={`/cv/${doc.id}${f.ref ? `?focus=${encodeURIComponent(f.ref)}` : ''}`}
+                  className="text-primary mt-1 inline-block text-sm font-semibold underline underline-offset-4"
+                >
+                  Show me
+                </Link>
+              )}
             </div>
           </li>
         ))}

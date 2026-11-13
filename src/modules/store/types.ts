@@ -78,8 +78,15 @@ export interface UserStore {
   setPass(uid: string, pass: Pass | null): Promise<void>;
   getUsage(uid: string, month: string): Promise<Record<string, number>>;
   /** Atomically increments `key` if it is below `limit` (-1 = unlimited). */
-  reserveUsage(uid: string, month: string, key: string, limit: number): Promise<boolean>;
-  releaseUsage(uid: string, month: string, key: string): Promise<void>;
+  /** Adds `weight` (default 1) if it stays within `limit` (-1 = unlimited). */
+  reserveUsage(
+    uid: string,
+    month: string,
+    key: string,
+    limit: number,
+    weight?: number,
+  ): Promise<boolean>;
+  releaseUsage(uid: string, month: string, key: string, weight?: number): Promise<void>;
 
   // Business configuration with history (Admin Console).
   getConfig(area: string): Promise<{ version: number; value: unknown } | null>;

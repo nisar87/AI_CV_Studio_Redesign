@@ -49,14 +49,14 @@ export function nextAction(
       cta: 'Practise now',
     };
   const needsKit = newest(
-    open.filter((j) => j.stage === 'saved' && (!j.letter || !j.documentIds.length)),
+    open.filter((j) => j.stage === 'saved' && !j.kit && (!j.letter || !j.documentIds.length)),
   );
   if (needsKit)
     return {
       id: 'kit',
       title: `Create your application kit: ${at(needsKit)}`,
       body: 'A CV tailored to this job, a cover letter and a short email — reviewed together.',
-      href: `/jobs/${needsKit.id}`,
+      href: `/jobs/${needsKit.id}#kit`,
       cta: 'Create the kit',
     };
   const followUp = newest(

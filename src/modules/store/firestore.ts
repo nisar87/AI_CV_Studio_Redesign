@@ -392,18 +392,18 @@ export class FirestoreUserStore implements UserStore {
     void _m;
     return counts as Record<string, number>;
   }
-  async reserveUsage(uid: string, month: string, key: string, limit: number) {
+  async reserveUsage(uid: string, month: string, key: string, limit: number, weight = 1) {
     const ref = this.usageRef(uid, month);
     return this.db.runTransaction(async (tx) => {
       const s = await tx.get(ref);
       const n = Number(s.get(key) ?? 0);
-      if (limit !== -1 && n >= limit) return false;
-      tx.set(ref, { uid, month, [key]: n + 1 }, { merge: true });
+      if (limit !== -1 && n + weight > limit) return false;
+      tx.set(ref, { uid, month, [key]: n + weight }, { merge: true });
       return true;
     });
   }
-  async releaseUsage(uid: string, month: string, key: string) {
-    await this.usageRef(uid, month).set({ [key]: FieldValue.increment(-1) }, { merge: true });
+  async releaseUsage(uid: string, month: string, key: string, weight = 1) {
+    await this.usageRef(uid, month).set({ [key]: FieldValue.increment(-weight) }, { merge: true });
   }
   async getConfig(area: string) {
     const s = await this.db.collection('config').doc(area).get();

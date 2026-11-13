@@ -89,9 +89,14 @@ export async function includes(user: SessionUser | null, cap: Metered): Promise<
 }
 
 /** Reserve one use of a metered capability. Call release() if the work then fails. */
+/**
+ * Reserves `weight` uses of a metered capability (spec §14: some AI actions cost more than one,
+ * e.g. the application kit = 3). Released with the same weight if the action fails.
+ */
 export async function reserve(
   user: SessionUser | null,
   cap: Metered,
+  weight = 1,
 ): Promise<{ decision: Decision; release: () => Promise<void>; plan: PlanId }> {
   const noop = async () => {};
   const [{ value: cfg }, { plan }] = await Promise.all([getBusinessConfig(), planFor(user)]);
@@ -101,12 +106,12 @@ export async function reserve(
   const pre = canUse(plan, cfg, cap, usage[cap] ?? 0);
   if (!pre.ok) return { decision: pre, release: noop, plan };
   const limit = cfg.plans[plan].limits[cap];
-  const got = await getUserStore().reserveUsage(user.uid, month, cap, limit);
+  const got = await getUserStore().reserveUsage(user.uid, month, cap, limit, weight);
   if (!got) return { decision: canUse(plan, cfg, cap, limit), release: noop, plan };
   return {
     decision: { ok: true },
     plan,
-    release: () => getUserStore().releaseUsage(user.uid, month, cap),
+    release: () => getUserStore().releaseUsage(user.uid, month, cap, weight),
   };
 }
 
@@ -144,6 +149,7 @@ export async function entitlementsFor(user: SessionUser | null) {
       'import.cv': usage['import.cv'] ?? 0,
       'ai.action': usage['ai.action'] ?? 0,
       'design.ai': usage['design.ai'] ?? 0,
+      'ats.check': usage['ats.check'] ?? 0,
     },
     designs: cfg.designs,
     passes: cfg.passes.filter((p) => p.active),
@@ -155,6 +161,7 @@ export async function entitlementsFor(user: SessionUser | null) {
       maintenance: cfg.features.maintenance,
       designStudio: cfg.features.designStudio,
       designer: cfg.features.designer,
+      atsCheck: cfg.features.atsCheck,
     },
     announcement: cfg.announcement.enabled ? cfg.announcement.text : null,
   };

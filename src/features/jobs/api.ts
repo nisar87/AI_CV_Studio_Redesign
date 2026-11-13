@@ -62,6 +62,11 @@ export const jobAiApi = {
       method: 'POST',
       body: JSON.stringify({ document, tone }),
     }),
+  kit: (id: string, document: ResumeDocument, tone: 'warm' | 'formal') =>
+    call<{ document: ResumeDocument; job: Job; findings: number }>(`/api/jobs/${id}/kit`, {
+      method: 'POST',
+      body: JSON.stringify({ document, tone }),
+    }),
   interview: (id: string, document: ResumeDocument) =>
     call<{ job: Job }>(`/api/jobs/${id}/interview`, {
       method: 'POST',

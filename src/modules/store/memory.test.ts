@@ -125,3 +125,16 @@ describe('metrics and payment references', () => {
     expect(await s.findPaymentByReference('tid1')).toBeNull();
   });
 });
+
+describe('weighted usage', () => {
+  it('reserves and releases a weight, refusing when it would pass the limit', async () => {
+    const s = new MemoryUserStore();
+    expect(await s.reserveUsage('u', '2026-11', 'ai.action', 4, 3)).toBe(true);
+    expect(await s.reserveUsage('u', '2026-11', 'ai.action', 4, 3)).toBe(false);
+    expect(await s.reserveUsage('u', '2026-11', 'ai.action', 4)).toBe(true);
+    expect((await s.getUsage('u', '2026-11'))['ai.action']).toBe(4);
+    await s.releaseUsage('u', '2026-11', 'ai.action', 3);
+    expect((await s.getUsage('u', '2026-11'))['ai.action']).toBe(1);
+    expect(await s.reserveUsage('u', '2026-11', 'ai.action', -1, 3)).toBe(true);
+  });
+});
