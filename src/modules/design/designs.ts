@@ -44,8 +44,8 @@ export type DesignMeta = {
   photo: boolean;
   /** Kind of work this design suits, 0–1 (missing = neutral). */
   fit: Partial<Record<PresetId, number>>;
-  /** Font pair the design is shown with (the person can change it). */
-  fontPair?: FontPairId;
+  /** Font pair the design is shown and applied with (the person can change it afterwards). */
+  fontPair: FontPairId;
 };
 
 const SIDE = ['skills', 'languages', 'certifications', 'licences', 'awards'] as const;
@@ -305,7 +305,10 @@ const M = (
   columns: o.columns ?? 1,
   photo: o.photo ?? true,
   fit: o.fit ?? {},
-  ...(o.fontPair ? { fontPair: o.fontPair } : {}),
+  // Every design has its own typeface — the one its thumbnail shows — and picking the design
+  // applies it (the person can change it afterwards). Classic designs default to the elegant
+  // serif pair, the others to the friendly pair with serif headings.
+  fontPair: o.fontPair ?? (family === 'classic' ? 'executive' : 'humanist'),
 });
 
 /** Every catalogue design, in gallery order (by family, safest first). */

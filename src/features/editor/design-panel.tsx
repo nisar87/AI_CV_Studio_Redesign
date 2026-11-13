@@ -2,7 +2,7 @@
 
 import { Check, Crown } from 'lucide-react';
 import { isPremiumDesign, useEntitlements } from '@/features/account/entitlements';
-import { useId, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { SelectableCard } from '@/components/ui/card';
 import { StyleAssist } from '@/features/ai/style-assist';
 import { CheckboxField } from './fields';
@@ -25,7 +25,7 @@ import {
 import type { DocumentEditor } from './use-document-editor';
 import { DesignStudio } from './design-studio';
 import { Designer } from './designer';
-import type { PreviewStatus } from '@/features/preview/document-preview';
+import { DocumentPreview, type PreviewStatus } from '@/features/preview/document-preview';
 
 const FONT_DESCRIPTIONS: Record<(typeof FONT_PAIR_IDS)[number], string> = {
   modern: 'Clean and contemporary',
@@ -79,6 +79,24 @@ export function DesignPanel({
     (t) => t.id === current || !ent || ent.designs.find((x) => x.id === t.id)?.enabled !== false,
   );
   const shown = family === 'all' ? available : available.filter((t) => t.family === family);
+  // The person's CV as the picker previews show it: rebuilt only when the words or their own
+  // colour, font, spacing or paper change — not when they pick a design.
+  const mineKey = JSON.stringify([
+    doc.basics,
+    doc.sections,
+    d.accent,
+    d.fontPair,
+    d.density,
+    d.pageSize,
+  ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- rebuilt by content key only
+  const mine = useMemo(() => doc, [mineKey]);
+  // One preview document per design, kept while the content is the same (stable identities, so
+  // the previews don't rebuild on every render).
+  const inDesign = useMemo(
+    () => new Map(DESIGNS.map((t) => [t.id, ops.useDesign(mine, t.id)] as const)),
+    [mine],
+  );
   const customLow = contrast(d.accent, '#ffffff') < 4.5;
 
   return (
@@ -134,14 +152,24 @@ export function DesignPanel({
                 )}
               >
                 <span className="bg-surface shadow-1 ring-line relative block overflow-hidden rounded-[3px] ring-1">
+                  {/* Static thumbnail at once; the person's own CV in this design renders over it
+                      when the card scrolls into view, so the picker shows what they will get. */}
                   {/* eslint-disable-next-line @next/next/no-img-element -- static thumbnails */}
                   <img
                     src={`/templates/${t.id}.webp`}
                     alt=""
                     width={397}
                     height={562}
-                    className="block h-auto w-full"
+                    className="absolute inset-0 h-full w-full object-cover object-top"
                     loading="lazy"
+                  />
+                  <DocumentPreview
+                    doc={inDesign.get(t.id)!}
+                    firstPageOnly
+                    decorative
+                    lazy
+                    debounceMs={300}
+                    title={`Your CV in the ${t.name} design`}
                   />
                   {selected && (
                     <span className="bg-primary text-on-primary shadow-1 absolute top-2 right-2 inline-flex size-6 items-center justify-center rounded-full">

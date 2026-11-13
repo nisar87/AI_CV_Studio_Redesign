@@ -23,7 +23,10 @@ const browser = await puppeteer.launch({
 for (const id of ids) {
   const meta = DESIGNS.find((d) => d.id === id)!;
   for (const f of fixtures) {
-    let base: ResumeDocument = FIXTURES[f];
+    let base: ResumeDocument =
+      (f as string) === 'owner'
+        ? JSON.parse(fs.readFileSync('/tmp/owner/doc.json', 'utf8'))
+        : FIXTURES[f];
     const photo = PHOTO_FOR[f];
     if (meta.photo && photo) base = withPhoto(base, photo);
     const doc = ops.useDesign(base, meta.id);
