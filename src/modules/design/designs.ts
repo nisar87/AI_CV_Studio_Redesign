@@ -139,7 +139,7 @@ export const SPEC_DESIGNS: Record<SpecDesignId, DesignSpecV2Input> = {
     lists: { skills: { style: 'tags' } },
   },
   summit: {
-    layout: { type: 'sidebar-right', sideWidthPct: 30, sideFill: 'deep' },
+    layout: { type: 'sidebar-right', sideWidthPct: 30, sideFill: 'deep', sideBleed: true },
     placement: { side: [...SIDE] },
     header: { style: 'band', band: 'solid', name: { size: 'XL', weight: 800 } },
     headings: { style: 'underline', case: 'upper', size: 'S' },

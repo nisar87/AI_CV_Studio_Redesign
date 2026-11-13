@@ -151,6 +151,7 @@ test.describe('free accounts', () => {
       .getByRole('button', { name: /Use the/ })
       .click();
     await expect(page.getByTestId('designer-note')).toContainText('Now using');
+    await expect(page.getByTestId('studio-base')).toContainText('Your own design');
     await designer.getByRole('button', { name: 'Try again' }).click();
     await expect(designer.getByRole('link', { name: 'See Premium' })).toBeVisible();
     // The design made with the free try can be previewed but not downloaded.

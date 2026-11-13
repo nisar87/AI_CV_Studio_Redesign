@@ -156,8 +156,8 @@ export function TemplateGallery() {
             onChange={setPhoto}
             options={[
               { value: 'any', label: 'Any' },
-              { value: 'with', label: 'With photo' },
-              { value: 'without', label: 'No photo' },
+              { value: 'with', label: 'With' },
+              { value: 'without', label: 'Without' },
             ]}
           />
           <label className="flex flex-col gap-1.5 text-sm font-semibold">

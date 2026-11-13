@@ -99,11 +99,11 @@ function CandidateCard({
   const preview = { ...doc, design: { ...doc.design, v2: spec } };
   return (
     <li
-      className="border-line bg-surface flex flex-col gap-2 rounded-lg border p-2"
+      className="border-line bg-surface grid grid-cols-[112px_1fr] gap-3 rounded-lg border p-2"
       data-testid="designer-candidate"
       data-ready={status && status.overflow === 0 ? '' : undefined}
     >
-      <div className="ring-line overflow-hidden rounded-[3px] ring-1">
+      <div className="ring-line self-start overflow-hidden rounded-[3px] ring-1">
         <DocumentPreview
           doc={preview}
           firstPageOnly
@@ -112,11 +112,13 @@ function CandidateCard({
           title={`${c.name} design preview`}
         />
       </div>
-      <div className="flex flex-col gap-0.5 px-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <p className="font-semibold">
           {c.name}
           {best && (
-            <span className="text-primary ml-2 text-xs font-semibold uppercase">Closest</span>
+            <span className="text-primary ml-2 text-xs font-semibold whitespace-nowrap uppercase">
+              Closest
+            </span>
           )}
         </p>
         <p className="text-ink-muted text-sm">
@@ -131,10 +133,15 @@ function CandidateCard({
             {u}
           </p>
         ))}
+        <Button
+          size="sm"
+          className="mt-1 self-start"
+          onClick={() => onUse(spec)}
+          aria-label={`Use the ${c.name} design`}
+        >
+          Use this
+        </Button>
       </div>
-      <Button size="sm" onClick={() => onUse(spec)} aria-label={`Use the ${c.name} design`}>
-        Use this
-      </Button>
     </li>
   );
 }
@@ -435,7 +442,7 @@ export function Designer({ editor }: { editor: DocumentEditor }) {
       )}
       {shown.length > 0 && (
         <div className="flex flex-col gap-2">
-          <ul className="grid grid-cols-2 gap-2 xl:grid-cols-3" aria-label="Designs for you">
+          <ul className="flex flex-col gap-2" aria-label="Designs for you">
             {shown.map((c, i) => (
               <CandidateCard
                 key={c.key}

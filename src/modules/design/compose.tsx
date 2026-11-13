@@ -388,6 +388,9 @@ function css(s: DesignSpecV2, d: ResolvedDesign): string {
         out.push(`.cv-has-third .cv-page:not(.cv-page--wide)::after{content:'';position:absolute;top:0;bottom:0;right:${L.sideBleed ? '0' : 'var(--margin)'};width:${w};background:${fill};z-index:0}
 .cv-has-third .cv-third{padding-right:${L.sideBleed ? '0' : '3mm'};padding-top:2mm}`);
       if (L.sideFill === 'solid') out.push('.cv-aside,.cv-third{--ink-3:var(--ink-2)}');
+      // The page number sits bottom right: on a deep right-hand column it is drawn light.
+      if (deep && L.type !== 'sidebar-left')
+        out.push('.cv-has-aside .cv-page:not(.cv-page--wide) .cv-foot{color:rgba(255,255,255,.8)}');
       if (deep)
         out.push(`.cv-aside,.cv-third{color:#fff;--ink:#fff;--ink-2:rgba(255,255,255,.88);--ink-3:rgba(255,255,255,.72);--accent:var(--accent-bright);--bullet:var(--accent-bright)}
 .cv-aside .g-tags li,.cv-third .g-tags li{background:rgba(255,255,255,.14);color:#fff}`);
@@ -777,6 +780,7 @@ export function contrastPairs(spec: DesignSpecV2): { what: string; fg: string; b
       add('side muted', over('#ffffff', 0.72, b), b);
       add('side accent', d.accentBright, b);
       add('side tags', '#ffffff', over('#ffffff', 0.14, b));
+      if (L.type !== 'sidebar-left') add('page number on side', over('#ffffff', 0.8, b), b);
     } else {
       const b = L.sideFill === 'solid' ? d.accentSoft : d.accentTint;
       const sideInk = L.sideFill === 'solid' ? [ink[0], ink[1], ink[1]] : ink;
