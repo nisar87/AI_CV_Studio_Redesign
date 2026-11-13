@@ -915,6 +915,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 - **Evaluation:** 7 `story.draft` samples (driver, nurse, engineer, teacher, graduate; one with notes; one where the notes ask to invent numbers and awards). Checks: the action is there, tags only from the CV's skills, no number that isn't in the point.
 - **e2e `stories.spec`:** from Coach to the empty bank (axe), draft from a CV point with notes, edit title and tag, save, reload, edit, 1 AI action counted, delete; mock interview offers the matching story only on the right question and fills the answer (axe), saves a strong answer; free account keeps 3, the 4th is refused, drafting is 402; visitor 401; another account gets 404.
 - **Found while testing:** pale hint text on the tinted draft panel and an un-underlined link inside a sentence failed the accessibility check (fixed); the draft panel closed while typing a title (now decided once when the editor opens).
+- **Found live on the owner's real CV:** the point list offered the imported "Core strengths" list and personal details (nationality, date of birth, phone) as story points. Points now come from jobs, volunteering and projects first, and personal-detail lines and skill lists are never offered (unit-tested).
 - **Deviation:** a mock answer is saved whole as the story's action; the person splits it into STAR parts if they want.
 
 ## Owner to-do (when you have time)
