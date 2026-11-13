@@ -1,4 +1,5 @@
 import type { Job } from '@/modules/jobs/schema';
+import type { SavedLetter } from '@/modules/letters/schema';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import {
   MAX_VERSIONS,
@@ -56,6 +57,28 @@ export class MemoryUserStore implements UserStore {
     this.jobBucket(uid).delete(id);
   }
 
+  private letters = new Map<string, Map<string, SavedLetter>>();
+  private letterBucket(uid: string) {
+    let b = this.letters.get(uid);
+    if (!b) this.letters.set(uid, (b = new Map()));
+    return b;
+  }
+  async listLetters(uid: string) {
+    return structuredClone([...this.letterBucket(uid).values()]).sort((a, b) =>
+      b.updatedAt.localeCompare(a.updatedAt),
+    );
+  }
+  async getLetter(uid: string, id: string) {
+    const l = this.letterBucket(uid).get(id);
+    return l ? structuredClone(l) : null;
+  }
+  async putLetter(uid: string, letter: SavedLetter) {
+    this.letterBucket(uid).set(letter.id, structuredClone(letter));
+  }
+  async deleteLetter(uid: string, id: string) {
+    this.letterBucket(uid).delete(id);
+  }
+
   private metrics = new Map<string, Record<string, number>>();
   async bumpMetrics(day: string, counts: Record<string, number>) {
     const m = this.metrics.get(day) ?? {};
@@ -80,6 +103,7 @@ export class MemoryUserStore implements UserStore {
     for (const k of [...this.versions.keys()]) if (k.startsWith(`${uid}/`)) this.versions.delete(k);
     this.passes.delete(uid);
     this.jobs.delete(uid);
+    this.letters.delete(uid);
     this.designs.delete(uid);
     for (const [t, sh] of this.shares) if (sh.uid === uid) this.shares.delete(t);
     for (const [k, v] of this.portfolios) if (v.uid === uid) this.portfolios.delete(k);

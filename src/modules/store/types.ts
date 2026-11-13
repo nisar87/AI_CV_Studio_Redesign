@@ -1,4 +1,5 @@
 import type { Job } from '@/modules/jobs/schema';
+import type { SavedLetter } from '@/modules/letters/schema';
 import type { ResumeDocument } from '@/modules/resume/schema';
 
 /**
@@ -32,6 +33,12 @@ export interface UserStore {
   getJob(uid: string, id: string): Promise<Job | null>;
   putJob(uid: string, job: Job): Promise<void>;
   deleteJob(uid: string, id: string): Promise<void>;
+
+  // Letter library (R8.2)
+  listLetters(uid: string): Promise<SavedLetter[]>;
+  getLetter(uid: string, id: string): Promise<SavedLetter | null>;
+  putLetter(uid: string, letter: SavedLetter): Promise<void>;
+  deleteLetter(uid: string, id: string): Promise<void>;
   /** Adds to today's event counters (metrics/{yyyy-mm-dd}); names are [a-z0-9_]. */
   bumpMetrics(day: string, counts: Record<string, number>): Promise<void>;
   /** Daily counters for days in [from, to] (inclusive, yyyy-mm-dd), oldest first. */

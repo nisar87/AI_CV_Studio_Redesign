@@ -193,6 +193,21 @@ function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] =
         },
       };
     }
+    case 'letter.generic': {
+      const i = input as ParsedInput<'letter.generic'>;
+      const cv = digestLines(i.profile);
+      const best = cv.find((l) => /\.B\d+$/.test(l.id))?.text.replace(/\.$/, '');
+      const answers = i.answers.filter((a) => a.answer.trim());
+      return {
+        greeting: 'Dear Hiring Manager,',
+        paragraphs: [
+          `I am writing about the following: ${answers.map((a) => a.answer).join('; ') || i.typeTitle}.`,
+          best ? `In my work so far I have: ${best}.` : 'My CV sets out my experience.',
+          'Thank you for your time.',
+        ],
+        closing: i.tone === 'formal' ? 'Yours sincerely,' : 'Kind regards,',
+      };
+    }
     case 'interview.prep': {
       const i = input as ParsedInput<'interview.prep'>;
       const cv = digestLines(i.profile);

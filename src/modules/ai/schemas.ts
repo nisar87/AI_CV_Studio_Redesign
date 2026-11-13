@@ -26,6 +26,7 @@ export const TASK_IDS = [
   'job.match',
   'job.tailor',
   'letter.write',
+  'letter.generic',
   'linkedin.write',
   'interview.prep',
   'import.transcribe',
@@ -169,6 +170,19 @@ export const taskInputs = {
     advert: z.string().min(80).max(12_000),
     jobTitle: z.string().max(160),
     company: z.string().max(160),
+    name: z.string().max(120),
+    profile: z.string().min(20).max(24_000),
+    tone: z.enum(['warm', 'formal']).default('warm'),
+  }),
+  'letter.generic': z.object({
+    /** Letter type title and what the letter must do (from letters/types.ts, never from the user). */
+    typeTitle: z.string().max(80),
+    notes: z.string().max(1000),
+    /** The person's answers to the type's questions. */
+    answers: z
+      .array(z.object({ question: z.string().max(200), answer: z.string().max(1500) }))
+      .max(8),
+    to: z.string().max(400).default(''),
     name: z.string().max(120),
     profile: z.string().min(20).max(24_000),
     tone: z.enum(['warm', 'formal']).default('warm'),
@@ -334,6 +348,11 @@ export const taskOutputs = {
     closing: z.string().max(80),
     /** A short covering email to send the CV and letter with. */
     email: z.object({ subject: z.string().max(160), body: z.string().max(1500) }),
+  }),
+  'letter.generic': z.object({
+    greeting: z.string().max(80),
+    paragraphs: z.array(z.string().min(1).max(1200)).min(1).max(5),
+    closing: z.string().max(80),
   }),
   'interview.prep': z.object({
     questions: z

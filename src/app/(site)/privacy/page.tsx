@@ -42,6 +42,13 @@ export default function PrivacyPage() {
             checked against your CV so nothing is added that you didn’t write.
           </li>
           <li>
+            <strong>Letters (resignation, reference request, thank-you and others):</strong> the
+            letters you write are kept in your account and deleted with it. If you ask for an AI
+            draft, your answers to the letter’s questions and the CV text are sent to Gemini; the
+            draft may only use facts from those two, and anything else is highlighted for you to
+            fill in.
+          </li>
+          <li>
             <strong>Share links (only if you create one):</strong> anyone with the link can see that
             CV, read-only, until you switch the link off or delete it. Share pages are hidden from
             search engines. We count how many times a link is opened, nothing about who opened it.

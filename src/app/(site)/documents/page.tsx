@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { ButtonLink } from '@/components/ui/button';
 import { Container } from '@/components/ui/misc';
-import { MyCvsClient } from '@/features/library/client';
+import { Suspense } from 'react';
+import { DocumentsHubClient } from '@/features/library/client';
 
 export const metadata: Metadata = { title: 'Documents', robots: { index: false } };
 
@@ -12,9 +13,16 @@ export default function DocumentsPage() {
         <h1 className="font-display text-[32px] leading-tight font-semibold tracking-tight sm:text-4xl">
           Documents
         </h1>
-        <ButtonLink href="/start">Create a new CV</ButtonLink>
+        <div className="flex flex-wrap gap-2">
+          <ButtonLink href="/letters/new" variant="secondary">
+            New letter
+          </ButtonLink>
+          <ButtonLink href="/start">New CV</ButtonLink>
+        </div>
       </div>
-      <MyCvsClient />
+      <Suspense>
+        <DocumentsHubClient />
+      </Suspense>
     </Container>
   );
 }

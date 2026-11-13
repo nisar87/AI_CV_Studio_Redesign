@@ -1,6 +1,7 @@
 import 'server-only';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import type { Job } from '@/modules/jobs/schema';
+import type { SavedLetter } from '@/modules/letters/schema';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import {
   MAX_VERSIONS,
@@ -26,6 +27,7 @@ import {
  *   passes/{uid}                             Pass (Premium access until expiresAt) + uid, email
  *   usage/{uid}_{yyyy-mm}                    { uid, month, 'pdf.download': n, ... }
  *   users/{uid}/jobs/{id}                    Job (tracker; deleted with the account)
+ *   users/{uid}/letters/{id}                 SavedLetter (letter library; deleted with the account)
  *   portfolios/{slug}                        Portfolio (public page; one per account)
  *   referralCodes/{code}                     { uid }  (invite link; users/{uid}.referralCode, .referredBy)
  *   shares/{token}                           Share (read-only CV link; deleted with the CV/account)
@@ -64,6 +66,24 @@ export class FirestoreUserStore implements UserStore {
   }
   async deleteJob(uid: string, id: string) {
     await this.jobsCol(uid).doc(id).delete();
+  }
+
+  private lettersCol(uid: string) {
+    return this.db.collection('users').doc(uid).collection('letters');
+  }
+  async listLetters(uid: string) {
+    const snap = await this.lettersCol(uid).orderBy('updatedAt', 'desc').limit(500).get();
+    return snap.docs.map((d) => d.data() as SavedLetter);
+  }
+  async getLetter(uid: string, id: string) {
+    const s = await this.lettersCol(uid).doc(id).get();
+    return s.exists ? (s.data() as SavedLetter) : null;
+  }
+  async putLetter(uid: string, letter: SavedLetter) {
+    await this.lettersCol(uid).doc(letter.id).set(letter);
+  }
+  async deleteLetter(uid: string, id: string) {
+    await this.lettersCol(uid).doc(id).delete();
   }
 
   async bumpMetrics(day: string, counts: Record<string, number>) {

@@ -211,6 +211,18 @@ describe('mock provider', () => {
       profile: profileDigest(F.driver).text,
       tone: 'warm',
     },
+    'letter.generic': {
+      typeTitle: 'Resignation letter',
+      notes: 'A short resignation letter.',
+      answers: [
+        { question: 'Your current role', answer: 'Van Driver' },
+        { question: 'Your last working day', answer: '31 December 2026' },
+      ],
+      to: 'Sara Khan, Swift Logistics',
+      name: 'Imran Qureshi',
+      profile: profileDigest(F.driver).text,
+      tone: 'formal',
+    },
     'linkedin.write': { profile: profileDigest(F.driver).text, target: 'transport planning' },
     'interview.prep': {
       advert: ADVERT,
@@ -528,5 +540,43 @@ describe('Gemini thinking setting (design tasks)', () => {
     expect(
       (bodies[1]!.generationConfig as Record<string, unknown>).responseJsonSchema,
     ).toBeDefined();
+  });
+});
+
+describe('letter.generic guard', () => {
+  it('keeps facts from the answers and marks invented ones', async () => {
+    const provider = scripted([
+      JSON.stringify({
+        greeting: 'Dear Sara,',
+        paragraphs: [
+          'Please accept my resignation as Van Driver. My last day will be 31 December 2026.',
+          'I increased deliveries by 45% last year.',
+        ],
+        closing: 'Yours sincerely,',
+      }),
+    ]);
+    const r = await runTask(
+      'letter.generic',
+      {
+        typeTitle: 'Resignation letter',
+        notes: 'Short.',
+        answers: [
+          { question: 'Role', answer: 'Van Driver' },
+          { question: 'Last day', answer: '31 December 2026' },
+        ],
+        to: 'Sara Khan',
+        name: 'Imran Qureshi',
+        profile: profileDigest(F.driver).text,
+        tone: 'formal',
+      },
+      0,
+      { provider, models },
+    );
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.result.paragraphs[0]).toContain('31 December 2026');
+    expect(r.result.paragraphs[0]).not.toContain('{{?');
+    expect(r.result.paragraphs[1]).toContain('{{?');
+    expect(r.result.paragraphs[1]).not.toContain('45%');
   });
 });

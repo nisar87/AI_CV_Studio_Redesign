@@ -5,6 +5,7 @@ import {
   Globe,
   Home,
   Mail,
+  PenLine,
   MessagesSquare,
   Upload,
   UserRound,
@@ -24,7 +25,18 @@ export const DESTINATIONS: { href: string; label: string; icon: LucideIcon; also
 export const CREATE: { href: string; label: string; hint: string; icon: LucideIcon }[] = [
   { href: '/makeover', label: 'Upload a CV', hint: 'See yours in new designs', icon: Upload },
   { href: '/start', label: 'New CV', hint: 'Start from scratch, step by step', icon: FilePlus2 },
-  { href: '/jobs', label: 'Cover letter', hint: 'Written for a job you’ve saved', icon: Mail },
+  {
+    href: '/letters/new?type=cover',
+    label: 'Cover letter',
+    hint: 'For a kind of role, or a saved job',
+    icon: Mail,
+  },
+  {
+    href: '/letters/new',
+    label: 'Letter',
+    hint: 'Resignation, thank-you, follow-up…',
+    icon: PenLine,
+  },
   { href: '/jobs?new=1', label: 'Add a job', hint: 'Track it and tailor your CV', icon: Briefcase },
   { href: '/presence', label: 'Portfolio', hint: 'Your CV as a web page', icon: UserRound },
 ];

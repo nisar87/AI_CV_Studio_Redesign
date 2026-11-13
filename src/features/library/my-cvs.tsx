@@ -43,7 +43,8 @@ function when(iso: string): string {
   return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-export function MyCvs() {
+/** `only` narrows the list (Documents hub: CVs for one job). */
+export function MyCvs({ only }: { only?: (doc: ResumeDocument) => boolean } = {}) {
   const toast = useToast();
   const router = useRouter();
   const [docs, setDocs] = useState<ResumeDocument[]>(load);
@@ -55,7 +56,7 @@ export function MyCvs() {
   const account = useAccount();
   const signedIn = account.status === 'signedIn';
   const profile = docs.find(isProfile);
-  const cvs = docs.filter((d) => !isProfile(d));
+  const cvs = docs.filter((d) => !isProfile(d) && (!only || only(d)));
 
   const newFromProfile = () => {
     if (!profile) return;

@@ -13,3 +13,8 @@ export const ContinueCardClient = dynamic(
   () => import('./continue-card').then((m) => m.ContinueCard),
   { ssr: false },
 );
+
+export const DocumentsHubClient = dynamic(
+  () => import('./documents-hub').then((m) => m.DocumentsHub),
+  { ssr: false, loading: () => <Skeleton className="h-28 w-full rounded-md" /> },
+);

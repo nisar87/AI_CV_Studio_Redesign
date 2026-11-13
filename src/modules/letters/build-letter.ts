@@ -16,8 +16,9 @@ const mark = (s: string) => esc(s).replace(/\{\{\?([^{}]*)\}\}/g, '<mark class="
  */
 export function buildLetterHtml(
   cv: ResumeDocument,
-  l: Letter,
-  job: { title: string; company: string },
+  l: Pick<Letter, 'greeting' | 'paragraphs' | 'closing'>,
+  /** A job's cover letter (title, company) or a library letter (recipient lines and subject). */
+  job: { title: string; company: string; to?: string[]; subject?: string; kind?: string },
   opts: { fonts: FontSource; date?: Date },
 ): string {
   const t = getTemplate(cv.design.templateId);
@@ -52,9 +53,17 @@ h1{font-family:var(--font-heading);font-weight:var(--heading-weight);color:var(-
 .sign{margin-top:16pt}.sign .name{font-weight:600;margin-top:22pt}
 mark.ask{background:#fff1c2;color:inherit;padding:0 2px;border-radius:2px}
 @media screen{body{background:#eef0f2}.page{margin:0 auto;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12)}}`;
+  const library = job.subject !== undefined || job.to !== undefined;
+  const meta = library
+    ? `${(job.to ?? [])
+        .filter((t) => t.trim())
+        .map((t) => `<p>${esc(t)}</p>`)
+        .join('')}${job.subject ? `<p class="re">${esc(job.subject)}</p>` : ''}`
+    : `${job.company ? `<p>${esc(job.company)}</p>` : ''}<p class="re">${esc(job.title ? `Application: ${job.title}` : 'Application')}</p>`;
+  const kind = job.kind ?? 'cover letter';
   const body = `<div class="page"><div class="bar"></div>
 <header class="head"><h1>${esc(b.name || 'Your name')}</h1>${b.headline ? `<p class="role">${esc(b.headline)}</p>` : ''}${contacts ? `<p class="contact">${contacts}</p>` : ''}</header>
-<div class="meta"><p>${esc(date)}</p>${job.company ? `<p>${esc(job.company)}</p>` : ''}<p class="re">${esc(job.title ? `Application: ${job.title}` : 'Application')}</p></div>
+<div class="meta"><p>${esc(date)}</p>${meta}</div>
 <div class="body"><p>${mark(l.greeting)}</p>${l.paragraphs
     .filter((p) => p.trim())
     .map((p) => `<p>${mark(p)}</p>`)
@@ -63,7 +72,7 @@ mark.ask{background:#fff1c2;color:inherit;padding:0 2px;border-radius:2px}
   const ready = `document.fonts.ready.then(function(){var h=document.querySelector('.page').scrollHeight;window.__CV_READY__={pages:Math.max(1,Math.round(h/(${d.page.heightMm}*96/25.4))),overflow:0,nearlyFits:false};document.documentElement.setAttribute('data-cv-ready','1');try{parent.postMessage({type:'cv:ready',result:window.__CV_READY__},'*')}catch(e){}});`;
   return `<!DOCTYPE html><html lang="${esc(cv.locale.split('-')[0] || 'en')}"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${esc(csp)}"><meta name="viewport" content="width=device-width">
-<title>${esc(b.name ? `${b.name} — cover letter` : 'Cover letter')}</title>
+<title>${esc(b.name ? `${b.name} — ${kind}` : kind.charAt(0).toUpperCase() + kind.slice(1))}</title>
 <style>${fontFaceCss(d.fontPairId, opts.fonts)}</style><style>${designCssVars(d)}${css}</style></head>
 <body>${body}<script>${ready}</script></body></html>`;
 }

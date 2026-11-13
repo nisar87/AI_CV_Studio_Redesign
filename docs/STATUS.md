@@ -727,6 +727,36 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - A narrow Continue card was then fixed: the title wraps and the button no longer clips.
 - **Deviation:** the spec's "Letter" entry in the Create sheet waits for R8.2, when the letter library exists. The Cover letter entry goes to Jobs, where letters are made today.
 
+### R8.2 Documents hub and letter library
+- **Letter library** (spec §10). Letter types are data in `src/modules/letters/types.ts`: one editor, one AI task and one PDF route serve every type. There are 8 types:
+  - general cover letter;
+  - resignation;
+  - reference request;
+  - thank-you after an interview;
+  - application follow-up;
+  - accepting an offer;
+  - salary negotiation;
+  - networking introduction.
+
+  Each type is a guided form of 3–5 questions (required ones are marked).
+- **"Write it myself"** is free. It starts from a draft built from the answers without AI, keeps nothing invented and leaves out lines with no answer.
+- **"Write it with AI"** (Premium, `ai.action`) uses the new task `letter.generic`.
+  - Facts may come only from the person's answers and the CV; anything else is marked for them to fill in (unit-tested with an injected "45%").
+  - "Write a new AI draft" redrafts from changed answers.
+- **Letter editor:** recipient lines, subject, greeting, paragraphs and sign-off, beside a live preview in the chosen CV's design (or a plain page). Save, Download PDF (counts as a PDF download) and Delete.
+- **Storage and API:**
+  - Letters live in the account at `users/{uid}/letters/{id}`, up to 100, and are deleted with the account.
+  - API: `/api/letters` (list, create), `/api/letters/{id}` (read, change, delete), `/api/letters/{id}/draft` and `/api/letters/{id}/pdf`.
+  - Other accounts get 404 (e2e).
+- **Documents hub:** filters All · CVs · Letters and "For job". The Letters list shows library letters and the cover letters written on jobs (they open on their job). It has one-click starts for every letter type.
+- **Create sheet:** Cover letter → the general cover letter; Letter → the type picker. The general cover letter points to Jobs when there is a specific advert.
+- **Privacy page:** a paragraph on letters.
+- **Deviations:**
+  - Letters are a separate account collection, not `docType: 'letter'` documents (Appendix B). This avoids touching every CV path (editor, sync, makeover, health check) for something with a different shape; the hub joins them.
+  - Job cover letters stay on their job.
+  - The letter editor keeps the studio shell; it is a form plus preview, not the full CV studio.
+  - Turning letter types on and off in the Console comes with R8.7.
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.
@@ -743,7 +773,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 
 ## Next action (exact)
 
-1. R8.1 (studio shell and Home) is done. Next: R8.2, the Documents hub and letter library. Remaining in R8 "One studio" (spec §11, §16): studio shell and Home, Documents and Presence hubs, application kit, ATS check, letter library, new section types, edit-on-page, drag reorder, AI on selection, sync back to profile, Console additions.
+1. R8.1 and R8.2 are done. Next: R8.3 Presence hub, then R8.4 application kit and ATS check, R8.5 new section types, R8.6 edit-on-page, drag reorder, AI on a selection and sync back to the profile, R8.7 Console additions.
 
 ## Deployment (2026-11-12)
 

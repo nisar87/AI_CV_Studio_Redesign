@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   CircleCheck,
   CircleDashed,
@@ -23,6 +23,7 @@ import { TextArea, TextField } from '@/components/ui/field';
 import { useToast } from '@/components/ui/toast';
 import { useEntitlements } from '@/features/account/entitlements';
 import { saveBlob } from '@/lib/save-blob';
+import { ScaledPage, resolvePage } from '@/features/letters/scaled-page';
 import type { InterviewKind } from '@/modules/jobs/interview';
 import type { MatchResult } from '@/modules/jobs/match';
 import { defaultSourceCv } from '@/modules/jobs/source-cv';
@@ -30,8 +31,6 @@ import type { Job } from '@/modules/jobs/schema';
 import { buildLetterHtml } from '@/modules/letters/build-letter';
 import type { Letter } from '@/modules/letters/schema';
 import type { ResumeDocument } from '@/modules/resume/schema';
-import { resolveDesign } from '@/modules/templates/design';
-import { getTemplate } from '@/modules/templates/registry';
 import { getRepository } from '@/modules/storage/repository';
 import { jobAiApi, jobsApi, JobsError } from './api';
 
@@ -219,50 +218,6 @@ export function JobTools({ job, onJobChange }: { job: Job; onJobChange: (j: Job)
         </>
       )}
     </Card>
-  );
-}
-
-const MM = 96 / 25.4;
-const resolvePage = (doc: ResumeDocument) =>
-  resolveDesign(doc.design, getTemplate(doc.design.templateId).support).page;
-
-/** Shows a page-sized HTML document scaled down to the width of its container. */
-function ScaledPage({
-  html,
-  widthMm,
-  heightMm,
-}: {
-  html: string;
-  widthMm: number;
-  heightMm: number;
-}) {
-  const [scale, setScale] = useState(0.5);
-  const w = widthMm * MM;
-  const h = heightMm * MM;
-  const box = useCallback(
-    (el: HTMLDivElement | null) => {
-      if (!el) return;
-      const ro = new ResizeObserver(([e]) => e && setScale(e.contentRect.width / w));
-      ro.observe(el);
-      return () => ro.disconnect();
-    },
-    [w],
-  );
-  return (
-    <div
-      ref={box}
-      className="border-line relative w-full overflow-hidden rounded-md border bg-white"
-      style={{ height: h * scale }}
-    >
-      <iframe
-        title="Cover letter preview"
-        srcDoc={html}
-        sandbox="allow-scripts"
-        data-testid="letter-preview"
-        style={{ width: w, height: h, transform: `scale(${scale})`, transformOrigin: '0 0' }}
-        className="absolute top-0 left-0 border-0"
-      />
-    </div>
   );
 }
 
