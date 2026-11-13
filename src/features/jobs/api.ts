@@ -1,5 +1,6 @@
 'use client';
 
+import type { JobFromUrl } from '@/modules/jobs/from-url';
 import type { Job, JobInput } from '@/modules/jobs/schema';
 import type { ResumeDocument } from '@/modules/resume/schema';
 
@@ -38,6 +39,12 @@ export const jobsApi = {
     call<{ job: Job }>('/api/jobs', { method: 'POST', body: JSON.stringify(input) }).then(
       (r) => r.job,
     ),
+  /** R9.5: the job read from its advert page (not saved). */
+  fromUrl: (url: string) =>
+    call<{ job: JobFromUrl }>('/api/jobs/fetch', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    }).then((r) => r.job),
   update: (id: string, patch: Partial<JobInput>) =>
     call<{ job: Job }>(`/api/jobs/${id}`, { method: 'PUT', body: JSON.stringify(patch) }).then(
       (r) => r.job,

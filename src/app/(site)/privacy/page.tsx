@@ -49,6 +49,12 @@ export default function PrivacyPage() {
             fill in.
           </li>
           <li>
+            <strong>Job links:</strong> when you paste a job’s link, our server opens that page
+            (nothing from your account is sent to the site). If the page has no job details we can
+            read directly, its text is sent to Gemini to find the job; nothing is saved until you
+            press Save job.
+          </li>
+          <li>
             <strong>Story bank, mock interviews and the coach:</strong> the stories you write are
             kept in your account and deleted with it. When you use a mock interview, the coach or an
             AI letter, your finished stories are sent to Gemini with your CV so the advice can use

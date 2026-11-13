@@ -48,6 +48,11 @@ export const EVENTS = [
   'design_refine',
   'design_refine_fail',
   'ats_check',
+  // R9.5 Job from URL: how each link was read, and failures.
+  'job_url_structured',
+  'job_url_ai',
+  'job_url_page',
+  'job_url_fail',
 ] as const;
 export type MetricEvent = (typeof EVENTS)[number];
 

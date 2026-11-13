@@ -684,6 +684,11 @@ export function AdminSettings() {
             checked={draft.features.skillGap}
             onChange={(v) => edit((c) => void (c.features.skillGap = v))}
           />
+          <CheckboxField
+            label="Add a job from its link (the server reads the advert page)"
+            checked={draft.features.jobFromUrl}
+            onChange={(v) => edit((c) => void (c.features.jobFromUrl = v))}
+          />
         </Section>
 
         <Section

@@ -936,6 +936,20 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - **Evaluation: 6/6 skill-gap samples and the new coach task pass**, no unmarked new facts; the instruction hidden in the role was ignored. Found and fixed: "degree" was flagged in a summary although the CV lists a BSc (the generic word is now known when a named degree is in the CV — never the other way round, unit-tested); one summary spoke about the person in the third person (the prompt now asks for "you"; `skills-gap@2`).
 - **Deviation:** plans don't refresh themselves when the CV changes; make a new plan to see the change.
 
+### R9.5 Job from URL
+- **What it is** (spec §10, §12.4, §12.6, §13, §14): in **Add a job**, paste a job's link and press **Fill in from the link**; the title, company, location and advert are filled in for the person to check and save. `/jobs?new=1&url=…` opens the form and fills it by itself (ready for the browser extension). The job keeps its link.
+- **Plans** (spec §14): signed in, within the plan's job limit (free 3, Premium unlimited); **not** an AI action. Switch: **Add a job from its link**. 20 links per person per 10 minutes.
+- **Safe server fetch** (`jobs/fetch.ts`, `jobs/page.ts`, unit-tested):
+  - http/https only; no passwords in links; ports 80/443; no local names (`localhost`, `.local`, `.internal`…); IP-literal tricks (`2130706433`, `0x7f.1`, `[::ffff:…]`) are normalised and checked;
+  - every DNS answer must be public (private, loopback, link-local/metadata, CGNAT, reserved, multicast, IPv4 inside IPv6 all blocked), and the connection is made to the address that was checked (no DNS rebinding); a host with any private answer is refused;
+  - redirects re-checked (at most 3); 5 seconds and 2 MB in total (compressed pages included); HTML or text only.
+- **Reading the page:** scripts, styles, menus, footers, comments and hidden parts are removed. The page's own **schema.org JobPosting** (most job boards have one) is used first — no AI. Otherwise the new task **`jobs.extract`** (fast, page text as untrusted data) reads it, and the app keeps only what is really on the page: the title must be the page title or a heading line (never words from a sentence), company and place must appear on the page, and the advert is **cut from the page** between the first and last words the AI quotes — so it is the page's own text. Without AI, the page title and text are offered with a note to trim them.
+- **Plain messages** when a site blocks robots (LinkedIn, Indeed…), the page needs JavaScript or a sign-in, is a list of jobs, is too large or too slow.
+- **Evaluation:** 5 `jobs.extract` samples, part of the injection suite: a clean advert with clutter, a page with an instruction to the AI, a job list, a sign-in wall, a company named only in the text. Checks: right job/not-a-job, title and company, nothing from the instruction, the advert cut without clutter.
+- **e2e `job-url.spec`:** JSON-LD page → form → save with its link, 0 AI actions (axe); a page without job data (with a hidden instruction) read through the address bar, clutter and instruction kept out; 8 unsafe links, a redirect to the metadata address, a followed redirect, too large, too slow, not HTML, 403 and a job list all refused with plain messages; free account within and past its 3 jobs; visitor 401. Test pages exist only with the e2e test hooks and the in-memory store.
+- **Found while building:** an instruction hidden in a page (`display:none`) could have put "Chief Executive" in the title even with the on-the-page check, because the words were on the page. Hidden parts are now removed and the title must be a heading line.
+- **New error code** `UNPROCESSABLE` (422) for "the page couldn't be used".
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.

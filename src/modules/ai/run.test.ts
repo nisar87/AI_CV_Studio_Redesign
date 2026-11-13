@@ -253,6 +253,12 @@ describe('mock provider', () => {
       notes: '',
       skills: ['Route planning', 'Customer service'],
     },
+    'jobs.extract': {
+      url: 'https://jobs.example.com/1',
+      pageTitle: 'Delivery Driver - Fresh Foods',
+      siteName: '',
+      text: 'Delivery Driver\nFresh Foods Ltd, Leicester\nYou will deliver chilled groceries to homes on a planned route each day.\nApply now.',
+    },
     'skills.gap': { profile: profileDigest(F.driver).text, role: 'Transport planner', advert: '' },
     'linkedin.write': { profile: profileDigest(F.driver).text, target: 'transport planning' },
     'interview.prep': {

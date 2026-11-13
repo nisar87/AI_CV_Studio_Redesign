@@ -50,6 +50,7 @@ export const TASK_IDS = [
   'coach.chat',
   'story.draft',
   'skills.gap',
+  'jobs.extract',
   'import.transcribe',
   'makeover.diagnose',
   'design.compose',
@@ -270,6 +271,13 @@ export const taskInputs = {
     notes: z.string().max(2000).default(''),
     /** The person's skills; tags are chosen from these. */
     skills: z.array(z.string().max(60)).max(60).default([]),
+  }),
+  /** Job from URL (R9.5): the job in a fetched page's text (untrusted data). */
+  'jobs.extract': z.object({
+    url: z.string().max(500),
+    pageTitle: z.string().max(300).default(''),
+    siteName: z.string().max(160).default(''),
+    text: z.string().min(1).max(14_000),
   }),
   /** Skill gap and learning plan (R9.4) for a target role or a tracked job's advert. */
   'skills.gap': z.object({
@@ -506,6 +514,16 @@ export const taskOutputs = {
         }),
       )
       .max(3),
+  }),
+  'jobs.extract': z.object({
+    /** False when the page is not a single job advert (a list, a sign-in wall, an article…). */
+    isJob: z.boolean(),
+    title: z.string().max(160),
+    company: z.string().max(160),
+    location: z.string().max(120),
+    /** The advert's first 6–10 words and last 6–10 words, copied exactly from the page. */
+    start: z.string().max(200),
+    end: z.string().max(200),
   }),
   'skills.gap': z.object({
     skills: z

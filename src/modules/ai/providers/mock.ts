@@ -234,6 +234,29 @@ function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] =
       const firstBullet = digestLines(i.profile).find((l) => /\.B\d+$/.test(l.id))?.id ?? '';
       return { terms: terms.map((term, n) => ({ term, line: n === 0 ? firstBullet : '' })) };
     }
+    case 'jobs.extract': {
+      const i = input as ParsedInput<'jobs.extract'>;
+      const lines = i.text
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean);
+      const words = (l: string) => l.split(/\s+/);
+      const body = lines.filter((l) => words(l).length >= 6);
+      const isJob = /apply|responsibilit|essential|requirement|you will/i.test(i.text);
+      const [t, c] = i.pageTitle.split(/\s+[-|–]\s+/);
+      const company =
+        (c && i.text.includes(c) ? c : '') ||
+        (/^(.+?) [–-] /m.exec(i.text)?.[1] ?? '') ||
+        (/\b([A-Z][\w&]+(?: [A-Z][\w&]+)+) (?:builds|is|are|has)\b/.exec(i.text)?.[1] ?? '');
+      return {
+        isJob,
+        title: t && i.text.includes(t) ? t : (lines[0] ?? ''),
+        company: company.slice(0, 160),
+        location: '',
+        start: body.length ? words(body[0]!).slice(0, 7).join(' ') : '',
+        end: body.length ? words(body.at(-1)!).slice(-7).join(' ') : '',
+      };
+    }
     case 'skills.gap': {
       const i = input as ParsedInput<'skills.gap'>;
       const lines = i.profile.split('\n');

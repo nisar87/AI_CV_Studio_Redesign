@@ -108,6 +108,8 @@ export const businessConfig = z.object({
     stories: z.boolean().default(true),
     /** R9 skill gap and learning plan. */
     skillGap: z.boolean().default(true),
+    /** R9 add a job from its link (server fetch of the advert page). */
+    jobFromUrl: z.boolean().default(true),
   }),
   /** AI actions that cost more than one (complete-studio-spec §14: weights are config data). */
   aiWeights: z
@@ -251,6 +253,7 @@ export const DEFAULT_CONFIG: BusinessConfig = {
     coach: true,
     stories: true,
     skillGap: true,
+    jobFromUrl: true,
   },
   aiWeights: { kit: 3, mockTurn: 1, coachTurn: 1, storyDraft: 1, skillGap: 1 },
   content: { hiddenLetterTypes: [] },

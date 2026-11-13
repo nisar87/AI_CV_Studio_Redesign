@@ -16,6 +16,7 @@ export type ErrorCode =
   | 'AI_UNAVAILABLE'
   | 'AI_INVALID_OUTPUT'
   | 'RENDER_FAILED'
+  | 'UNPROCESSABLE'
   | 'INTERNAL';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -33,6 +34,7 @@ const STATUS: Record<ErrorCode, number> = {
   AI_UNAVAILABLE: 503,
   AI_INVALID_OUTPUT: 502,
   RENDER_FAILED: 500,
+  UNPROCESSABLE: 422,
   INTERNAL: 500,
 };
 

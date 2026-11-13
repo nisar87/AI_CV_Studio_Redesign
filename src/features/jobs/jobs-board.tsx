@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Briefcase, Lock, Plus, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { Briefcase, Link2, Lock, Plus, X } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { TextArea, TextField } from '@/components/ui/field';
 import { useToast } from '@/components/ui/toast';
 import { useAccount } from '@/features/account/account-context';
 import { useEntitlements } from '@/features/account/entitlements';
+import type { JobFromUrl } from '@/modules/jobs/from-url';
 import { JOB_STAGES, STAGE_LABEL, type Job, type JobStage } from '@/modules/jobs/schema';
 import { JobsError, jobsApi } from './api';
 
@@ -116,6 +117,8 @@ export function JobsBoard() {
       )}
       {adding && (
         <AddJob
+          initialUrl={wantsNew ? (params.get('url') ?? '') : ''}
+          canFetch={ent?.features.jobFromUrl !== false}
           onCancel={() => setAdding(false)}
           onAdded={(job) => {
             setAdding(false);
@@ -197,14 +200,57 @@ export function JobsBoard() {
   );
 }
 
-function AddJob({ onCancel, onAdded }: { onCancel: () => void; onAdded: (j: Job) => void }) {
+function AddJob({
+  onCancel,
+  onAdded,
+  initialUrl = '',
+  canFetch = true,
+}: {
+  onCancel: () => void;
+  onAdded: (j: Job) => void;
+  initialUrl?: string;
+  canFetch?: boolean;
+}) {
   const [title, setTitle] = useState('');
   const [company, setCompany] = useState('');
   const [location, setLocation] = useState('');
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState(initialUrl);
   const [advert, setAdvert] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // R9.5: fill the form from the advert's link (the person checks it, then saves).
+  const [reading, setReading] = useState(false);
+  const [read, setRead] = useState<{ host: string; via: JobFromUrl['via'] } | null>(null);
+  const fill = async (link = url) => {
+    if (!/^https?:\/\/\S+\.\S+/i.test(link.trim())) {
+      setError('Paste the full link to the job advert, starting with https://');
+      return;
+    }
+    setReading(true);
+    setError(null);
+    setRead(null);
+    try {
+      const job = await jobsApi.fromUrl(link.trim());
+      setTitle(job.title);
+      setCompany(job.company);
+      setLocation(job.location);
+      setUrl(job.url);
+      setAdvert(job.advert);
+      setRead({ host: new URL(job.url).hostname.replace(/^www\./, ''), via: job.via });
+    } catch (err) {
+      setError(err instanceof JobsError ? err.message : 'That didn’t work. Please try again.');
+    } finally {
+      setReading(false);
+    }
+  };
+  const started = useRef(false);
+  useEffect(() => {
+    if (initialUrl && canFetch && !started.current) {
+      started.current = true;
+      void fill(initialUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialUrl, canFetch]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -232,6 +278,49 @@ function AddJob({ onCancel, onAdded }: { onCancel: () => void; onAdded: (j: Job)
             onClick={onCancel}
           />
         </div>
+        {canFetch && (
+          <div className="bg-primary-soft/40 flex flex-col gap-2 rounded-lg p-3">
+            <div className="flex flex-wrap items-end gap-2">
+              <TextField
+                label="Link to the advert"
+                containerClassName="min-w-0 flex-1"
+                type="url"
+                inputMode="url"
+                placeholder="https://"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    void fill();
+                  }
+                }}
+                maxLength={500}
+              />
+              <Button
+                variant="secondary"
+                icon={<Link2 aria-hidden size={18} />}
+                loading={reading}
+                disabled={reading || !url.trim()}
+                onClick={() => fill()}
+              >
+                Fill in from the link
+              </Button>
+            </div>
+            {read ? (
+              <p className="text-sm" role="status" data-testid="job-read">
+                Filled in from {read.host}
+                {read.via === 'page'
+                  ? ' — we couldn’t pick out the advert, so the whole page text is below. Trim it to the advert.'
+                  : '. Check it before you save.'}
+              </p>
+            ) : (
+              <p className="text-ink-muted text-sm">
+                Paste a job’s link and we’ll fill in the title, company and advert for you.
+              </p>
+            )}
+          </div>
+        )}
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField
             label="Job title"
@@ -254,16 +343,18 @@ function AddJob({ onCancel, onAdded }: { onCancel: () => void; onAdded: (j: Job)
             onChange={(e) => setLocation(e.target.value)}
             maxLength={120}
           />
-          <TextField
-            label="Link to the advert"
-            optional
-            type="url"
-            inputMode="url"
-            placeholder="https://"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            maxLength={500}
-          />
+          {!canFetch && (
+            <TextField
+              label="Link to the advert"
+              optional
+              type="url"
+              inputMode="url"
+              placeholder="https://"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              maxLength={500}
+            />
+          )}
         </div>
         <TextArea
           label="The job advert"

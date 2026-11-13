@@ -23,6 +23,7 @@ const INTERNAL = new Set<string>([
   'coach.chat',
   'story.draft',
   'skills.gap',
+  'jobs.extract',
 ]);
 const limiter = sharedAiLimiter();
 
