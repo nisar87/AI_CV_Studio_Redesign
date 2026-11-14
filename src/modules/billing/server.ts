@@ -170,6 +170,7 @@ export async function entitlementsFor(user: SessionUser | null) {
       skillGap: cfg.features.skillGap,
       jobFromUrl: cfg.features.jobFromUrl,
       reminders: cfg.features.reminders,
+      shareComments: cfg.features.shareComments,
     },
     aiWeights: cfg.aiWeights,
     hiddenLetterTypes: cfg.content.hiddenLetterTypes,

@@ -1,7 +1,14 @@
 import { apiError, readJson } from '@/lib/http';
 import { actor, json, withAdmin } from '@/modules/admin/server';
 import { getBusinessConfig } from '@/modules/billing/server';
-import { mailSettings, reminderEmail, sendMail, SITE, testEmail } from '@/modules/notify/server';
+import {
+  commentEmail,
+  mailSettings,
+  reminderEmail,
+  sendMail,
+  SITE,
+  testEmail,
+} from '@/modules/notify/server';
 import { getUserStore } from '@/modules/store';
 
 export const runtime = 'nodejs';
@@ -32,7 +39,11 @@ const sampleReminder = (to: string) =>
     { today: new Date().toISOString().slice(0, 10), unsubscribeUrl: `${SITE}/account` },
   );
 
-/** POST { to?, kind? } → sends a test email, or a sample reminder email (kind: 'reminder'). */
+/** A sample comment notice (R9.7). */
+const sampleComment = (to: string) =>
+  commentEmail(to, { cvTitle: 'Delivery Driver CV', open: 2, docId: 'sample' });
+
+/** POST { to?, kind? } → a test email, or a sample reminder or comment email (kind). */
 export function POST(req: Request) {
   return withAdmin(async (admin, rid) => {
     const body = await readJson(req, 1024);
@@ -41,10 +52,14 @@ export function POST(req: Request) {
         ? (body.value as { to: string }).to.trim() || admin.email
         : admin.email) ?? '';
     const { value: cfg } = await getBusinessConfig();
-    const kind =
-      body.ok && (body.value as { kind?: unknown })?.kind === 'reminder' ? 'reminder' : 'test';
+    const asked = body.ok ? (body.value as { kind?: unknown })?.kind : undefined;
+    const kind = asked === 'reminder' || asked === 'comment' ? asked : 'test';
     const r = await sendMail(
-      kind === 'reminder' ? sampleReminder(to) : testEmail(to),
+      kind === 'reminder'
+        ? sampleReminder(to)
+        : kind === 'comment'
+          ? sampleComment(to)
+          : testEmail(to),
       cfg.support.email,
     );
     await getUserStore().writeAudit({

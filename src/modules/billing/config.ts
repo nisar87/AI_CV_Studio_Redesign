@@ -112,6 +112,8 @@ export const businessConfig = z.object({
     jobFromUrl: z.boolean().default(true),
     /** R9 reminders on jobs and the daily reminder email. */
     reminders: z.boolean().default(true),
+    /** R9 comments on share links (the owner turns them on per link). */
+    shareComments: z.boolean().default(true),
   }),
   /** AI actions that cost more than one (complete-studio-spec §14: weights are config data). */
   aiWeights: z
@@ -257,6 +259,7 @@ export const DEFAULT_CONFIG: BusinessConfig = {
     skillGap: true,
     jobFromUrl: true,
     reminders: true,
+    shareComments: true,
   },
   aiWeights: { kit: 3, mockTurn: 1, coachTurn: 1, storyDraft: 1, skillGap: 1 },
   content: { hiddenLetterTypes: [] },

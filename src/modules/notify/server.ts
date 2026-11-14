@@ -230,3 +230,37 @@ export function reminderEmail(
     },
   };
 }
+
+/**
+ * A comment notice (R9.7). It never carries the reviewer's words or name: anyone holding the link
+ * can write a comment, so the email only says there are new ones and links to the studio.
+ */
+export function commentEmail(
+  to: string,
+  opts: { cvTitle: string; open: number; docId: string },
+): Mail {
+  const url = `${SITE}/cv/${encodeURIComponent(opts.docId)}?tab=check#comments`;
+  const settings = `${SITE}/cv/${encodeURIComponent(opts.docId)}/download`;
+  const title = opts.cvTitle.trim().slice(0, 80) || 'your CV';
+  const subject = `New comment on ${title}`;
+  const count =
+    opts.open === 1
+      ? 'There is 1 comment waiting for you.'
+      : `There are ${opts.open} comments waiting for you.`;
+  const text = [
+    `Someone you shared a link with left a comment on "${title}".`,
+    count,
+    `Read them in your studio: ${url}`,
+    `To stop these emails or comments, change the link’s settings: ${settings}`,
+  ].join('\n\n');
+  const html = wrapHtml(
+    'New comment on your CV',
+    [
+      `Someone you shared a link with left a comment on “${esc(title)}”.`,
+      esc(count),
+      `<a href="${esc(url)}" style="color:#1e5a55;font-weight:bold">Read the comments</a>`,
+    ],
+    `You get this email because comments are on for a link to your CV. <a href="${esc(settings)}" style="color:#5b616b">Change the link’s settings</a>.`,
+  );
+  return { to, subject, text, html };
+}

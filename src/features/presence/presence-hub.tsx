@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Copy, ExternalLink, Globe, IdCard, Link2 } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
@@ -226,7 +227,19 @@ export function PresenceHub() {
                     </p>
                     <p className="text-ink-muted text-sm">
                       {s.views} open{s.views === 1 ? '' : 's'} · last opened {when(s.lastViewedAt)}
+                      {s.comments && ' · comments on'}
                     </p>
+                    {(s.openComments ?? 0) > 0 && (
+                      <Link
+                        href={`/cv/${s.docId}?tab=check#comments`}
+                        className="text-primary text-sm font-semibold underline underline-offset-4"
+                      >
+                        {s.openComments === 1
+                          ? '1 comment to read'
+                          : `${s.openComments} comments to read`}
+                        <span className="sr-only"> on {title}</span>
+                      </Link>
+                    )}
                   </div>
                   <Opens recent={s.recent} label={`Opens of the link to ${title}`} />
                   <div className="flex flex-wrap gap-2">

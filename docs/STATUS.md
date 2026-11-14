@@ -23,7 +23,7 @@ _Last updated: 2026-11-14 (live on Firebase App Hosting at aicvstudio.app)_
 | R6 Design engine | `r6/design-engine` | ✅ Live on aicvstudio.app (2026-11-13); Design Studio switched on and checked live |
 | R7 Describe your design | `r7/describe` | ✅ Live on aicvstudio.app (2026-11-13): 32 designs, AI Designer on, verified with real Gemini; preference test and outside review are owner to-dos |
 | R8 One studio | `r8/studio` | ✅ Live on aicvstudio.app (2026-11-13): studio shell and Home, letters, Presence, application kit, ATS check, 24 section types, edit on the page, Console switches |
-| R9 Coach | `r9/*` | 🟡 In progress: mock interview, career coach, story bank, skill plan, job from URL and reminders live (2026-11-14) |
+| R9 Coach | `r9/*` | 🟡 In progress: mock interview, career coach, story bank, skill plan, job from URL, reminders and share comments live (2026-11-14) |
 
 ## Phase 0 report
 
@@ -867,7 +867,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - per-task AI switches and model per tier.
   These belong with the R9/R10 tools that need them.
 
-## Release 9 — Coach (in progress: R9.1–R9.6 live)
+## Release 9 — Coach (in progress: R9.1–R9.7 live)
 
 ### R9.1 Mock interview
 - **On every job (and from Coach):**
@@ -972,6 +972,21 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - **Still open for the R9 acceptance "delivered in staging":** sending a real reminder on staging needs a signed-in staging account. The owner signs in once on the staging site (Google sign-in works there) and adds a reminder for today — or presses **Send a sample reminder email** in staging's Console — and checks the inbox.
 - **Found while testing:** the "done" tick and the Account switch waited for the server before changing, so a click looked ignored; both now change at once and undo themselves if the save fails.
 
+### R9.7 Comments on share links
+- **What it is** (spec §9.1 "a share link can allow comments; a friend or mentor leaves notes on specific lines", §12.3 comments under the document, §15 comment-notice email with test send): on the download page, the share link gets **Let people with the link leave comments** (off by default) and **Email me when someone comments (at most once an hour)**.
+- **The reviewer** (no sign-in) opens the link and sees a **Leave a comment** panel beside the CV (below it on phones, with a "Comment" jump link). They click a line on the CV — the form then points at that job or section and quotes the clicked words — or choose a part from **Which part?** (the keyboard path), write a note and their name (remembered in the browser), and send. They see and can delete **only their own** comments: each browser keeps a random key; the server keeps only its hash. Others with the link see nothing.
+- **The owner** sees the comments at the top of the editor's **Check** tab: who, when, where on the CV, the quoted words and the note, with **Show me** (opens the job or section in the form), **Mark as done** / **Not done** and **Delete**. The download page shows "Read the N comments waiting", and Presence shows "comments on" and "N comments to read" per link.
+- **Checked on the server** (`share/comments.ts`, unit-tested): where a comment points must exist on the CV (and not in a hidden section), otherwise it is "the whole CV"; a quote is kept only if those words are on the CV; plain text only (control and direction-override characters removed); name ≤ 60, comment ≤ 1,000 characters; 200 comments per CV; 10 per network address (1 a minute after that) and 30 per link (1 per 2 minutes after that); a hidden honeypot field quietly drops robot posts. Comments are accepted only while the link is on, comments are on and the Console switch **Comments on share links** is on.
+- **The notice email** says how many comments are waiting and links to the Check tab and the link's settings. It never includes the reviewer's words or name (anyone with the link can write, so the email can't be used to send someone else's text from our address). One email per link per hour (shared lease). It goes to the owner's sign-in address, kept when they turn comments on. Console → Settings: **Send a sample comment email**.
+- **Data:** `users/{uid}/documents/{id}/comments/{id}` (spec §12.3); deleted with the CV (in batches) and with the account. Metrics `share_comment`, `comment_notice`, `comment_notice_fail`. Privacy page updated.
+- **Plans:** like share links, any signed-in account; not an AI action.
+- **Tests:** 11 unit tests (refs, quotes, labels, input cleaning, what each side sees, the email has no reviewer text, storage and deletion). e2e `comments.spec` (desktop and phone): off by default (404); turned on; a click on a bullet fills the form with that job and quote (axe); a second note from the list, a third taken back; crafted ref and quote dropped; honeypot not stored; another reviewer sees nothing and can't delete; empty comment refused; **one** email for the burst, without the words or name; counts on the download page and Presence; Check tab list (axe), Show me, mark done (kept after reload), delete; the reviewer sees "marked done"; emails off, comments off (panel gone, 404); visitor 401; deleting the CV deletes the comments; another account gets 404 everywhere.
+- **Found while testing:**
+  - on phones, long part names in "Which part?" widened the page past the screen (the grid column grew to fit the select); the column is now limited to the screen and the test checks for sideways scrolling;
+  - on wide screens the sticky comment panel could be taller than the window, leaving Send out of reach; it now scrolls inside itself;
+  - "Show me" did nothing for a comment on a whole section; it now scrolls to that section in the form.
+- **Deviation:** comments are not drawn as markers on the CV page itself; the owner sees where each one is (with the quoted words and Show me) in the Check tab.
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.
@@ -990,7 +1005,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 
 ## Next action (exact)
 
-1. R9 "Coach": R9.1 mock interview, R9.2 career coach, R9.3 story bank, R9.4 skill plan, R9.5 job from URL and R9.6 reminders are live. Next: R9.7 share comments, then portfolio themes, LinkedIn review, application analytics — spec §16. (Console switches and weights for the R9 tools came with R9.3.)
+1. R9 "Coach": R9.1 mock interview, R9.2 career coach, R9.3 story bank, R9.4 skill plan, R9.5 job from URL, R9.6 reminders and R9.7 share comments are live. Next: R9.8 portfolio themes, then LinkedIn review, application analytics — spec §16. (Console switches and weights for the R9 tools came with R9.3.)
 
 ## Deployment (2026-11-12)
 

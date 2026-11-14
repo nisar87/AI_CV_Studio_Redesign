@@ -1,3 +1,4 @@
+import type { ShareComment } from '@/modules/share/comments';
 import 'server-only';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import type { Job } from '@/modules/jobs/schema';
@@ -28,6 +29,7 @@ import {
  *   users/{uid}                              email, name, lastSeenAt (merged; old app fields untouched)
  *   users/{uid}/documents/{id}               { updatedAt, deleted, title, doc, serverUpdatedAt }
  *   users/{uid}/documents/{id}/versions/{v}  { savedAt, doc }   (last 10)
+ *   users/{uid}/documents/{id}/comments/{c}  ShareComment (reviewer comments; deleted with the CV)
  *   passes/{uid}                             Pass (Premium access until expiresAt) + uid, email
  *   usage/{uid}_{yyyy-mm}                    { uid, month, 'pdf.download': n, ... }
  *   users/{uid}/jobs/{id}                    Job (tracker; deleted with the account)
@@ -317,6 +319,24 @@ export class FirestoreUserStore implements UserStore {
     await ref.delete();
     return had;
   }
+  private commentsCol(uid: string, docId: string) {
+    return this.col(uid).doc(docId).collection('comments');
+  }
+  async listComments(uid: string, docId: string) {
+    const snap = await this.commentsCol(uid, docId).orderBy('createdAt', 'desc').limit(500).get();
+    return snap.docs.map((d) => d.data() as ShareComment);
+  }
+  async getComment(uid: string, docId: string, id: string) {
+    const s = await this.commentsCol(uid, docId).doc(id).get();
+    return s.exists ? (s.data() as ShareComment) : null;
+  }
+  async putComment(uid: string, c: ShareComment) {
+    await this.commentsCol(uid, c.docId).doc(c.id).set(c);
+  }
+  async deleteComment(uid: string, docId: string, id: string) {
+    await this.commentsCol(uid, docId).doc(id).delete();
+  }
+
   private shares() {
     return this.db.collection('shares');
   }
@@ -331,7 +351,10 @@ export class FirestoreUserStore implements UserStore {
     const snap = await this.shares().where('uid', '==', uid).get();
     return snap.docs.map((d) => d.data() as Share);
   }
-  async updateShare(token: string, patch: Partial<Pick<Share, 'enabled'>>) {
+  async updateShare(
+    token: string,
+    patch: Partial<Pick<Share, 'enabled' | 'comments' | 'notify' | 'ownerEmail'>>,
+  ) {
     await this.shares().doc(token).update(patch);
   }
   async deleteShare(token: string) {
@@ -427,15 +450,16 @@ export class FirestoreUserStore implements UserStore {
   }
 
   async deleteDoc(uid: string, id: string, at: string) {
-    // Deleting removes the content, every kept version and its share links; only a tombstone
-    // remains for sync.
+    // Deleting removes the content, every kept version, its comments and its share links; only a
+    // tombstone remains for sync.
     const versions = await this.col(uid).doc(id).collection('versions').listDocuments();
+    const comments = await this.col(uid).doc(id).collection('comments').listDocuments();
     const shares = await this.db.collection('shares').where('uid', '==', uid).get();
     const linked = shares.docs.filter((d) => d.get('docId') === id);
-    if (versions.length || linked.length) {
+    const refs = [...versions, ...comments, ...linked.map((d) => d.ref)];
+    for (let i = 0; i < refs.length; i += 400) {
       const batch = this.db.batch();
-      versions.forEach((v) => batch.delete(v));
-      linked.forEach((d) => batch.delete(d.ref));
+      refs.slice(i, i + 400).forEach((r) => batch.delete(r));
       await batch.commit();
     }
     await this.col(uid).doc(id).set({

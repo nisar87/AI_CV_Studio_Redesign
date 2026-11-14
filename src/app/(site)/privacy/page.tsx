@@ -74,6 +74,14 @@ export default function PrivacyPage() {
             search engines. We count how many times a link is opened, nothing about who opened it.
           </li>
           <li>
+            <strong>Comments on a share link (only if you turn them on):</strong> people with the
+            link can leave a note with a name they type; they don’t sign in. The comment, the name
+            and the words they pointed at are kept with your CV. Only you see all the comments; a
+            reviewer sees only their own, through a random key kept in their browser (we keep only a
+            scrambled copy of it). Our email about new comments says how many are waiting and never
+            includes what was written. Comments are deleted with the CV and with your account.
+          </li>
+          <li>
             <strong>Portfolio page (only if you publish one):</strong> the CV you choose becomes a
             public web page anyone can find. Your email and phone number appear only if you tick
             them. Unpublishing or deleting the page takes it down straight away.
@@ -104,11 +112,11 @@ export default function PrivacyPage() {
         </p>
         <h2>Deleting</h2>
         <p>
-          Deleting a CV removes it, all of its earlier versions and its share links from your
-          account. On the Account page you can delete your whole account, which removes everything
-          above, including your jobs, letters, stories, skill plans, share links and portfolio page,
-          except payment records, which we keep for accounting with your email address removed.
-          Signing out removes your account’s CVs from that device.
+          Deleting a CV removes it, all of its earlier versions, its comments and its share links
+          from your account. On the Account page you can delete your whole account, which removes
+          everything above, including your jobs, letters, stories, skill plans, share links and
+          portfolio page, except payment records, which we keep for accounting with your email
+          address removed. Signing out removes your account’s CVs from that device.
         </p>
         <h2>What we measure</h2>
         <p>

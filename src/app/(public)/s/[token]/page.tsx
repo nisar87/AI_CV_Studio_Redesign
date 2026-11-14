@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { SharedCv } from '@/features/share/shared-cv';
+import { getBusinessConfig } from '@/modules/billing/server';
 import { track } from '@/modules/metrics/server';
 import { resolveShare } from '@/modules/share/server';
 import { getUserStore } from '@/modules/store';
@@ -28,5 +29,7 @@ export default async function SharedCvPage({ params }: Props) {
     .bumpShareViews(token, new Date().toISOString())
     .catch(() => {});
   await track('share_view');
-  return <SharedCv doc={r.doc} />;
+  const comments =
+    r.share.comments === true && (await getBusinessConfig()).value.features.shareComments;
+  return <SharedCv doc={r.doc} token={token} comments={comments} />;
 }

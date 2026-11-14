@@ -11,6 +11,7 @@ import { jobsApi } from '@/features/jobs/api';
 import type { Job } from '@/modules/jobs/schema';
 import type { AtsCheck, AtsReport } from '@/modules/quality/ats';
 import type { ResumeDocument } from '@/modules/resume/schema';
+import { CommentsPanel } from '@/features/share/comments-panel';
 import { HealthPanel } from './health-panel';
 
 const ICON = { pass: CircleCheck, 'needs-work': CircleAlert, info: Info } as const;
@@ -34,6 +35,7 @@ export function CheckPanel({
 }) {
   return (
     <div className="flex flex-col gap-5 pb-6">
+      <CommentsPanel docId={doc.id} onShow={onShow} />
       <HealthPanel doc={doc} pages={pages} onShow={onShow} />
       <AtsPanel doc={doc} onShow={onShow} onDesign={onDesign} />
     </div>

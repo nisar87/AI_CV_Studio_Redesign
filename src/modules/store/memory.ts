@@ -1,3 +1,4 @@
+import type { ShareComment } from '@/modules/share/comments';
 import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
 import type { Story } from '@/modules/stories/schema';
@@ -184,6 +185,7 @@ export class MemoryUserStore implements UserStore {
     this.seen.delete(uid);
     this.docs.delete(uid);
     for (const k of [...this.versions.keys()]) if (k.startsWith(`${uid}/`)) this.versions.delete(k);
+    for (const k of [...this.comments.keys()]) if (k.startsWith(`${uid}/`)) this.comments.delete(k);
     this.passes.delete(uid);
     this.jobs.delete(uid);
     this.letters.delete(uid);
@@ -246,6 +248,7 @@ export class MemoryUserStore implements UserStore {
   async deleteDoc(uid: string, id: string, at: string) {
     this.bucket(uid).set(id, { id, updatedAt: at, deleted: true, doc: null });
     this.versions.delete(`${uid}/${id}`);
+    this.comments.delete(`${uid}/${id}`);
     for (const [t, sh] of this.shares) if (sh.uid === uid && sh.docId === id) this.shares.delete(t);
   }
 
@@ -320,6 +323,29 @@ export class MemoryUserStore implements UserStore {
     );
     return list.some((x) => x.id === id);
   }
+  private comments = new Map<string, Map<string, ShareComment>>(); // `${uid}/${docId}` → comments
+  private commentBucket(uid: string, docId: string) {
+    const k = `${uid}/${docId}`;
+    let b = this.comments.get(k);
+    if (!b) this.comments.set(k, (b = new Map()));
+    return b;
+  }
+  async listComments(uid: string, docId: string) {
+    return structuredClone([...this.commentBucket(uid, docId).values()]).sort((a, b) =>
+      b.createdAt.localeCompare(a.createdAt),
+    );
+  }
+  async getComment(uid: string, docId: string, id: string) {
+    const c = this.commentBucket(uid, docId).get(id);
+    return c ? structuredClone(c) : null;
+  }
+  async putComment(uid: string, c: ShareComment) {
+    this.commentBucket(uid, c.docId).set(c.id, structuredClone(c));
+  }
+  async deleteComment(uid: string, docId: string, id: string) {
+    this.commentBucket(uid, docId).delete(id);
+  }
+
   private shares = new Map<string, Share>();
   async createShare(share: Share) {
     this.shares.set(share.token, structuredClone(share));
@@ -331,7 +357,10 @@ export class MemoryUserStore implements UserStore {
   async listShares(uid: string) {
     return [...this.shares.values()].filter((s) => s.uid === uid).map((s) => structuredClone(s));
   }
-  async updateShare(token: string, patch: Partial<Pick<Share, 'enabled'>>) {
+  async updateShare(
+    token: string,
+    patch: Partial<Pick<Share, 'enabled' | 'comments' | 'notify' | 'ownerEmail'>>,
+  ) {
     const s = this.shares.get(token);
     if (s) this.shares.set(token, { ...s, ...patch });
   }

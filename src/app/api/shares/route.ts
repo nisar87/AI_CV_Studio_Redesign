@@ -14,10 +14,19 @@ export async function GET(req: Request) {
   const user = await currentUser();
   if (!user) return apiError('SIGN_IN_REQUIRED', 'Please sign in.', rid);
   const docId = new URL(req.url).searchParams.get('docId');
-  const shares = (await getUserStore().listShares(user.uid))
+  const store = getUserStore();
+  const list = (await store.listShares(user.uid))
     .filter((s) => !docId || s.docId === docId)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .map(publicShare);
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  // Comments waiting on each CV (only for links where comments were ever turned on).
+  const open = new Map<string, number>();
+  for (const s of list)
+    if (s.comments !== undefined && !open.has(s.docId))
+      open.set(
+        s.docId,
+        (await store.listComments(user.uid, s.docId)).filter((c) => c.status === 'open').length,
+      );
+  const shares = list.map((s) => ({ ...publicShare(s), openComments: open.get(s.docId) ?? 0 }));
   return NextResponse.json({ shares }, noStore);
 }
 

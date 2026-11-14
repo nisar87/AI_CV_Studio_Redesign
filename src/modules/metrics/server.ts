@@ -57,6 +57,10 @@ export const EVENTS = [
   'reminder_set',
   'reminder_email',
   'reminder_email_fail',
+  // R9.7 Share comments
+  'share_comment',
+  'comment_notice',
+  'comment_notice_fail',
 ] as const;
 export type MetricEvent = (typeof EVENTS)[number];
 

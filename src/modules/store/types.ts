@@ -1,3 +1,4 @@
+import type { ShareComment } from '@/modules/share/comments';
 import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
 import type { Story } from '@/modules/stories/schema';
@@ -85,7 +86,15 @@ export interface UserStore {
   listDesigns(uid: string): Promise<SavedDesign[]>;
   putDesign(d: SavedDesign): Promise<void>;
   deleteDesign(uid: string, id: string): Promise<boolean>;
-  updateShare(token: string, patch: Partial<Pick<Share, 'enabled'>>): Promise<void>;
+  updateShare(
+    token: string,
+    patch: Partial<Pick<Share, 'enabled' | 'comments' | 'notify' | 'ownerEmail'>>,
+  ): Promise<void>;
+  // Reviewer comments from share links (R9.7), under the document; deleted with it and the account.
+  listComments(uid: string, docId: string): Promise<ShareComment[]>;
+  getComment(uid: string, docId: string, id: string): Promise<ShareComment | null>;
+  putComment(uid: string, comment: ShareComment): Promise<void>;
+  deleteComment(uid: string, docId: string, id: string): Promise<void>;
   deleteShare(token: string): Promise<void>;
   /** Counts a visit (best effort). */
   bumpShareViews(token: string, at: string): Promise<void>;
@@ -167,6 +176,12 @@ export type Portfolio = {
   views: number;
   /** Opens per day (yyyy-mm-dd → count), for the Presence hub. */
   daily?: Record<string, number>;
+  /** People with the link may leave comments (R9.7). Off unless the owner turns it on. */
+  comments?: boolean;
+  /** Email the owner about new comments (default on once comments are on). */
+  notify?: boolean;
+  /** Where comment notices go: the owner's sign-in email when they turned comments on. */
+  ownerEmail?: string | null;
 };
 
 /** A private, read-only link to the latest version of one CV. */
@@ -189,6 +204,12 @@ export type Share = {
   lastViewedAt: string | null;
   /** Opens per day (yyyy-mm-dd → count), for the Presence hub. */
   daily?: Record<string, number>;
+  /** People with the link may leave comments (R9.7). Off unless the owner turns it on. */
+  comments?: boolean;
+  /** Email the owner about new comments (default on once comments are on). */
+  notify?: boolean;
+  /** Where comment notices go: the owner's sign-in email when they turned comments on. */
+  ownerEmail?: string | null;
 };
 
 export type AuditEntry = {

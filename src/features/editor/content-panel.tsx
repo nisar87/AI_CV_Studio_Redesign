@@ -78,7 +78,8 @@ export const ContentPanel = forwardRef<ContentPanelHandle, { editor: DocumentEdi
         else if (itemId) {
           toggle(itemId, true);
           el = document.getElementById(`item-${itemId}`);
-        }
+        } else
+          el = document.querySelector<HTMLElement>(`[data-section="${CSS.escape(sectionId!)}"]`);
         window.setTimeout(() => {
           const node = itemId ? document.getElementById(`item-${itemId}`) : el;
           node?.scrollIntoView({ behavior: 'smooth', block: 'start' });
