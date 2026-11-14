@@ -84,7 +84,15 @@ export default function PrivacyPage() {
           <li>
             <strong>Portfolio page (only if you publish one):</strong> the CV you choose becomes a
             public web page anyone can find. Your email and phone number appear only if you tick
-            them. Unpublishing or deleting the page takes it down straight away.
+            them. Unpublishing or deleting the page takes it down straight away. Sections and
+            project pictures you add are stored with your account and shown only on your published
+            page; the pictures are resized in your browser before they are uploaded and are deleted
+            with the page or your account.
+          </li>
+          <li>
+            <strong>Contact form on your portfolio (only if you turn it on):</strong> a visitor’s
+            name, email address and message are emailed to your sign-in address and not kept by us.
+            Your address is never shown to them; your reply goes straight to them.
           </li>
           <li>
             <strong>Uploading a CV (makeover or import):</strong> the file is read on our server and

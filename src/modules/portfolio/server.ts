@@ -1,7 +1,9 @@
 import 'server-only';
+import { getBusinessConfig } from '@/modules/billing/server';
+import { mailSettings } from '@/modules/notify/server';
 import { lastDays } from '@/modules/presence/daily';
 import { getUserStore } from '@/modules/store';
-import type { Portfolio } from '@/modules/store/types';
+import type { Portfolio, PortfolioImage } from '@/modules/store/types';
 import { slugProblem } from './slug';
 
 /** Whether the owner currently has Premium (portfolios are a Premium feature). */
@@ -34,5 +36,33 @@ export const publicPortfolio = (p: Portfolio) => ({
   updatedAt: p.updatedAt,
   views: p.views,
   recent: lastDays(p.daily),
+  theme: p.theme ?? 'auto',
+  sections: p.sections ?? [],
+  projects: p.projects ?? [],
+  contact: p.contact === true,
 });
 export type PortfolioView = ReturnType<typeof publicPortfolio>;
+
+/**
+ * Sends a stored picture. The type is the one sniffed at upload; nosniff and a closed CSP mean a
+ * browser only ever treats it as a picture.
+ */
+export function imageResponse(img: PortfolioImage, cache: string) {
+  return new Response(Buffer.from(img.data, 'base64'), {
+    headers: {
+      'Content-Type': img.type,
+      'Content-Length': String(img.bytes),
+      'Cache-Control': cache,
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "default-src 'none'; sandbox",
+      'Content-Disposition': 'inline',
+    },
+  });
+}
+
+/** Whether a page takes messages now: the owner turned it on, the switch is on and email works. */
+export async function contactOpen(p: Portfolio) {
+  if (!p.contact || !p.ownerEmail) return false;
+  const cfg = (await getBusinessConfig()).value;
+  return cfg.features.portfolioContact && mailSettings(cfg.support.email).configured;
+}

@@ -19,6 +19,7 @@ import {
   type PaymentStatus,
   type Share,
   type Portfolio,
+  type PortfolioImage,
   SavedDesign,
 } from './types';
 
@@ -186,6 +187,7 @@ export class MemoryUserStore implements UserStore {
     this.docs.delete(uid);
     for (const k of [...this.versions.keys()]) if (k.startsWith(`${uid}/`)) this.versions.delete(k);
     for (const k of [...this.comments.keys()]) if (k.startsWith(`${uid}/`)) this.comments.delete(k);
+    this.images.delete(uid);
     this.passes.delete(uid);
     this.jobs.delete(uid);
     this.letters.delete(uid);
@@ -297,6 +299,31 @@ export class MemoryUserStore implements UserStore {
   }
   async deletePortfolioOf(uid: string) {
     for (const [k, v] of this.portfolios) if (v.uid === uid) this.portfolios.delete(k);
+    this.images.delete(uid);
+  }
+  private images = new Map<string, Map<string, PortfolioImage>>();
+  private imageBucket(uid: string) {
+    let b = this.images.get(uid);
+    if (!b) this.images.set(uid, (b = new Map()));
+    return b;
+  }
+  async putPortfolioImage(uid: string, img: PortfolioImage) {
+    this.imageBucket(uid).set(img.id, structuredClone(img));
+  }
+  async getPortfolioImage(uid: string, id: string) {
+    const i = this.imageBucket(uid).get(id);
+    return i ? structuredClone(i) : null;
+  }
+  async listPortfolioImages(uid: string) {
+    return [...this.imageBucket(uid).values()].map((i) => ({
+      id: i.id,
+      type: i.type,
+      bytes: i.bytes,
+      createdAt: i.createdAt,
+    }));
+  }
+  async deletePortfolioImage(uid: string, id: string) {
+    this.imageBucket(uid).delete(id);
   }
   async bumpPortfolioViews(slug: string) {
     const p = this.portfolios.get(slug);

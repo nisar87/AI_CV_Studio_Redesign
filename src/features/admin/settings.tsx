@@ -699,6 +699,11 @@ export function AdminSettings() {
             checked={draft.features.shareComments}
             onChange={(v) => edit((c) => void (c.features.shareComments = v))}
           />
+          <CheckboxField
+            label="Contact forms on portfolio pages (each person turns theirs on)"
+            checked={draft.features.portfolioContact}
+            onChange={(v) => edit((c) => void (c.features.portfolioContact = v))}
+          />
         </Section>
 
         <Section
@@ -889,6 +894,27 @@ function EmailCheck() {
           }}
         >
           Send a sample comment email
+        </Button>{' '}
+        <Button
+          size="sm"
+          variant="secondary"
+          loading={busy}
+          onClick={async () => {
+            setBusy(true);
+            setProblem(null);
+            try {
+              const r = await adminSend<{ to: string }>('/api/admin/notify', 'POST', {
+                kind: 'contact',
+              });
+              toast.show({ tone: 'success', message: `Sample contact message sent to ${r.to}` });
+            } catch (e) {
+              setProblem((e as Error).message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          Send a sample portfolio message
         </Button>
       </div>
       {problem && (

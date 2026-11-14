@@ -61,6 +61,10 @@ export const EVENTS = [
   'share_comment',
   'comment_notice',
   'comment_notice_fail',
+  // R9.8 Portfolio themes
+  'portfolio_contact',
+  'portfolio_contact_fail',
+  'portfolio_image',
 ] as const;
 export type MetricEvent = (typeof EVENTS)[number];
 

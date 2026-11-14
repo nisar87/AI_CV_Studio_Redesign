@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PortfolioPage } from '@/features/portfolio/portfolio-page';
 import { track } from '@/modules/metrics/server';
-import { resolvePortfolio } from '@/modules/portfolio/server';
+import { contactOpen, resolvePortfolio } from '@/modules/portfolio/server';
+import { resolveTheme } from '@/modules/portfolio/themes';
 import { getUserStore } from '@/modules/store';
 
 export const dynamic = 'force-dynamic';
@@ -31,5 +32,14 @@ export default async function PortfolioRoute({ params }: Props) {
     .bumpPortfolioViews(slug)
     .catch(() => {});
   await track('portfolio_view');
-  return <PortfolioPage doc={r.doc} portfolio={r.portfolio} />;
+  const p = r.portfolio;
+  return (
+    <PortfolioPage
+      doc={r.doc}
+      portfolio={p}
+      theme={resolveTheme(p.theme, r.doc)}
+      imageSrc={(id) => `/p/${encodeURIComponent(p.slug)}/img/${encodeURIComponent(id)}`}
+      contactOpen={await contactOpen(p)}
+    />
+  );
 }

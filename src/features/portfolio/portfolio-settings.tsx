@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { ExternalLink, Globe } from 'lucide-react';
+import { ExternalLink, Eye, Globe } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,15 +13,23 @@ import { useEntitlements } from '@/features/account/entitlements';
 import { CheckboxField } from '@/features/editor/fields';
 import type { PortfolioView } from '@/modules/portfolio/server';
 import { slugProblem, suggestSlug } from '@/modules/portfolio/slug';
+import { themeForDoc, type Theme } from '@/modules/portfolio/themes';
 import { getRepository } from '@/modules/storage/repository';
+import { saveDraft, type PortfolioDraft } from './draft';
+import { ProjectsEditor, QrCard, SectionsEditor, ThemePicker } from './portfolio-extras';
 
-type Form = {
-  slug: string;
-  docId: string;
-  published: boolean;
-  showEmail: boolean;
-  showPhone: boolean;
-};
+type Form = PortfolioDraft;
+const fromView = (p: PortfolioView): Form => ({
+  slug: p.slug,
+  docId: p.docId,
+  published: p.published,
+  showEmail: p.showEmail,
+  showPhone: p.showPhone,
+  theme: p.theme,
+  sections: p.sections,
+  projects: p.projects,
+  contact: p.contact,
+});
 
 export function PortfolioSettings() {
   const mounted = useSyncExternalStore(
@@ -56,19 +64,17 @@ function Settings() {
         const source = cvs.find((c) => c.role === 'profile') ?? cvs[0];
         setForm(
           portfolio
-            ? {
-                slug: portfolio.slug,
-                docId: portfolio.docId,
-                published: portfolio.published,
-                showEmail: portfolio.showEmail,
-                showPhone: portfolio.showPhone,
-              }
+            ? fromView(portfolio)
             : {
                 slug: suggestSlug(source?.name ?? ''),
                 docId: source?.id ?? '',
                 published: true,
                 showEmail: false,
                 showPhone: false,
+                theme: 'auto',
+                sections: [],
+                projects: [],
+                contact: false,
               },
         );
       })
@@ -77,14 +83,17 @@ function Settings() {
 
   const url = (slug: string) => `${window.location.origin}/p/${slug}`;
   const problem = form ? slugProblem(form.slug) : null;
-  const dirty =
-    !!form &&
-    (!saved ||
-      form.slug !== saved.slug ||
-      form.docId !== saved.docId ||
-      form.published !== saved.published ||
-      form.showEmail !== saved.showEmail ||
-      form.showPhone !== saved.showPhone);
+  const dirty = !!form && (!saved || JSON.stringify(form) !== JSON.stringify(fromView(saved)));
+  const doc = form ? repo.get(form.docId) : null;
+  const auto = doc ? themeForDoc(doc) : 'clean';
+  const contactOn = !!ent?.features.portfolioContact;
+
+  /** Opens the preview in a new tab with these settings (saved or not). */
+  function preview(theme?: Theme) {
+    if (!form) return;
+    saveDraft(form);
+    window.open(`/portfolio-preview${theme ? `?theme=${theme}` : ''}`, '_blank', 'noopener');
+  }
 
   async function save() {
     if (!form) return;
@@ -99,6 +108,7 @@ function Settings() {
       const j = (await r.json()) as { portfolio?: PortfolioView; error?: { message: string } };
       if (!r.ok || !j.portfolio) throw new Error(j.error?.message ?? 'That didn’t work.');
       setSaved(j.portfolio);
+      setForm(fromView(j.portfolio));
       toast.show({
         tone: 'success',
         message: j.portfolio.published ? 'Your page is live' : 'Saved. Your page is hidden.',
@@ -182,6 +192,9 @@ function Settings() {
               >
                 Open my page
               </ButtonLink>
+              <div className="border-line w-full border-t pt-4">
+                <QrCard url={url(saved.slug)} slug={saved.slug} />
+              </div>
             </Card>
           )}
           <Card className="flex flex-col gap-4 p-5">
@@ -199,6 +212,12 @@ function Settings() {
                 ))}
               </select>
             </label>
+            <ThemePicker
+              value={form.theme}
+              auto={auto}
+              onChange={(theme) => setForm({ ...form, theme })}
+              onPreview={(t) => preview(t)}
+            />
             <TextField
               label="Your address"
               hint={`aicvstudio.app/p/${form.slug || 'your-name'}`}
@@ -226,6 +245,32 @@ function Settings() {
                 happy for anyone to see.
               </p>
             </fieldset>
+            {(contactOn || form.contact) && (
+              <div className="flex flex-col">
+                <CheckboxField
+                  label="Add a contact form"
+                  checked={form.contact}
+                  onChange={(v) => setForm({ ...form, contact: v })}
+                />
+                <p className="text-ink-muted -mt-1 pl-8 text-xs">
+                  Visitors can send you a message. It comes to your sign-in email
+                  {account.user?.email ? ` (${account.user.email})` : ''}; your address stays hidden
+                  and replying answers them.
+                </p>
+              </div>
+            )}
+          </Card>
+          <Card className="flex flex-col gap-6 p-5">
+            <SectionsEditor
+              value={form.sections}
+              onChange={(sections) => setForm({ ...form, sections })}
+            />
+            <ProjectsEditor
+              value={form.projects}
+              onChange={(projects) => setForm({ ...form, projects })}
+            />
+          </Card>
+          <Card className="flex flex-col gap-4 p-5">
             <CheckboxField
               label="Page is published"
               checked={form.published}
@@ -239,6 +284,13 @@ function Settings() {
             <div className="flex flex-wrap gap-2">
               <Button disabled={!dirty || !!problem} loading={busy} onClick={save}>
                 {saved ? 'Save changes' : 'Create my page'}
+              </Button>
+              <Button
+                variant="secondary"
+                icon={<Eye aria-hidden size={16} />}
+                onClick={() => preview()}
+              >
+                Preview
               </Button>
               {saved && (
                 <Button variant="ghost" onClick={remove}>

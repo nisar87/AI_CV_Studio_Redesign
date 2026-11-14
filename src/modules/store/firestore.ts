@@ -20,6 +20,7 @@ import {
   type PaymentStatus,
   type Share,
   type Portfolio,
+  type PortfolioImage,
   SavedDesign,
   ReminderQueue,
 } from './types';
@@ -292,7 +293,25 @@ export class FirestoreUserStore implements UserStore {
   }
   async deletePortfolioOf(uid: string) {
     const snap = await this.portfolios().where('uid', '==', uid).get();
-    await Promise.all(snap.docs.map((d) => d.ref.delete()));
+    const images = await this.imagesCol(uid).listDocuments();
+    await Promise.all([...snap.docs.map((d) => d.ref), ...images].map((r) => r.delete()));
+  }
+  private imagesCol(uid: string) {
+    return this.db.collection('users').doc(uid).collection('portfolioImages');
+  }
+  async putPortfolioImage(uid: string, img: PortfolioImage) {
+    await this.imagesCol(uid).doc(img.id).set(img);
+  }
+  async getPortfolioImage(uid: string, id: string) {
+    const s = await this.imagesCol(uid).doc(id).get();
+    return s.exists ? (s.data() as PortfolioImage) : null;
+  }
+  async listPortfolioImages(uid: string) {
+    const snap = await this.imagesCol(uid).select('id', 'type', 'bytes', 'createdAt').get();
+    return snap.docs.map((d) => d.data() as Omit<PortfolioImage, 'data'>);
+  }
+  async deletePortfolioImage(uid: string, id: string) {
+    await this.imagesCol(uid).doc(id).delete();
   }
   async bumpPortfolioViews(slug: string) {
     await this.portfolios()

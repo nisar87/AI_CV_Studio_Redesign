@@ -114,6 +114,8 @@ export const businessConfig = z.object({
     reminders: z.boolean().default(true),
     /** R9 comments on share links (the owner turns them on per link). */
     shareComments: z.boolean().default(true),
+    /** R9 contact forms on portfolio pages (the owner turns theirs on). */
+    portfolioContact: z.boolean().default(true),
   }),
   /** AI actions that cost more than one (complete-studio-spec §14: weights are config data). */
   aiWeights: z
@@ -260,6 +262,7 @@ export const DEFAULT_CONFIG: BusinessConfig = {
     jobFromUrl: true,
     reminders: true,
     shareComments: true,
+    portfolioContact: true,
   },
   aiWeights: { kit: 3, mockTurn: 1, coachTurn: 1, storyDraft: 1, skillGap: 1 },
   content: { hiddenLetterTypes: [] },

@@ -23,7 +23,7 @@ _Last updated: 2026-11-14 (live on Firebase App Hosting at aicvstudio.app)_
 | R6 Design engine | `r6/design-engine` | ✅ Live on aicvstudio.app (2026-11-13); Design Studio switched on and checked live |
 | R7 Describe your design | `r7/describe` | ✅ Live on aicvstudio.app (2026-11-13): 32 designs, AI Designer on, verified with real Gemini; preference test and outside review are owner to-dos |
 | R8 One studio | `r8/studio` | ✅ Live on aicvstudio.app (2026-11-13): studio shell and Home, letters, Presence, application kit, ATS check, 24 section types, edit on the page, Console switches |
-| R9 Coach | `r9/*` | 🟡 In progress: mock interview, career coach, story bank, skill plan, job from URL, reminders and share comments live (2026-11-14) |
+| R9 Coach | `r9/*` | 🟡 In progress: mock interview, career coach, story bank, skill plan, job from URL, reminders, share comments and portfolio themes live (2026-11-14) |
 
 ## Phase 0 report
 
@@ -867,7 +867,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - per-task AI switches and model per tier.
   These belong with the R9/R10 tools that need them.
 
-## Release 9 — Coach (in progress: R9.1–R9.7 live)
+## Release 9 — Coach (in progress: R9.1–R9.8 live)
 
 ### R9.1 Mock interview
 - **On every job (and from Coach):**
@@ -996,6 +996,56 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - Not checkable from the automation browser: a pointer click on a line inside the scaled, sandboxed preview frame. The browser tool cannot click into a CSS-scaled frame. The e2e suite covers this path in real Chrome, and the editor's click-to-edit, live since R8.6, uses the same frame and message.
   - **Found live and fixed:** opening the Check tab at `#comments` scrolled the section's heading under the sticky tab bar; it now stops below it.
 
+### R9.8 Portfolio themes
+- **What it is** (spec §10 "Portfolio upgrade: 6 themes from the design families, project galleries with images, contact form, custom sections, QR code", §8.6 "each design page shows … the portfolio theme", §14 "Portfolio themes: Premium, all 6"): `/portfolio` now has a theme picker, your own sections, projects with pictures, a contact form, a preview and a QR code.
+- **6 themes** (`portfolio/themes.ts`, `portfolio-page.tsx`):
+  - **Clean:** calm, one column.
+  - **Classic:** centred, serif headings between rules, warm paper.
+  - **Sidebar:** details and skills in a side column on wide screens; on phones, your details come first, then your story, then skills.
+  - **Editorial:** very large name and numbered sections.
+  - **Timeline:** dates down the side of jobs and education.
+  - **Bold:** a colour band and cards.
+  
+  **Match my CV** (the default) picks the theme from the CV's design family: portrait designs use Sidebar, compact designs use Clean, and a Design Studio design uses the design it started from. The CV's accent colour stays readable on every theme, and Classic and Editorial use serif headings.
+- **Your own sections:** up to 6, only on the page (for example "What I'm looking for"): a title, paragraphs and an optional link.
+- **Projects with pictures:** up to 8 projects, each with a name, a description, a link and up to 4 pictures with descriptions (alt text). If the CV already has a "Projects" section, the gallery is called "Project gallery".
+- **Pictures** are resized in the browser to WebP (or JPEG) of at most 600 KB, then checked on the server by their bytes. Only JPEG, PNG and WebP are accepted, so SVG, HTML and GIF are refused. The limit is 40 per account, kept at `users/{uid}/portfolioImages/{id}`.
+  - Public pictures are served only while the page is live and only if the picture is on it. They are sent with `nosniff` and a closed CSP; the owner sees theirs through their own session.
+  - Pictures no longer used are removed on save (fresh uploads are kept for a day). All pictures are deleted with the page and with the account.
+- **Links** on the page must be web addresses (`javascript:`, `data:`, `mailto:` and the like are refused); a bare address gets `https://`.
+- **Contact form** (off by default; Console switch **Contact forms on portfolio pages**): the visitor gives a name, email and message. The message is emailed to the owner's sign-in address with *Reply-To* set to the visitor, so replying answers them. The owner's address is never shown, and we don't keep the message. The email says plainly that we don't check who sends messages.
+  - Limits: 3 messages per network address (then one every few minutes) and 20 per page per day, plus a honeypot field.
+  - The form only appears while email is set up.
+- **Preview** (`/portfolio-preview`, not indexed): shows your unsaved settings in the chosen theme, or in any theme from its **Preview** link. Free accounts can preview themes too; publishing stays Premium. In the preview the form doesn't send.
+- **QR code:** once the page is live, the settings show a QR code of its address to download as PNG or SVG (for print). The CV's own QR option is in the Design Studio (Extras).
+- **Theme samples:** `/portfolio-themes/{theme}` shows each theme with a sample person. Each design's page in the gallery has a **Matching portfolio page** view that shows the CV you picked in that design's theme.
+- **Console:** **Send a sample portfolio message** next to the other sample emails. Metrics: `portfolio_contact`, `portfolio_contact_fail`, `portfolio_image`. The privacy page now covers sections, pictures and the contact form.
+- **Also fixed:** R9.7 had also added the share-comment fields to the `Portfolio` type by mistake (a find-and-replace matched both types). They were unused there and are removed.
+- **Tests:**
+  - 12 unit tests:
+    - every catalogue design maps to its family's theme, including custom designs, and the page's own choice wins;
+    - sections and projects are cleaned, with limits and defaults;
+    - links: only web addresses;
+    - contact input, and the email's Reply-To and escaping;
+    - pictures recognised by their bytes;
+    - pictures stored and deleted with the page and the account.
+  - e2e `portfolio-themes.spec` (desktop and phone):
+    - picker with "Match my CV", the Sidebar theme, an own section with a link, and a project with a real picture uploaded and described (axe);
+    - the unsaved preview in Sidebar and in Bold, where the form refuses to send;
+    - publish with the QR code (PNG and SVG);
+    - a stranger sees the theme, the section and the picture (served as an image with `nosniff`; axe);
+    - the contact form sends **one** email to the owner with Reply-To set to the visitor, and the owner's address is nowhere on the page; the honeypot sends nothing and a bad email is refused;
+    - an unused picture is not public, and the owner's picture route needs a session; HTML posted as a picture gets 422 and a too-large file 413;
+    - someone else's picture id and a `javascript:` link are refused;
+    - switching to Classic and turning the form off (404) both work;
+    - deleting the page deletes the pictures;
+    - all six sample pages pass axe with no sideways scrolling; the design page view works;
+    - a free account gets 402 and the Premium offer; a visitor gets 401.
+- **Found while testing:**
+  - The page showed two "Projects" headings when the CV already had a Projects section.
+  - On phones, the Sidebar theme put a long skills list before "About".
+  - The design page's sample in an iframe was blocked by our own `X-Frame-Options: DENY`. That header is kept; the theme is now drawn in the page, with the person's own CV, with no second main landmark or banner.
+
 ## Owner to-do (when you have time)
 
 1. ~~Payments and sales~~: done on 2026-11-12.
@@ -1015,7 +1065,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 
 ## Next action (exact)
 
-1. R9 "Coach": R9.1 mock interview, R9.2 career coach, R9.3 story bank, R9.4 skill plan, R9.5 job from URL, R9.6 reminders and R9.7 share comments are live. Next: R9.8 portfolio themes, then LinkedIn review, application analytics — spec §16. (Console switches and weights for the R9 tools came with R9.3.)
+1. R9 "Coach": R9.1 mock interview, R9.2 career coach, R9.3 story bank, R9.4 skill plan, R9.5 job from URL, R9.6 reminders, R9.7 share comments and R9.8 portfolio themes are live. Next: R9.9 LinkedIn review, then application analytics — spec §16. (Console switches and weights for the R9 tools came with R9.3.)
 
 ## Deployment (2026-11-12)
 

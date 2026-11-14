@@ -16,6 +16,8 @@ export type Mail = {
   html: string;
   /** Extra headers (e.g. List-Unsubscribe for reminder emails). */
   headers?: Record<string, string>;
+  /** Where a reply goes (a portfolio visitor's address for contact messages). */
+  replyTo?: string;
 };
 export type MailResult =
   | { ok: true; id?: string }
@@ -263,4 +265,40 @@ export function commentEmail(
     `You get this email because comments are on for a link to your CV. <a href="${esc(settings)}" style="color:#5b616b">Change the link’s settings</a>.`,
   );
   return { to, subject, text, html };
+}
+
+/**
+ * A message from a portfolio page's contact form (R9.8). The visitor's words go to the owner,
+ * clearly marked as coming from someone on the internet; replying answers the visitor directly.
+ * The owner's address is never shown to the visitor.
+ */
+export function contactEmail(
+  to: string,
+  m: { name: string; email: string; message: string; slug: string },
+): Mail {
+  const page = `${SITE}/p/${encodeURIComponent(m.slug)}`;
+  const settings = `${SITE}/portfolio`;
+  const name = m.name.slice(0, 80);
+  const subject = `Message from ${name} through your portfolio page`;
+  const note =
+    'Someone used the contact form on your portfolio page. We don’t check who sends messages, so be careful with links and requests for money or personal details.';
+  const text = [
+    note,
+    `From: ${name} <${m.email}>`,
+    m.message,
+    `Reply to this email to answer ${name}.`,
+    `Your page: ${page}`,
+    `To stop messages, turn off the contact form: ${settings}`,
+  ].join('\n\n');
+  const html = wrapHtml(
+    'A message through your portfolio page',
+    [
+      `<strong>From:</strong> ${esc(name)} &lt;${esc(m.email)}&gt;`,
+      `<span style="white-space:pre-wrap">${esc(m.message)}</span>`,
+      `Reply to this email to answer ${esc(name)}.`,
+      `<span style="color:#5b616b;font-size:13px">${esc(note)}</span>`,
+    ],
+    `You get this email because the contact form is on for <a href="${esc(page)}" style="color:#5b616b">your portfolio page</a>. <a href="${esc(settings)}" style="color:#5b616b">Turn it off</a>.`,
+  );
+  return { to, subject, text, html, replyTo: m.email };
 }

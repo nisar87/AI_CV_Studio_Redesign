@@ -1,3 +1,8 @@
+import type {
+  PortfolioProject,
+  PortfolioSection,
+  PortfolioTheme,
+} from '@/modules/portfolio/themes';
 import type { ShareComment } from '@/modules/share/comments';
 import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
@@ -105,6 +110,12 @@ export interface UserStore {
   putPortfolio(p: Portfolio): Promise<boolean>;
   deletePortfolioOf(uid: string): Promise<void>;
   bumpPortfolioViews(slug: string): Promise<void>;
+  // Portfolio pictures (R9.8), under the account: users/{uid}/portfolioImages/{id}.
+  putPortfolioImage(uid: string, img: PortfolioImage): Promise<void>;
+  getPortfolioImage(uid: string, id: string): Promise<PortfolioImage | null>;
+  /** Without the picture data. */
+  listPortfolioImages(uid: string): Promise<Omit<PortfolioImage, 'data'>[]>;
+  deletePortfolioImage(uid: string, id: string): Promise<void>;
   listVersions(uid: string, id: string): Promise<{ savedAt: string; doc: ResumeDocument }[]>;
 
   // Billing (studio-master-plan §4.3) — written only by the server.
@@ -176,12 +187,26 @@ export type Portfolio = {
   views: number;
   /** Opens per day (yyyy-mm-dd → count), for the Presence hub. */
   daily?: Record<string, number>;
-  /** People with the link may leave comments (R9.7). Off unless the owner turns it on. */
-  comments?: boolean;
-  /** Email the owner about new comments (default on once comments are on). */
-  notify?: boolean;
-  /** Where comment notices go: the owner's sign-in email when they turned comments on. */
+  /** R9.8: the page's theme ('auto' follows the CV's design family). */
+  theme?: PortfolioTheme;
+  /** R9.8: the owner's own sections (portfolio only, not on the CV). */
+  sections?: PortfolioSection[];
+  /** R9.8: projects with pictures. */
+  projects?: PortfolioProject[];
+  /** R9.8: a contact form that emails the owner (their address stays hidden). */
+  contact?: boolean;
+  /** Where contact messages go: the owner's sign-in email when they saved the page. */
   ownerEmail?: string | null;
+};
+
+/** A picture for a portfolio project, resized in the browser and checked by its bytes. */
+export type PortfolioImage = {
+  id: string;
+  type: 'image/webp' | 'image/jpeg' | 'image/png';
+  /** base64 */
+  data: string;
+  bytes: number;
+  createdAt: string;
 };
 
 /** A private, read-only link to the latest version of one CV. */

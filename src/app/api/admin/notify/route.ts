@@ -3,6 +3,7 @@ import { actor, json, withAdmin } from '@/modules/admin/server';
 import { getBusinessConfig } from '@/modules/billing/server';
 import {
   commentEmail,
+  contactEmail,
   mailSettings,
   reminderEmail,
   sendMail,
@@ -43,7 +44,16 @@ const sampleReminder = (to: string) =>
 const sampleComment = (to: string) =>
   commentEmail(to, { cvTitle: 'Delivery Driver CV', open: 2, docId: 'sample' });
 
-/** POST { to?, kind? } → a test email, or a sample reminder or comment email (kind). */
+/** A sample portfolio contact message (R9.8). */
+const sampleContact = (to: string) =>
+  contactEmail(to, {
+    name: 'Sample Visitor',
+    email: 'visitor@example.com',
+    message: 'Hello! I saw your portfolio and would like to talk about a role on our team.',
+    slug: 'sample',
+  });
+
+/** POST { to?, kind? } → a test email, or a sample reminder, comment or contact email (kind). */
 export function POST(req: Request) {
   return withAdmin(async (admin, rid) => {
     const body = await readJson(req, 1024);
@@ -53,13 +63,16 @@ export function POST(req: Request) {
         : admin.email) ?? '';
     const { value: cfg } = await getBusinessConfig();
     const asked = body.ok ? (body.value as { kind?: unknown })?.kind : undefined;
-    const kind = asked === 'reminder' || asked === 'comment' ? asked : 'test';
+    const kind =
+      asked === 'reminder' || asked === 'comment' || asked === 'contact' ? asked : 'test';
     const r = await sendMail(
       kind === 'reminder'
         ? sampleReminder(to)
         : kind === 'comment'
           ? sampleComment(to)
-          : testEmail(to),
+          : kind === 'contact'
+            ? sampleContact(to)
+            : testEmail(to),
       cfg.support.email,
     );
     await getUserStore().writeAudit({

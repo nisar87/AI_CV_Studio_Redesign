@@ -9,6 +9,8 @@ import { isPremiumDesign, useEntitlements } from '@/features/account/entitlement
 import { DocumentPreview } from '@/features/preview/document-preview';
 import { specOf } from '@/modules/design/designer';
 import { DESIGN_META, FAMILY_LABEL } from '@/modules/design/designs';
+import { PortfolioPage } from '@/features/portfolio/portfolio-page';
+import { FAMILY_THEME, THEME_INFO } from '@/modules/portfolio/themes';
 import { buildLetterHtml } from '@/modules/letters/build-letter';
 import { ops } from '@/modules/resume/ops';
 import type { DesignId } from '@/modules/resume/schema';
@@ -42,7 +44,7 @@ export function DesignDetail({ id }: { id: DesignId }) {
   const show =
     choice ??
     (params.get('cv') ? `own:${params.get('cv')}` : own[0] ? `own:${own[0].id}` : 'sample:teacher');
-  const [view, setView] = useState<'design' | 'ats' | 'letter'>('design');
+  const [view, setView] = useState<'design' | 'ats' | 'letter' | 'portfolio'>('design');
 
   const { doc, ownId } = useMemo(() => {
     if (show.startsWith('own:')) {
@@ -141,6 +143,7 @@ export function DesignDetail({ id }: { id: DesignId }) {
               ['design', 'The design'],
               ['ats', 'ATS-safe version'],
               ['letter', 'Matching cover letter'],
+              ['portfolio', 'Matching portfolio page'],
             ] as const
           ).map(([v, l]) => (
             <button
@@ -172,6 +175,35 @@ export function DesignDetail({ id }: { id: DesignId }) {
               software. Turn it on or off any time in the Design Studio.
             </p>
             <DocumentPreview doc={ats} debounceMs={0} title={`${meta.name}, ATS-safe version`} />
+          </>
+        )}
+        {view === 'portfolio' && (
+          <>
+            <p className="text-ink-muted mb-3 text-sm">
+              Your portfolio page (Premium) uses the {THEME_INFO[FAMILY_THEME[meta.family]].name}{' '}
+              theme with this design: {THEME_INFO[FAMILY_THEME[meta.family]].hint.toLowerCase()}.{' '}
+              <a
+                href={`/portfolio-themes/${FAMILY_THEME[meta.family]}`}
+                target="_blank"
+                rel="noopener"
+                className="text-primary font-semibold underline underline-offset-4"
+              >
+                Open a full-size sample
+              </a>
+            </p>
+            <section
+              className="border-line h-[720px] overflow-auto rounded-lg border"
+              aria-label={`Portfolio page in the ${THEME_INFO[FAMILY_THEME[meta.family]].name} theme`}
+              tabIndex={0}
+              data-testid="portfolio-theme-view"
+            >
+              <PortfolioPage
+                doc={doc}
+                theme={FAMILY_THEME[meta.family]}
+                portfolio={{ slug: 'sample', showEmail: false, showPhone: false }}
+                embedded
+              />
+            </section>
           </>
         )}
         {view === 'letter' && letter && (

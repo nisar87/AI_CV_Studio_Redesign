@@ -74,6 +74,36 @@ export async function readJson(
   }
 }
 
+/** Read a binary body, stopping as soon as it passes the limit (a missing length is not trusted). */
+export async function readBytes(
+  req: Request,
+  maxBytes: number,
+): Promise<{ ok: true; bytes: Uint8Array } | { ok: false; code: 'PAYLOAD_TOO_LARGE' }> {
+  const len = Number(req.headers.get('content-length') ?? 0);
+  if (len > maxBytes) return { ok: false, code: 'PAYLOAD_TOO_LARGE' };
+  if (!req.body) return { ok: true, bytes: new Uint8Array() };
+  const reader = req.body.getReader();
+  const parts: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel().catch(() => {});
+      return { ok: false, code: 'PAYLOAD_TOO_LARGE' };
+    }
+    parts.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let at = 0;
+  for (const p of parts) {
+    bytes.set(p, at);
+    at += p.byteLength;
+  }
+  return { ok: true, bytes };
+}
+
 /** Simple per-key token bucket (per server instance). Replace with a shared store when scaling out. */
 export function createRateLimiter({
   capacity,
