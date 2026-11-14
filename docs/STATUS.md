@@ -1045,6 +1045,15 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - The page showed two "Projects" headings when the CV already had a Projects section.
   - On phones, the Sidebar theme put a long skills list before "About".
   - The design page's sample in an iframe was blocked by our own `X-Frame-Options: DENY`. That header is kept; the theme is now drawn in the page, with the person's own CV, with no second main landmark or banner.
+- **Verified live on aicvstudio.app (2026-11-14, owner's account; Premium granted temporarily, then removed and usage reset):**
+  - All six theme samples answer.
+  - `/portfolio` shows the live card with the QR code (PNG and SVG) and the theme picker ("Match my CV — Clean, from your CV's design" for the owner's CV).
+  - A picture made and resized in the browser (6 KB WebP) uploaded with 201. A save with the Sidebar theme, a test section with a link, a project with that picture and the contact form returned 200.
+  - The public page `/p/nisar-ahmad` showed the Sidebar theme with the section, the link (`https://example.com`) and the project picture (served as `image/webp`, `nosniff`, `default-src 'none'; sandbox`), plus the contact form, with no sideways scrolling.
+  - The contact form, filled in as a visitor, answered "Thank you…". The server only answers that after the mail server accepts the email, so a message went to the owner's sign-in address with Reply-To `visitor@example.com`. The owner's sign-in address is nowhere in the page's HTML.
+  - The preview from the live settings showed the owner's real CV in the Editorial theme with the unsaved section.
+  - The automation browser blocks pop-ups, so the preview was opened by its address; the e2e suite covers the click.
+  - **Restored afterwards:** the page's original settings (same CV, address, published, email shown, phone hidden, no sections, projects or form). The test picture was deleted and the draft cleared. The page is offline again because the account is not Premium. The page's visit count rose from 1 to 3 from these checks.
 
 ## Owner to-do (when you have time)
 
@@ -1061,7 +1070,8 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 11. **Later:** publishing the browser extension to the Chrome Web Store (R10).
 12. **Reminder email on staging (R9 acceptance):** sign in once on https://aicvstudio-staging--ai-cv-studio.europe-west4.hosted.app and press Admin → Settings → **Send a sample reminder email** (or add a reminder for today on a job), then check the inbox. Production delivery was verified on 2026-11-14.
 13. **Comment notice email:** check the inbox of aicvstudio.app@gmail.com for "New comment on Nisar Ahmad — imported" (sent 2026-11-14 ~08:10 PKT during the R9.7 live check), or press Admin → Settings → **Send a sample comment email**.
-14. **Optional:** a `CRON_KEY` (same value as an App Hosting secret and a GitHub repository secret) makes the hourly reminder sender require a key. Not needed for safety (it only sends what is due, once).
+14. **Portfolio contact message:** check the inbox of your sign-in address for "Message from Claude test visitor through your portfolio page" (sent 2026-11-14 during the R9.8 live check), or press Admin → Settings → **Send a sample portfolio message**.
+15. **Optional:** a `CRON_KEY` (same value as an App Hosting secret and a GitHub repository secret) makes the hourly reminder sender require a key. Not needed for safety (it only sends what is due, once).
 
 ## Next action (exact)
 
