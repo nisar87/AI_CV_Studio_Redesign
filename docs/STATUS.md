@@ -23,7 +23,7 @@ _Last updated: 2026-11-14 (live on Firebase App Hosting at aicvstudio.app)_
 | R6 Design engine | `r6/design-engine` | ✅ Live on aicvstudio.app (2026-11-13); Design Studio switched on and checked live |
 | R7 Describe your design | `r7/describe` | ✅ Live on aicvstudio.app (2026-11-13): 32 designs, AI Designer on, verified with real Gemini; preference test and outside review are owner to-dos |
 | R8 One studio | `r8/studio` | ✅ Live on aicvstudio.app (2026-11-13): studio shell and Home, letters, Presence, application kit, ATS check, 24 section types, edit on the page, Console switches |
-| R9 Coach | `r9/coach`, `r9/stories`, `r9/skills` | 🟡 In progress: mock interview, career coach, story bank and skill plan live (2026-11-14) |
+| R9 Coach | `r9/*` | 🟡 In progress: mock interview, career coach, story bank, skill plan and job from URL live (2026-11-14) |
 
 ## Phase 0 report
 
@@ -867,7 +867,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - per-task AI switches and model per tier.
   These belong with the R9/R10 tools that need them.
 
-## Release 9 — Coach (in progress: R9.1–R9.4 live)
+## Release 9 — Coach (in progress: R9.1–R9.5 live)
 
 ### R9.1 Mock interview
 - **On every job (and from Coach):**
@@ -949,6 +949,10 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 - **e2e `job-url.spec`:** JSON-LD page → form → save with its link, 0 AI actions (axe); a page without job data (with a hidden instruction) read through the address bar, clutter and instruction kept out; 8 unsafe links, a redirect to the metadata address, a followed redirect, too large, too slow, not HTML, 403 and a job list all refused with plain messages; free account within and past its 3 jobs; visitor 401. Test pages exist only with the e2e test hooks and the in-memory store.
 - **Found while building:** an instruction hidden in a page (`display:none`) could have put "Chief Executive" in the title even with the on-the-page check, because the words were on the page. Hidden parts are now removed and the title must be a heading line.
 - **New error code** `UNPROCESSABLE` (422) for "the page couldn't be used".
+- **Verified live on aicvstudio.app (2026-11-14):**
+  - Refused on the production server: the cloud metadata address and host (`169.254.169.254`, `metadata.google.internal`), `127.0.0.1:8080`, `[::ffff:169.254.169.254]`, the decimal form `2852039166`, `localtest.me` (a public name that resolves to 127.0.0.1 — stopped by the DNS check) and port 8443. The e2e test pages answer 404 in production.
+  - Real adverts: **Greenhouse** (2 open jobs, read by AI in 4–6 s: title, company, location and the advert cut from its first words to the closing date), **Lever** (read from its JSON-LD in 1.6 s), **Rippling** (read by AI in 5 s). Honest refusals: closed jobs that redirect to a list ("doesn't look like one job advert"), a removed posting (404), sites that block robots (startup.jobs, Climatebase: 403). The owner's form filled itself from a Lever link through `/jobs?new=1&url=…` (not saved); no AI action counted.
+  - **Evaluation: 5/5 `jobs.extract` samples with real Gemini** (about 2 s each); the hostile page's instruction was ignored; the job list and sign-in wall were recognised as not a job.
 
 ## Owner to-do (when you have time)
 
@@ -966,7 +970,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 
 ## Next action (exact)
 
-1. R9 "Coach": R9.1 mock interview, R9.2 career coach, R9.3 story bank and R9.4 skill plan are live. Next: R9.5 job from URL, then reminders by email, share comments, portfolio themes, LinkedIn review, application analytics — spec §16. (Console switches and weights for the R9 tools came with R9.3.)
+1. R9 "Coach": R9.1 mock interview, R9.2 career coach, R9.3 story bank, R9.4 skill plan and R9.5 job from URL are live. Next: R9.6 reminders by email, then share comments, portfolio themes, LinkedIn review, application analytics — spec §16. (Console switches and weights for the R9 tools came with R9.3.)
 
 ## Deployment (2026-11-12)
 
