@@ -23,7 +23,7 @@ _Last updated: 2026-11-14 (live on Firebase App Hosting at aicvstudio.app)_
 | R6 Design engine | `r6/design-engine` | ✅ Live on aicvstudio.app (2026-11-13); Design Studio switched on and checked live |
 | R7 Describe your design | `r7/describe` | ✅ Live on aicvstudio.app (2026-11-13): 32 designs, AI Designer on, verified with real Gemini; preference test and outside review are owner to-dos |
 | R8 One studio | `r8/studio` | ✅ Live on aicvstudio.app (2026-11-13): studio shell and Home, letters, Presence, application kit, ATS check, 24 section types, edit on the page, Console switches |
-| R9 Coach | `r9/*` | 🟡 In progress: mock interview, career coach, story bank, skill plan and job from URL live (2026-11-14) |
+| R9 Coach | `r9/*` | 🟡 In progress: mock interview, career coach, story bank, skill plan, job from URL and reminders live (2026-11-14) |
 
 ## Phase 0 report
 
@@ -867,7 +867,7 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - per-task AI switches and model per tier.
   These belong with the R9/R10 tools that need them.
 
-## Release 9 — Coach (in progress: R9.1–R9.5 live)
+## Release 9 — Coach (in progress: R9.1–R9.6 live)
 
 ### R9.1 Mock interview
 - **On every job (and from Coach):**
@@ -965,6 +965,11 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 - **Console:** **Send a sample reminder email** next to the test email.
 - **Staging:** `PUBLIC_SITE_URL` makes staging emails link to staging.
 - **e2e `reminders.spec`:** one-click follow-up, preset with own words, done/not done/delete, board card and Home (axe); a past day refused; the sender at 7:00 sends nothing, at 8:30 Karachi time one digest with both due reminders and none of the later one, links to both jobs, one-click headers; a second run sends nothing more; the job shows "emailed"; the stop link asks first, then turns emails off, a forged token is refused; with emails off nothing is sent; Account turns them back on; another account gets 404; visitor 401.
+- **Verified live (2026-11-14):**
+  - **Production:** a reminder on the owner's Northwind job, due at once (time zone set to Tokyo, where 8:00 had passed), was found by one run of the sender and **emailed to the owner's account address (aicvstudio.app@gmail.com); the mail server accepted it**; the job page then showed "Today · emailed". The test reminder was deleted afterwards. Reminder emails are on for the account.
+  - **Staging:** the new code is live; the sender runs against the staging database (no index needed) and the lease turns away a second run within 10 minutes; the stop page refuses unknown links.
+  - **Scheduled workflow:** a manual run reached both sites (both answered "already ran" because of the lease from the checks just before). It now runs every hour at :07.
+  - **Still open for the R9 acceptance "delivered in staging":** sending a real reminder on staging needs a signed-in staging account. The owner signs in once on the staging site (Google sign-in works there) and adds a reminder for today — or presses **Send a sample reminder email** in staging's Console — and checks the inbox.
 - **Found while testing:** the "done" tick and the Account switch waited for the server before changing, so a click looked ignored; both now change at once and undo themselves if the save fails.
 
 ## Owner to-do (when you have time)
@@ -980,10 +985,12 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 9. **Makeover acceptance with real CVs:** try 40 real CVs (10 Word, 10 PDFs from other builders, 10 two-column, 5 scans, 5 phone photos) on `/makeover` and note any wrong or missing text.
 10. **R7 human checks:** the 30-person blind design preference test (target 60%) and an outside reviewer's rubric scores for the 22 new designs (minimum 8.5).
 11. **Later:** publishing the browser extension to the Chrome Web Store (R10).
+12. **Reminder email on staging (R9 acceptance):** sign in once on https://aicvstudio-staging--ai-cv-studio.europe-west4.hosted.app and press Admin → Settings → **Send a sample reminder email** (or add a reminder for today on a job), then check the inbox. Production delivery was verified on 2026-11-14.
+13. **Optional:** a `CRON_KEY` (same value as an App Hosting secret and a GitHub repository secret) makes the hourly reminder sender require a key. Not needed for safety (it only sends what is due, once).
 
 ## Next action (exact)
 
-1. R9 "Coach": R9.1 mock interview, R9.2 career coach, R9.3 story bank, R9.4 skill plan and R9.5 job from URL are live. Next: R9.6 reminders by email, then share comments, portfolio themes, LinkedIn review, application analytics — spec §16. (Console switches and weights for the R9 tools came with R9.3.)
+1. R9 "Coach": R9.1 mock interview, R9.2 career coach, R9.3 story bank, R9.4 skill plan, R9.5 job from URL and R9.6 reminders are live. Next: R9.7 share comments, then portfolio themes, LinkedIn review, application analytics — spec §16. (Console switches and weights for the R9 tools came with R9.3.)
 
 ## Deployment (2026-11-12)
 
