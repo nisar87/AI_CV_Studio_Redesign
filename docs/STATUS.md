@@ -986,6 +986,15 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
   - on wide screens the sticky comment panel could be taller than the window, leaving Send out of reach; it now scrolls inside itself;
   - "Show me" did nothing for a comment on a whole section; it now scrolls to that section in the form.
 - **Deviation:** comments are not drawn as markers on the CV page itself; the owner sees where each one is (with the quoted words and Show me) in the Check tab.
+- **Verified live on aicvstudio.app (2026-11-14, owner's account):**
+  - On the owner's imported CV, **Create a link** then **Let people with the link leave comments**: saved in production Firestore, with comment emails on by default.
+  - The shared page shows the comment panel beside the CV. **Which part?** lists the owner's real sections and jobs (e.g. "PROFESSIONAL EXPERIENCE / BERUFSERFAHRUNG — Senior Software Engineer & Backend Architect, 3D Cellular (Canada) - Remote").
+  - A test comment on the 3D Cellular job: 201; the reviewer saw "Sent", their comment under "Your comments", and their name remembered.
+  - The request took 5.8 s, consistent with the notice email going to the mail server before the reply. Delivery to the owner's inbox (aicvstudio.app@gmail.com) is for the owner to confirm.
+  - Owner side via the email's link `/cv/{id}?tab=check#comments`: the Check tab listed the comment with name, date and the job; **Show me** opened the 3D Cellular job in the form; **Mark as done** was saved and the waiting count fell to 0.
+  - Clean-up: the comment and the link were deleted; the old link and its comment API answer 404. Staging runs the same code.
+  - Not checkable from the automation browser: a pointer click on a line inside the scaled, sandboxed preview frame. The browser tool cannot click into a CSS-scaled frame. The e2e suite covers this path in real Chrome, and the editor's click-to-edit, live since R8.6, uses the same frame and message.
+  - **Found live and fixed:** opening the Check tab at `#comments` scrolled the section's heading under the sticky tab bar; it now stops below it.
 
 ## Owner to-do (when you have time)
 
@@ -1001,7 +1010,8 @@ Spec: `docs/product/complete-studio-spec.md` §7.4, §7.7, §7.8, §8, §16 (R7)
 10. **R7 human checks:** the 30-person blind design preference test (target 60%) and an outside reviewer's rubric scores for the 22 new designs (minimum 8.5).
 11. **Later:** publishing the browser extension to the Chrome Web Store (R10).
 12. **Reminder email on staging (R9 acceptance):** sign in once on https://aicvstudio-staging--ai-cv-studio.europe-west4.hosted.app and press Admin → Settings → **Send a sample reminder email** (or add a reminder for today on a job), then check the inbox. Production delivery was verified on 2026-11-14.
-13. **Optional:** a `CRON_KEY` (same value as an App Hosting secret and a GitHub repository secret) makes the hourly reminder sender require a key. Not needed for safety (it only sends what is due, once).
+13. **Comment notice email:** check the inbox of aicvstudio.app@gmail.com for "New comment on Nisar Ahmad — imported" (sent 2026-11-14 ~08:10 PKT during the R9.7 live check), or press Admin → Settings → **Send a sample comment email**.
+14. **Optional:** a `CRON_KEY` (same value as an App Hosting secret and a GitHub repository secret) makes the hourly reminder sender require a key. Not needed for safety (it only sends what is due, once).
 
 ## Next action (exact)
 

@@ -119,7 +119,7 @@ export function CommentsPanel({ docId, onShow }: { docId: string; onShow: (ref: 
       ref={section}
       id="comments"
       aria-labelledby="comments-h"
-      className="border-line bg-surface shadow-1 flex scroll-mt-4 flex-col gap-4 rounded-lg border p-5"
+      className="border-line bg-surface shadow-1 flex scroll-mt-20 flex-col gap-4 rounded-lg border p-5"
       data-testid="comments"
     >
       <div>
