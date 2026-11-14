@@ -17,6 +17,7 @@ const AI_WEIGHTS = [
   ['coachTurn', 'Coach chat turn'],
   ['storyDraft', 'Story draft'],
   ['skillGap', 'Skill gap plan'],
+  ['linkedinReview', 'LinkedIn review'],
 ] as const;
 import { AdminHeading } from './admin-shell';
 import { adminGet, adminSend } from './api';
@@ -703,6 +704,11 @@ export function AdminSettings() {
             label="Contact forms on portfolio pages (each person turns theirs on)"
             checked={draft.features.portfolioContact}
             onChange={(v) => edit((c) => void (c.features.portfolioContact = v))}
+          />
+          <CheckboxField
+            label="LinkedIn review (from the person's LinkedIn PDF export)"
+            checked={draft.features.linkedinReview}
+            onChange={(v) => edit((c) => void (c.features.linkedinReview = v))}
           />
         </Section>
 

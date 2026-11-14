@@ -175,11 +175,16 @@ export function PresenceHub() {
           </div>
           <p className="text-ink-muted">
             A headline, About section and experience entries written from your CV, within LinkedIn’s
-            limits and ready to paste.
+            limits and ready to paste. Or upload your LinkedIn profile for a review of each section.
           </p>
-          <ButtonLink href="/linkedin" variant="secondary" className="mt-auto self-start">
-            Write my LinkedIn text
-          </ButtonLink>
+          <div className="mt-auto flex flex-wrap gap-2">
+            <ButtonLink href="/linkedin" variant="secondary">
+              Write my LinkedIn text
+            </ButtonLink>
+            <ButtonLink href="/linkedin?tab=review" variant="ghost">
+              Review my profile
+            </ButtonLink>
+          </div>
         </section>
       </div>
 

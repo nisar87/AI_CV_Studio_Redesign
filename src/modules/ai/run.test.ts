@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { profileDigest } from '@/modules/jobs/digest';
+import { LINKEDIN_SAMPLES } from '@/modules/linkedin/samples';
 import * as F from '@/modules/resume/fixtures';
 import { describe, expect, it, vi } from 'vitest';
 import { aiMode, aiModels } from './config';
@@ -261,6 +262,7 @@ describe('mock provider', () => {
     },
     'skills.gap': { profile: profileDigest(F.driver).text, role: 'Transport planner', advert: '' },
     'linkedin.write': { profile: profileDigest(F.driver).text, target: 'transport planning' },
+    'linkedin.review': { export: LINKEDIN_SAMPLES.DRIVER, profile: profileDigest(F.driver).text },
     'interview.prep': {
       advert: ADVERT,
       jobTitle: 'Delivery Driver',

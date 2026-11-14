@@ -42,6 +42,11 @@ export default function PrivacyPage() {
             checked against your CV so nothing is added that you didn’t write.
           </li>
           <li>
+            <strong>LinkedIn review:</strong> the text of the LinkedIn PDF you upload (and, if you
+            choose, the CV you compare it with) is sent to Gemini to write the review. The file is
+            read in memory and not stored; the review is kept only in your browser.
+          </li>
+          <li>
             <strong>Letters (resignation, reference request, thank-you and others):</strong> the
             letters you write are kept in your account and deleted with it. If you ask for an AI
             draft, your answers to the letter’s questions and the CV text are sent to Gemini; the

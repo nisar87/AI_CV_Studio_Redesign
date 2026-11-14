@@ -45,6 +45,7 @@ export const TASK_IDS = [
   'letter.generic',
   'quality.atsKeywords',
   'linkedin.write',
+  'linkedin.review',
   'interview.prep',
   'interview.turn',
   'coach.chat',
@@ -289,6 +290,16 @@ export const taskInputs = {
   }),
   'linkedin.write': z.object({
     profile: z.string().min(20).max(24_000),
+    /** The kind of role the person wants next (optional, their words). */
+    target: z.string().max(160).default(''),
+  }),
+  /** LinkedIn review (R9.9): the text of the person's LinkedIn PDF export. */
+  'linkedin.review': z.object({
+    export: z.string().min(40).max(20_000),
+    /** Counted from the file (linkedin/review.ts exportFacts). */
+    facts: z.string().max(1000).default(''),
+    /** The CV to compare with (profileDigest), optional. */
+    profile: z.string().max(24_000).default(''),
     /** The kind of role the person wants next (optional, their words). */
     target: z.string().max(160).default(''),
   }),
@@ -566,6 +577,31 @@ export const taskOutputs = {
     about: z.string().max(2600),
     experience: z.array(z.object({ job: z.string().max(12), text: z.string().max(2000) })).max(12),
     skills: z.array(z.string().max(80)).max(15),
+  }),
+  'linkedin.review': z.object({
+    isLinkedin: z.boolean(),
+    overall: z.string().max(900),
+    sections: z
+      .array(
+        z.object({
+          key: z.enum([
+            'headline',
+            'about',
+            'experience',
+            'skills',
+            'education',
+            'certifications',
+            'contact',
+            'other',
+          ]),
+          title: z.string().max(160),
+          status: z.enum(['good', 'improve', 'missing']),
+          current: z.string().max(3000),
+          notes: z.array(z.string().max(400)).max(5),
+          rewrite: z.string().max(3200),
+        }),
+      )
+      .max(18),
   }),
 } satisfies Record<TaskId, z.ZodType>;
 

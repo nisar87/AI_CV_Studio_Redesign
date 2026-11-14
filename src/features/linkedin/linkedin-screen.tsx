@@ -3,17 +3,19 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useMemo, useState, useSyncExternalStore } from 'react';
-import { Copy, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { TextArea, TextField } from '@/components/ui/field';
-import { useToast } from '@/components/ui/toast';
+import { TextField } from '@/components/ui/field';
 import { useAccount } from '@/features/account/account-context';
+import { Tabs, tabId, tabPanelId } from '@/components/ui/tabs';
 import { useEntitlements } from '@/features/account/entitlements';
 import { callAi } from '@/features/ai/client';
 import { profileDigest } from '@/modules/jobs/digest';
 import { getRepository } from '@/modules/storage/repository';
+import { CopyField } from './copy-field';
+import { LinkedinReview } from './linkedin-review';
 
 type Result = {
   headline: string;
@@ -34,9 +36,51 @@ export function LinkedinScreen() {
     () => true,
     () => false,
   );
+  const params = useSearchParams();
+  const [tab, setTab] = useState<'write' | 'review'>(
+    params.get('tab') === 'review' ? 'review' : 'write',
+  );
   if (!mounted)
     return <div className="skeleton mx-auto my-8 h-80 max-w-[860px] rounded-lg" aria-busy="true" />;
-  return <LinkedinWriter />;
+  const pick = (t: 'write' | 'review') => {
+    setTab(t);
+    const url = new URL(window.location.href);
+    if (t === 'review') url.searchParams.set('tab', 'review');
+    else url.searchParams.delete('tab');
+    window.history.replaceState(null, '', url);
+  };
+  return (
+    <div className="mx-auto flex max-w-[860px] flex-col gap-6 px-4 py-8 md:px-8">
+      <div>
+        <h1 className="font-display text-[32px] leading-tight font-semibold tracking-tight">
+          Your LinkedIn profile
+        </h1>
+        <p className="text-ink-muted mt-1">
+          {tab === 'write'
+            ? 'A headline, About section and job descriptions written from your CV, ready to paste into LinkedIn. Nothing is invented.'
+            : 'Upload the PDF LinkedIn makes of your profile and get a review of each section, with better text to paste back.'}
+        </p>
+      </div>
+      <Tabs
+        label="LinkedIn tools"
+        idBase="linkedin"
+        value={tab}
+        onChange={pick}
+        tabs={[
+          { value: 'write', label: 'Write from my CV' },
+          { value: 'review', label: 'Review my profile' },
+        ]}
+      />
+      <div
+        role="tabpanel"
+        id={tabPanelId('linkedin', tab)}
+        aria-labelledby={tabId('linkedin', tab)}
+        className="flex flex-col gap-6"
+      >
+        {tab === 'write' ? <LinkedinWriter /> : <LinkedinReview />}
+      </div>
+    </div>
+  );
 }
 
 function LinkedinWriter() {
@@ -116,17 +160,7 @@ function LinkedinWriter() {
     : 0;
 
   return (
-    <div className="mx-auto flex max-w-[860px] flex-col gap-6 px-4 py-8 md:px-8">
-      <div>
-        <h1 className="font-display text-[32px] leading-tight font-semibold tracking-tight">
-          Your LinkedIn profile
-        </h1>
-        <p className="text-ink-muted mt-1">
-          A headline, About section and job descriptions written from your CV, ready to paste into
-          LinkedIn. Nothing is invented.
-        </p>
-      </div>
-
+    <>
       {signedOut ? (
         <Banner
           tone="info"
@@ -266,49 +300,6 @@ function LinkedinWriter() {
           )}
         </section>
       )}
-    </div>
-  );
-}
-
-function CopyField({
-  label,
-  value,
-  limit,
-  rows,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  limit: number;
-  rows: number;
-  onChange: (v: string) => void;
-}) {
-  const toast = useToast();
-  const over = value.length > limit;
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(value);
-      toast.show({ tone: 'success', message: `${label} copied` });
-    } catch {
-      toast.show({ tone: 'error', message: 'Couldn’t copy. Select the text and copy it.' });
-    }
-  };
-  return (
-    <Card className="flex flex-col gap-2 p-5">
-      <TextArea
-        label={label}
-        rows={rows}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      <div className="flex items-center justify-between gap-3">
-        <span className={`text-xs ${over ? 'text-danger font-semibold' : 'text-ink-muted'}`}>
-          {value.length} / {limit} characters{over ? ' — too long for LinkedIn' : ''}
-        </span>
-        <Button size="sm" variant="secondary" icon={<Copy aria-hidden size={16} />} onClick={copy}>
-          Copy
-        </Button>
-      </div>
-    </Card>
+    </>
   );
 }

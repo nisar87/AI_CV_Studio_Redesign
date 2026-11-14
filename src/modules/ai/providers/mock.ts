@@ -1,10 +1,11 @@
+import { looksLikeLinkedin } from '@/modules/linkedin/review';
 import { parseCv } from '@/modules/import/parse';
 import { docToStructure } from '@/modules/import/structure';
 import { PRESETS } from '@/modules/resume/presets';
 import { TEMPLATE_CATALOG } from '../catalog';
 import { guessDesign, guessPreset, guessTitle } from '../heuristics';
 import type { AiFile, AiProvider, GenerateRequest } from '../provider';
-import type { DesignChoice, ParsedInput, TaskId } from '../schemas';
+import type { DesignChoice, ParsedInput, TaskId, TaskOutput } from '../schemas';
 
 /**
  * Deterministic stand-in for a model: tests, e2e and development without a key.
@@ -482,6 +483,128 @@ function answer(task: TaskId, input: unknown, attempt: number, files: AiFile[] =
             .join(' '),
         })),
         skills: skills.slice(0, 10),
+      };
+    }
+    case 'linkedin.review': {
+      const i = input as ParsedInput<'linkedin.review'>;
+      const lines = i.export
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean);
+      if (!looksLikeLinkedin(lines)) return { isLinkedin: false, overall: '', sections: [] };
+      const lower = lines.map((l) => l.toLowerCase());
+      const first = lower.findIndex((l) => l === 'summary' || l === 'experience');
+      const headline = lines[first - 2] ?? '';
+      const block = (h: string) => {
+        const k = lower.indexOf(h);
+        if (k < 0) return [];
+        const out: string[] = [];
+        for (
+          let j = k + 1;
+          j < lines.length &&
+          !/^(summary|experience|education|top skills|languages|certifications|contact)$/.test(
+            lower[j]!,
+          );
+          j++
+        )
+          out.push(lines[j]!);
+        return out;
+      };
+      const summary = block('summary').join(' ');
+      const cv = i.profile ? digestLines(i.profile) : [];
+      const cvSkills = (cv.find((l) => l.id === 'SKILLS')?.text ?? '').split('; ').filter(Boolean);
+      const top = block('top skills');
+      const sections: TaskOutput<'linkedin.review'>['sections'] = [
+        {
+          key: 'headline',
+          title: 'Headline',
+          status: 'improve',
+          current: headline,
+          notes: ['Say what you do and what you are good at, not only where you work.'],
+          rewrite: [headline.replace(/ at .*/, ''), ...top.slice(0, 2)].join(' | '),
+        },
+        summary
+          ? {
+              key: 'about',
+              title: 'About',
+              status: 'improve',
+              current: summary,
+              notes: ['Show the work you do with a real example.'],
+              rewrite: cv.find((l) => l.id === 'SUMMARY')?.text ?? `I work as ${headline}.`,
+            }
+          : {
+              key: 'about',
+              title: 'About',
+              status: 'missing',
+              current: '',
+              notes: ['Add an About section: it is the first thing people read.'],
+              rewrite: `I work as ${headline}.`,
+            },
+      ];
+      const dates = lower
+        .map((l, k) => (/\b\d{4}\s*-\s*(present|\w*\s*\d{4})/.test(l) && k > 1 ? k : -1))
+        .filter((k) => k > 0 && k < lower.indexOf('education'));
+      for (const d of dates) {
+        const title = lines[d - 1]!;
+        const company = lines[d - 2]!;
+        // Line after the job's place, unless that is a heading or the next job's company.
+        const next = lines[d + 2] ?? '';
+        const hasDesc =
+          !!next && !/^(education|experience|summary)$/i.test(next) && !dates.includes(d + 4);
+        const desc = hasDesc ? next : '';
+        const fromCv = cv
+          .filter((l) => /^J\d+$/.test(l.id) && l.text.toLowerCase().includes(title.toLowerCase()))
+          .flatMap((j) => cv.filter((l) => l.id.startsWith(`${j.id}.B`)).map((l) => l.text));
+        const hook = /ZZ-INVENT/.test(i.export) ? ' I cut delivery times by 45%.' : '';
+        sections.push({
+          key: 'experience',
+          title: `Experience — ${title}, ${company}`,
+          status: hasDesc ? 'improve' : 'missing',
+          current: hasDesc ? desc : '',
+          notes: [
+            hasDesc
+              ? 'Add what you did and what it achieved.'
+              : 'Add a short description of this job.',
+          ],
+          rewrite:
+            (fromCv.length
+              ? fromCv
+                  .map((t) => `I ${t.charAt(0).toLowerCase()}${t.slice(1).replace(/\.$/, '')}.`)
+                  .join(' ')
+              : `I worked as ${title} at ${company}.`) + hook,
+        });
+      }
+      sections.push({
+        key: 'skills',
+        title: 'Skills',
+        status: 'improve',
+        current: top.join(', '),
+        notes: ['Add the skills employers search for in your work.'],
+        rewrite: [...new Set([...top, ...cvSkills])].join(', '),
+      });
+      // Not on the page: the review's own check must drop this quote.
+      sections.push({
+        key: 'education',
+        title: 'Education',
+        status: 'good',
+        current: 'A quote that is not in the export',
+        notes: ['Your education is clear.'],
+        rewrite: '',
+      });
+      if (/linkedin\.com\/in\/[\w-]*-[a-z0-9]*\d/i.test(i.export.replace(/-\n/g, '-')))
+        sections.push({
+          key: 'contact',
+          title: 'Profile address',
+          status: 'improve',
+          current: '',
+          notes: ['Choose a short address with your name in LinkedIn’s settings.'],
+          rewrite: 'linkedin.com/in/your-name',
+        });
+      return {
+        isLinkedin: true,
+        overall:
+          'Your profile lists your jobs clearly. Describe what you did in each job and write a fuller About section.',
+        sections,
       };
     }
     case 'import.structure': {

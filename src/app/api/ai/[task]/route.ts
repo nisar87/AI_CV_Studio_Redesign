@@ -22,6 +22,7 @@ const INTERNAL = new Set<string>([
   'interview.turn',
   'coach.chat',
   'story.draft',
+  'linkedin.review',
   'skills.gap',
   'jobs.extract',
 ]);

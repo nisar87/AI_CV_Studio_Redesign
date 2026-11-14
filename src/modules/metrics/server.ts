@@ -65,6 +65,9 @@ export const EVENTS = [
   'portfolio_contact',
   'portfolio_contact_fail',
   'portfolio_image',
+  // R9.9 LinkedIn review
+  'linkedin_review',
+  'linkedin_review_fail',
 ] as const;
 export type MetricEvent = (typeof EVENTS)[number];
 

@@ -172,6 +172,7 @@ export async function entitlementsFor(user: SessionUser | null) {
       reminders: cfg.features.reminders,
       shareComments: cfg.features.shareComments,
       portfolioContact: cfg.features.portfolioContact,
+      linkedinReview: cfg.features.linkedinReview,
     },
     aiWeights: cfg.aiWeights,
     hiddenLetterTypes: cfg.content.hiddenLetterTypes,

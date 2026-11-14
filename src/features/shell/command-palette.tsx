@@ -33,6 +33,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       { label: 'Career profile', group: 'Go to', href: '/profile' },
       { label: 'Story bank', group: 'Go to', href: '/stories' },
       { label: 'Skill plan', group: 'Go to', href: '/skills' },
+      { label: 'Review my LinkedIn profile', group: 'Go to', href: '/linkedin?tab=review' },
       { label: 'Account and settings', group: 'Go to', href: '/account' },
       { label: 'Help', group: 'Go to', href: '/help' },
       ...docs,
