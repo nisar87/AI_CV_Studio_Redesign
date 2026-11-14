@@ -1,7 +1,7 @@
 import { apiError, readJson } from '@/lib/http';
 import { actor, json, withAdmin } from '@/modules/admin/server';
 import { getBusinessConfig } from '@/modules/billing/server';
-import { mailSettings, sendMail, testEmail } from '@/modules/notify/server';
+import { mailSettings, reminderEmail, sendMail, SITE, testEmail } from '@/modules/notify/server';
 import { getUserStore } from '@/modules/store';
 
 export const runtime = 'nodejs';
@@ -16,7 +16,23 @@ export function GET() {
   });
 }
 
-/** POST { to? } → sends a test email (to the admin's own address by default). */
+/** A sample reminder digest (R9.6) so the template can be checked in a real inbox. */
+const sampleReminder = (to: string) =>
+  reminderEmail(
+    to,
+    [
+      {
+        job: { id: 'sample', title: 'Delivery Driver', company: 'Fresh Foods Ltd' },
+        reminder: {
+          note: 'Follow up with Fresh Foods Ltd',
+          on: new Date().toISOString().slice(0, 10),
+        },
+      },
+    ],
+    { today: new Date().toISOString().slice(0, 10), unsubscribeUrl: `${SITE}/account` },
+  );
+
+/** POST { to?, kind? } → sends a test email, or a sample reminder email (kind: 'reminder'). */
 export function POST(req: Request) {
   return withAdmin(async (admin, rid) => {
     const body = await readJson(req, 1024);
@@ -25,13 +41,18 @@ export function POST(req: Request) {
         ? (body.value as { to: string }).to.trim() || admin.email
         : admin.email) ?? '';
     const { value: cfg } = await getBusinessConfig();
-    const r = await sendMail(testEmail(to), cfg.support.email);
+    const kind =
+      body.ok && (body.value as { kind?: unknown })?.kind === 'reminder' ? 'reminder' : 'test';
+    const r = await sendMail(
+      kind === 'reminder' ? sampleReminder(to) : testEmail(to),
+      cfg.support.email,
+    );
     await getUserStore().writeAudit({
       at: new Date().toISOString(),
       by: actor(admin),
       action: 'email.test',
       target: to,
-      detail: { ok: r.ok, ...(r.ok ? {} : { reason: r.reason }) },
+      detail: { kind, ok: r.ok, ...(r.ok ? {} : { reason: r.reason }) },
     });
     if (!r.ok)
       return apiError(

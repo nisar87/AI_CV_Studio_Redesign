@@ -49,6 +49,12 @@ export default function PrivacyPage() {
             fill in.
           </li>
           <li>
+            <strong>Reminders:</strong> reminders you set on a job are kept with the job. On the
+            day, we email them to your account address at 8:00 your time (we keep your time zone for
+            this). Every reminder email has a link to stop them, and you can switch them off on your
+            Account page.
+          </li>
+          <li>
             <strong>Job links:</strong> when you paste a job’s link, our server opens that page
             (nothing from your account is sent to the site). If the page has no job details we can
             read directly, its text is sent to Gemini to find the job; nothing is saved until you

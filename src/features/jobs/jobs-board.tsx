@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { Briefcase, Link2, Lock, Plus, X } from 'lucide-react';
+import { Bell, Briefcase, Link2, Lock, Plus, X } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -174,6 +174,7 @@ export function JobsBoard() {
                     <p className="text-ink-subtle mt-1 text-xs">
                       {j.appliedOn ? `Applied ${fmt(j.appliedOn)}` : `Added ${fmt(j.createdAt)}`}
                     </p>
+                    <NextReminder job={j} />
                     <label className="mt-2 flex items-center gap-2 text-sm">
                       <span className="text-ink-muted">Move to</span>
                       <select
@@ -380,5 +381,25 @@ function AddJob({
         </div>
       </form>
     </Card>
+  );
+}
+
+/** The job's next open reminder on its card ("Due" when today or earlier). */
+function NextReminder({ job }: { job: Job }) {
+  const r = (job.reminders ?? [])
+    .filter((x) => !x.done)
+    .sort((a, b) => a.on.localeCompare(b.on))[0];
+  if (!r) return null;
+  const today = new Date().toLocaleDateString('en-CA');
+  const due = r.on <= today;
+  return (
+    <p
+      className={`mt-1 flex items-center gap-1 text-xs ${due ? 'text-warning font-semibold' : 'text-ink-muted'}`}
+      data-testid="card-reminder"
+    >
+      <Bell aria-hidden size={12} />
+      {due ? 'Due: ' : `${fmt(r.on)}: `}
+      {r.note}
+    </p>
   );
 }

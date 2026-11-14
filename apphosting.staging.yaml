@@ -6,6 +6,11 @@ env:
     value: staging
     availability:
       - RUNTIME
+  # Links in emails (reminders) point to staging, not to production.
+  - variable: PUBLIC_SITE_URL
+    value: https://aicvstudio-staging--ai-cv-studio.europe-west4.hosted.app
+    availability:
+      - RUNTIME
   # Smaller AI budget on staging.
   - variable: AI_DAILY_BUDGET
     value: '200'

@@ -2,6 +2,7 @@ import type { Job } from '@/modules/jobs/schema';
 import type { SavedLetter } from '@/modules/letters/schema';
 import type { Story } from '@/modules/stories/schema';
 import type { SkillPlan } from '@/modules/skills/gap';
+import type { ReminderQueue } from './types';
 import type { CoachThread } from '@/modules/coach/thread';
 import type { ResumeDocument } from '@/modules/resume/schema';
 import {
@@ -116,6 +117,29 @@ export class MemoryUserStore implements UserStore {
     this.storyBucket(uid).delete(id);
   }
 
+  private reminderQueue = new Map<string, ReminderQueue>();
+  private leases = new Map<string, number>();
+  async getReminderQueue(uid: string) {
+    const q = this.reminderQueue.get(uid);
+    return q ? structuredClone(q) : null;
+  }
+  async putReminderQueue(q: ReminderQueue) {
+    this.reminderQueue.set(q.uid, structuredClone(q));
+  }
+  async dueReminderQueues(nowIso: string, limit: number) {
+    return [...this.reminderQueue.values()]
+      .filter((q) => q.next !== null && q.next <= nowIso)
+      .sort((a, b) => a.next!.localeCompare(b.next!))
+      .slice(0, limit)
+      .map((q) => structuredClone(q));
+  }
+  async takeLease(name: string, ms: number, now = new Date()) {
+    const until = this.leases.get(name) ?? 0;
+    if (until > now.getTime()) return false;
+    this.leases.set(name, now.getTime() + ms);
+    return true;
+  }
+
   private skillPlans = new Map<string, Map<string, SkillPlan>>();
   private planBucket(uid: string) {
     let b = this.skillPlans.get(uid);
@@ -165,6 +189,7 @@ export class MemoryUserStore implements UserStore {
     this.letters.delete(uid);
     this.stories.delete(uid);
     this.skillPlans.delete(uid);
+    this.reminderQueue.delete(uid);
     this.coach.delete(uid);
     this.designs.delete(uid);
     for (const [t, sh] of this.shares) if (sh.uid === uid) this.shares.delete(t);

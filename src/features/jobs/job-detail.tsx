@@ -14,6 +14,8 @@ import { JOB_STAGES, STAGE_LABEL, type Job, type JobStage } from '@/modules/jobs
 import { getRepository } from '@/modules/storage/repository';
 import { jobsApi } from './api';
 import { JobTools } from './job-tools';
+import { RemindersCard } from './reminders-card';
+import { useEntitlements } from '@/features/account/entitlements';
 
 type Draft = Pick<
   Job,
@@ -54,6 +56,7 @@ export function JobDetail({ id }: { id: string }) {
   const router = useRouter();
   const toast = useToast();
   const cvs = useCvList();
+  const { ent } = useEntitlements();
   const [job, setJob] = useState<Job | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -176,6 +179,8 @@ export function JobDetail({ id }: { id: string }) {
               maxLength={4000}
             />
           </Card>
+
+          {ent?.features.reminders !== false && <RemindersCard job={job} onJobChange={setJob} />}
 
           <Card className="flex flex-col gap-3 p-5">
             <h2 className="text-lg font-semibold">CVs used for this job</h2>

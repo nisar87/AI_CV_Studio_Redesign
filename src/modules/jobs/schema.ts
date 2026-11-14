@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Reminder } from './reminders';
 import { letter } from '@/modules/letters/schema';
 import type { InterviewPrep } from './interview';
 import type { MatchResult } from './match';
@@ -58,6 +59,8 @@ export const job = jobInput.extend({
     .optional(),
   /** Application kit (R8.4): the tailored CV made with the letter and email (server only). */
   kit: z.object({ cvId: z.string().max(64), at: z.string() }).optional(),
+  /** Reminders (R9.6), written through /api/jobs/[id]/reminders only. */
+  reminders: z.custom<Reminder[]>().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

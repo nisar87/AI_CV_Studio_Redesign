@@ -53,6 +53,10 @@ export const EVENTS = [
   'job_url_ai',
   'job_url_page',
   'job_url_fail',
+  // R9.6 Reminders
+  'reminder_set',
+  'reminder_email',
+  'reminder_email_fail',
 ] as const;
 export type MetricEvent = (typeof EVENTS)[number];
 

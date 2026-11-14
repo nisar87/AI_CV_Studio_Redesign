@@ -169,6 +169,7 @@ export async function entitlementsFor(user: SessionUser | null) {
       stories: cfg.features.stories,
       skillGap: cfg.features.skillGap,
       jobFromUrl: cfg.features.jobFromUrl,
+      reminders: cfg.features.reminders,
     },
     aiWeights: cfg.aiWeights,
     hiddenLetterTypes: cfg.content.hiddenLetterTypes,

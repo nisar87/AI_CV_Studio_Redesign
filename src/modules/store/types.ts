@@ -52,6 +52,13 @@ export interface UserStore {
   getStory(uid: string, id: string): Promise<Story | null>;
   putStory(uid: string, story: Story): Promise<void>;
   deleteStory(uid: string, id: string): Promise<void>;
+  // Reminders (R9.6): one queue entry per person with reminders, and a lease for the sender.
+  getReminderQueue(uid: string): Promise<ReminderQueue | null>;
+  putReminderQueue(q: ReminderQueue): Promise<void>;
+  /** Entries with `next` at or before `nowIso`, oldest first. */
+  dueReminderQueues(nowIso: string, limit: number): Promise<ReminderQueue[]>;
+  /** True if this caller now holds the named lease for `ms` (nobody else did). */
+  takeLease(name: string, ms: number, now?: Date): Promise<boolean>;
   // Skill gap plans (R9.4)
   listSkillPlans(uid: string): Promise<SkillPlan[]>;
   getSkillPlan(uid: string, id: string): Promise<SkillPlan | null>;
@@ -241,3 +248,17 @@ export type PaymentRequest = {
 export type ConfigVersion = { version: number; savedAt: string; savedBy: string; value: unknown };
 
 export const MAX_VERSIONS = 10;
+
+/** reminderQueue/{uid}: who to email, when next, and whether they turned reminder emails off. */
+export type ReminderQueue = {
+  uid: string;
+  email: string | null;
+  tz: string;
+  /** Earliest due reminder not yet emailed (ISO), or null. */
+  next: string | null;
+  /** Reminder emails turned off (the reminders still show in the studio). */
+  off: boolean;
+  /** Random token for the one-click "stop reminder emails" link. */
+  token: string;
+  updatedAt: string;
+};

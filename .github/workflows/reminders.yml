@@ -1,0 +1,32 @@
+# R9.6 — the hourly reminder sender. Calls the app's /api/cron/reminders on production and staging.
+# The endpoint is safe to call without a secret: it only emails reminders that are due, each once,
+# and runs at most once per 10 minutes. If the repository secret CRON_KEY is set, it is sent as
+# x-cron-key (and the app must have the same CRON_KEY to require it).
+name: Reminders
+
+on:
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  send:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        site:
+          - https://aicvstudio.app
+          - https://aicvstudio-staging--ai-cv-studio.europe-west4.hosted.app
+    steps:
+      - name: Send due reminders
+        env:
+          CRON_KEY: ${{ secrets.CRON_KEY }}
+        run: |
+          curl -fsS --max-time 150 -X POST \
+            -H "x-cron-key: ${CRON_KEY}" \
+            "${{ matrix.site }}/api/cron/reminders"
+          echo

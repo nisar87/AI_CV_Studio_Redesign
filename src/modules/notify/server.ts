@@ -9,7 +9,14 @@ import type { PaymentRequest } from '@/modules/store/types';
  *
  * Test runs (MAIL_OUTBOX=memory, with the in-memory store) keep messages in an outbox instead.
  */
-export type Mail = { to: string; subject: string; text: string; html: string };
+export type Mail = {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+  /** Extra headers (e.g. List-Unsubscribe for reminder emails). */
+  headers?: Record<string, string>;
+};
 export type MailResult =
   | { ok: true; id?: string }
   | { ok: false; reason: 'not_configured' | 'no_recipient' | 'failed'; message?: string };
@@ -84,17 +91,22 @@ const esc = (s: string) =>
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
   );
 
-function wrapHtml(title: string, paragraphs: string[]) {
+function wrapHtml(
+  title: string,
+  paragraphs: string[],
+  footer = 'You get this email because you placed an order on aicvstudio.app.',
+) {
   return `<!doctype html><html><body style="margin:0;background:#faf8f4;font-family:Arial,Helvetica,sans-serif;color:#1b1f24">
 <div style="max-width:560px;margin:0 auto;padding:32px 24px">
 <p style="font-size:14px;color:#1e5a55;font-weight:bold;margin:0 0 16px">AI CV Studio</p>
 <h1 style="font-size:22px;margin:0 0 16px">${esc(title)}</h1>
 ${paragraphs.map((p) => `<p style="font-size:16px;line-height:1.5;margin:0 0 12px">${p}</p>`).join('\n')}
-<p style="font-size:13px;color:#5b616b;margin-top:24px">You get this email because you placed an order on aicvstudio.app.</p>
+<p style="font-size:13px;color:#5b616b;margin-top:24px">${footer}</p>
 </div></body></html>`;
 }
 
-const SITE = 'https://aicvstudio.app';
+/** The site address used in emails (staging sets PUBLIC_SITE_URL to its own address). */
+export const SITE = (process.env.PUBLIC_SITE_URL || 'https://aicvstudio.app').replace(/\/$/, '');
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -151,5 +163,70 @@ export function testEmail(to: string): Mail {
     subject: 'Test email from AI CV Studio',
     text,
     html: wrapHtml('Test email', [esc(text)]),
+  };
+}
+
+/** One line per due reminder: "Follow up with Acme — Delivery Driver at Acme (due 16 Nov)". */
+type DigestItem = {
+  job: { id: string; title: string; company: string };
+  reminder: { note: string; on: string };
+};
+
+const dayLabel = (on: string) =>
+  new Date(`${on}T12:00:00Z`).toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  });
+
+/**
+ * The daily reminders digest (R9.6). Every reminder links to its job; the email and its headers
+ * carry a one-click way to stop reminder emails (RFC 8058).
+ */
+export function reminderEmail(
+  to: string,
+  items: DigestItem[],
+  opts: { today: string; unsubscribeUrl: string },
+): Mail {
+  const line = (i: DigestItem) => {
+    const job = `${i.job.title}${i.job.company ? ` at ${i.job.company}` : ''}`;
+    const when = i.reminder.on < opts.today ? ` (since ${dayLabel(i.reminder.on)})` : '';
+    return {
+      text: `${i.reminder.note || 'Reminder'} — ${job}${when}`,
+      url: `${SITE}/jobs/${i.job.id}`,
+    };
+  };
+  const lines = items.map(line);
+  const n = items.length;
+  const subject =
+    n === 1
+      ? `Reminder: ${items[0]!.reminder.note || items[0]!.job.title}`
+      : `${n} reminders for today`;
+  const text = [
+    n === 1 ? 'You asked us to remind you today:' : `You asked us to remind you about ${n} things:`,
+    ...lines.map((l) => `- ${l.text}\n  ${l.url}`),
+    `All your jobs: ${SITE}/jobs`,
+    `Stop reminder emails: ${opts.unsubscribeUrl}`,
+  ].join('\n\n');
+  const html = wrapHtml(
+    n === 1 ? 'Your reminder for today' : 'Your reminders for today',
+    [
+      ...lines.map(
+        (l) => `<a href="${esc(l.url)}" style="color:#1e5a55;font-weight:bold">${esc(l.text)}</a>`,
+      ),
+      `<a href="${SITE}/jobs" style="color:#1e5a55">Open your job tracker</a>`,
+    ],
+    `You get this email because you set reminders on aicvstudio.app. <a href="${esc(opts.unsubscribeUrl)}" style="color:#5b616b">Stop reminder emails</a>.`,
+  );
+  return {
+    to,
+    subject,
+    text,
+    html,
+    headers: {
+      'List-Unsubscribe': `<${opts.unsubscribeUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    },
   };
 }

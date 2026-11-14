@@ -39,6 +39,19 @@ export const jobsApi = {
     call<{ job: Job }>('/api/jobs', { method: 'POST', body: JSON.stringify(input) }).then(
       (r) => r.job,
     ),
+  /** R9.6 reminders on a job. */
+  addReminder: (id: string, input: { on: string; note: string; tz: string }) =>
+    call<{ job: Job }>(`/api/jobs/${id}/reminders`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }).then((r) => r.job),
+  updateReminder: (id: string, rid: string, patch: { done?: boolean; note?: string }) =>
+    call<{ job: Job }>(`/api/jobs/${id}/reminders/${rid}`, {
+      method: 'PUT',
+      body: JSON.stringify(patch),
+    }).then((r) => r.job),
+  removeReminder: (id: string, rid: string) =>
+    call<{ job: Job }>(`/api/jobs/${id}/reminders/${rid}`, { method: 'DELETE' }).then((r) => r.job),
   /** R9.5: the job read from its advert page (not saved). */
   fromUrl: (url: string) =>
     call<{ job: JobFromUrl }>('/api/jobs/fetch', {

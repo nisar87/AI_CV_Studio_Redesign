@@ -194,6 +194,8 @@ export function AccountScreen() {
         </section>
       )}
 
+      {ent && ent.plan !== 'visitor' && ent.features.reminders && <ReminderEmails />}
+
       {ent && ent.plan !== 'visitor' && <InviteCard />}
 
       <section className="flex flex-wrap gap-3" aria-label="Account actions">
@@ -283,5 +285,60 @@ export function AccountScreen() {
         </section>
       )}
     </div>
+  );
+}
+
+/** R9.6: the daily reminder email on or off (reminders still show in the studio). */
+function ReminderEmails() {
+  const [state, setState] = useState<{ emails: boolean; email: string | null } | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    fetch('/api/me/reminders', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then(setState, () => setState(null));
+  }, []);
+  if (!state) return null;
+  return (
+    <section
+      id="reminders"
+      aria-labelledby="rem-h"
+      className="border-line bg-surface flex scroll-mt-20 flex-col gap-3 rounded-lg border p-5"
+    >
+      <h2 id="rem-h" className="text-xl font-semibold">
+        Reminder emails
+      </h2>
+      <label className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          className="accent-primary mt-1 size-5"
+          checked={state.emails}
+          aria-busy={busy}
+          onChange={async (e) => {
+            const emails = e.target.checked;
+            const before = state;
+            setState({ ...state, emails });
+            setBusy(true);
+            try {
+              const r = await fetch('/api/me/reminders', {
+                method: 'PUT',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ emails }),
+              });
+              if (!r.ok) throw new Error();
+              const j = (await r.json()) as { emails: boolean };
+              setState({ ...before, emails: j.emails });
+            } catch {
+              setState(before);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        />
+        <span>
+          Email me my job reminders at 8:00 on the day
+          {state.email ? ` (to ${state.email})` : ''}. Reminders always show in your job tracker.
+        </span>
+      </label>
+    </section>
   );
 }

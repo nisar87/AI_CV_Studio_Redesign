@@ -20,6 +20,7 @@ import {
   type Share,
   type Portfolio,
   SavedDesign,
+  ReminderQueue,
 } from './types';
 
 /**
@@ -33,6 +34,8 @@ import {
  *   users/{uid}/letters/{id}                 SavedLetter (letter library; deleted with the account)
  *   users/{uid}/stories/{id}                 Story (story bank; deleted with the account)
  *   users/{uid}/skillPlans/{id}              SkillPlan (skill gap plans; deleted with the account)
+ *   reminderQueue/{uid}                      ReminderQueue (next reminder email; deleted with the account)
+ *   leases/{name}                            { until } (one hourly sender at a time)
  *   users/{uid}/coach/main                   CoachThread (career coach; deleted with the account)
  *   portfolios/{slug}                        Portfolio (public page; one per account)
  *   referralCodes/{code}                     { uid }  (invite link; users/{uid}.referralCode, .referredBy)
@@ -124,6 +127,33 @@ export class FirestoreUserStore implements UserStore {
     await this.storiesCol(uid).doc(id).delete();
   }
 
+  async getReminderQueue(uid: string) {
+    const s = await this.db.collection('reminderQueue').doc(uid).get();
+    return s.exists ? (s.data() as ReminderQueue) : null;
+  }
+  async putReminderQueue(q: ReminderQueue) {
+    await this.db.collection('reminderQueue').doc(q.uid).set(q);
+  }
+  async dueReminderQueues(nowIso: string, limit: number) {
+    // Single-field range on `next`: served by Firestore's automatic index.
+    const snap = await this.db
+      .collection('reminderQueue')
+      .where('next', '<=', nowIso)
+      .orderBy('next')
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => d.data() as ReminderQueue);
+  }
+  async takeLease(name: string, ms: number, now = new Date()) {
+    const ref = this.db.collection('leases').doc(name);
+    return this.db.runTransaction(async (tx) => {
+      const until = ((await tx.get(ref)).get('until') as number | undefined) ?? 0;
+      if (until > now.getTime()) return false;
+      tx.set(ref, { until: now.getTime() + ms });
+      return true;
+    });
+  }
+
   private plansCol(uid: string) {
     return this.db.collection('users').doc(uid).collection('skillPlans');
   }
@@ -175,6 +205,7 @@ export class FirestoreUserStore implements UserStore {
     // users/{uid} with every document and version below it.
     await this.db.recursiveDelete(this.db.collection('users').doc(uid));
     await this.db.collection('passes').doc(uid).delete();
+    await this.db.collection('reminderQueue').doc(uid).delete();
     const usage = await this.db.collection('usage').where('uid', '==', uid).get();
     const shares = await this.db.collection('shares').where('uid', '==', uid).get();
     const portfolios = await this.db.collection('portfolios').where('uid', '==', uid).get();

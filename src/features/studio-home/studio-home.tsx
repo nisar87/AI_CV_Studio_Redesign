@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Bell,
   ArrowRight,
   Briefcase,
   CheckCircle2,
@@ -15,6 +16,8 @@ import { ButtonLink } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/misc';
 import { useAccount } from '@/features/account/account-context';
 import { jobsApi } from '@/features/jobs/api';
+import { dayLabel } from '@/features/jobs/reminders-card';
+import { soonest, todayIn } from '@/modules/jobs/reminders';
 import { DocumentPreview } from '@/features/preview/document-preview';
 import { JOB_STAGES, type Job } from '@/modules/jobs/schema';
 import type { ResumeDocument } from '@/modules/resume/schema';
@@ -132,6 +135,7 @@ export function StudioHome() {
   const strength = profile ? profileStrength(profile) : null;
   const name = account.user?.name?.split(' ')[0];
 
+  const next = jobs ? soonest(jobs.filter((j) => j.stage !== 'closed')) : null;
   const counts = JOB_STAGES.filter((s) => s !== 'closed').map((s) => ({
     stage: s,
     n: (jobs ?? []).filter((j) => j.stage === s).length,
@@ -283,6 +287,18 @@ export function StudioHome() {
               ))}
             </ul>
           )}
+          {next && (
+            <p className="text-sm" data-testid="next-reminder">
+              <Bell aria-hidden size={14} className="text-primary mr-1 inline" />
+              Next reminder:{' '}
+              <Link href={`/jobs/${next.job.id}`} className="text-primary font-semibold underline">
+                {next.reminder.note}
+              </Link>{' '}
+              <span className="text-ink-muted">
+                · {dayLabel(next.reminder.on, todayIn(zone()))}
+              </span>
+            </p>
+          )}
         </section>
 
         <section
@@ -347,3 +363,11 @@ export function StudioHome() {
     </div>
   );
 }
+
+const zone = () => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+};

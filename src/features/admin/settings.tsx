@@ -689,6 +689,11 @@ export function AdminSettings() {
             checked={draft.features.jobFromUrl}
             onChange={(v) => edit((c) => void (c.features.jobFromUrl = v))}
           />
+          <CheckboxField
+            label="Reminders on jobs, and the daily reminder email"
+            checked={draft.features.reminders}
+            onChange={(v) => edit((c) => void (c.features.reminders = v))}
+          />
         </Section>
 
         <Section
@@ -837,6 +842,27 @@ function EmailCheck() {
           }}
         >
           Send a test email to me
+        </Button>{' '}
+        <Button
+          size="sm"
+          variant="secondary"
+          loading={busy}
+          onClick={async () => {
+            setBusy(true);
+            setProblem(null);
+            try {
+              const r = await adminSend<{ to: string }>('/api/admin/notify', 'POST', {
+                kind: 'reminder',
+              });
+              toast.show({ tone: 'success', message: `Sample reminder email sent to ${r.to}` });
+            } catch (e) {
+              setProblem((e as Error).message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          Send a sample reminder email
         </Button>
       </div>
       {problem && (
